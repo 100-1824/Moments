@@ -1,16 +1,20 @@
 {
     "version": 2,
-    "framework": null,
+    "framework": "vite",
     "functions": {
-        "api/index.php": {
+        "backend/api/index.php": {
             "runtime": "vercel-php@0.7.3",
             "maxDuration": 30
         }
     },
-    "routes": [
+    "rewrites": [
         {
-            "src": "/(.*)",
-            "dest": "/api/index.php"
+            "source": "/api/(.*)",
+            "destination": "/backend/api/index.php"
+        },
+        {
+            "source": "/(.*)",
+            "destination": "/index.html"
         }
     ],
     "env": {
