@@ -1,0 +1,5 @@
+{
+  "name": "Moments",
+  "description": "A private, intimate digital space for long-distance partners to share daily visual updates.",
+  "requestFramePermissions": ["camera"]
+}

@@ -1,0 +1,54 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: #F2EFE9;
+  --color-highlight: #FFFFFF;
+  --color-shadow: #D1CDC4;
+  --color-accent-terracotta: #D97757;
+  --color-accent-sage: #8A9A5B;
+  --color-text-main: #4A453E;
+  
+  --font-sans: "Nunito", ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer base {
+  body {
+    background-color: var(--color-background);
+    color: var(--color-text-main);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-family: var(--font-sans);
+  }
+}
+
+@utility neu-extruded {
+  background-color: var(--color-background);
+  box-shadow: 
+    8px 8px 16px var(--color-shadow),
+    -8px -8px 16px var(--color-highlight);
+}
+
+@utility neu-extruded-sm {
+  background-color: var(--color-background);
+  box-shadow: 
+    4px 4px 8px var(--color-shadow),
+    -4px -4px 8px var(--color-highlight);
+}
+
+@utility neu-depressed {
+  background-color: var(--color-background);
+  box-shadow: 
+    inset 8px 8px 16px var(--color-shadow),
+    inset -8px -8px 16px var(--color-highlight);
+}
+
+@utility neu-depressed-sm {
+  background-color: var(--color-background);
+  box-shadow: 
+    inset 4px 4px 8px var(--color-shadow),
+    inset -4px -4px 8px var(--color-highlight);
+}
+
+@utility neu-button {
+  @apply neu-extruded transition-all duration-200 active:neu-depressed active:scale-[0.98];
+}
