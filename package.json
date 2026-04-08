@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite --port=3000 --host=0.0.0.0",
     "build": "vite build",
-    "vercel-build": "cd backend && if [ ! -f composer ]; then php -r \"copy('https://getcomposer.org/installer','composer-setup.php');\" && php composer-setup.php --install-dir=. --filename=composer && rm composer-setup.php; fi && ./composer install --no-dev --optimize-autoloader && cd .. && npm run build",
+    "vercel-build": "npm run build",
     "preview": "vite preview",
     "clean": "rm -rf dist",
     "lint": "tsc --noEmit"
