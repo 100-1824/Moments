@@ -134,11 +134,12 @@ try {
     
     $isDebug = filter_var($_ENV['APP_DEBUG'] ?? $_SERVER['APP_DEBUG'] ?? 'false', FILTER_VALIDATE_BOOLEAN);
     $isDiagnostics = $requestPath === '/api/diagnostics' && ($_GET['diagnose'] ?? '') === '1';
+    $isMigration = $requestPath === '/api/migrate' && !empty($_GET['token'] ?? null);
     
     echo json_encode([
         'status' => 'error',
         'message' => 'Internal server error',
-        'debug' => $isDiagnostics ? [
+        'debug' => ($isDiagnostics || $isMigration) ? [
             'exception' => get_class($e),
             'message' => $e->getMessage(),
             'file' => $e->getFile(),
