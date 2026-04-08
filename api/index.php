@@ -27,7 +27,12 @@ if ($requestPath === '/api/diagnostics' && ($_GET['diagnose'] ?? '') === '1') {
             'cache_driver' => $_ENV['CACHE_DRIVER'] ?? $_SERVER['CACHE_DRIVER'] ?? null,
             'session_driver' => $_ENV['SESSION_DRIVER'] ?? $_SERVER['SESSION_DRIVER'] ?? null,
         ],
-    ]);
+        'request' => [
+            'uri' => $_SERVER['REQUEST_URI'] ?? null,
+            'path' => $requestPath,
+            'query' => $_SERVER['QUERY_STRING'] ?? null,
+        ],
+    ], JSON_PRETTY_PRINT);
     exit;
 }
 
@@ -61,15 +66,22 @@ try {
     error_log('[Moments API Error] ' . get_class($e) . ': ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
     
     $isDebug = filter_var($_ENV['APP_DEBUG'] ?? $_SERVER['APP_DEBUG'] ?? 'false', FILTER_VALIDATE_BOOLEAN);
+    $isDiagnostics = $requestPath === '/api/diagnostics' && ($_GET['diagnose'] ?? '') === '1';
     
     echo json_encode([
         'status' => 'error',
         'message' => 'Internal server error',
-        'debug' => $isDebug ? [
+        'debug' => $isDiagnostics ? [
+            'exception' => get_class($e),
+            'message' => $e->getMessage(),
+            'file' => $e->getFile(),
+            'line' => $e->getLine(),
+            'trace' => explode("\n", $e->getTraceAsString()),
+        ] : ($isDebug ? [
             'exception' => get_class($e),
             'message' => $e->getMessage(),
             'file' => $e->getFile(),
             'line' => $e->getLine()
-        ] : null
-    ]);
+        ] : null),
+    ], JSON_PRETTY_PRINT);
 }
