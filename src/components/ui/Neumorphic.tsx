@@ -32,12 +32,16 @@ interface NeuButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 
 export const NeuButton = React.forwardRef<HTMLButtonElement, NeuButtonProps>(
   ({ className, size = "md", active = false, ...props }, ref) => {
+    const hasWidth = className?.includes("w-");
+    const hasHeight = className?.includes("h-");
+
     return (
       <button
         ref={ref}
         className={cn(
-          "neu-button rounded-full flex items-center justify-center transition-all duration-200",
-          size === "sm" ? "w-10 h-10" : size === "md" ? "w-16 h-16" : "w-20 h-20",
+          "neu-button rounded-full flex items-center justify-center transition-all duration-200 px-4",
+          !hasWidth && (size === "sm" ? "w-10" : size === "md" ? "w-16" : "w-20"),
+          !hasHeight && (size === "sm" ? "h-10" : size === "md" ? "h-16" : "h-20"),
           active && "neu-depressed",
           className
         )}

@@ -556,14 +556,14 @@ function SettingsScreen({ onBack, onLock, onPrivacy, onArchive }: { onBack: () =
           <div className="grid grid-cols-2 gap-4">
             <NeuButton 
               onClick={onLock}
-              className="h-14 text-sm font-bold text-accent-terracotta"
+              className="w-full h-14 text-sm font-bold text-accent-terracotta"
             >
               <LockIcon className="w-4 h-4 mr-2" />
               Vault
             </NeuButton>
             <NeuButton 
               onClick={onArchive}
-              className="h-14 text-sm font-bold opacity-60"
+              className="w-full h-14 text-sm font-bold opacity-60"
             >
               <Download className="w-4 h-4 mr-2" />
               Archive
