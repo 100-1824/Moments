@@ -1,31 +1,27 @@
 import * as React from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { 
-  Lock, 
-  Shield, 
-  WifiOff, 
-  RefreshCw, 
-  Download, 
-  Palette, 
+import {
+  Lock,
+  Shield,
+  WifiOff,
+  RefreshCw,
+  Download,
+  Palette,
   ArrowLeft,
   CheckCircle2,
   Loader2,
-  Image as ImageIcon
+  Image as ImageIcon,
 } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 import { NeuCard, NeuButton } from "@/src/components/ui/Neumorphic";
+import * as api from "@/src/lib/api";
 
 // 1. Privacy Settings Page
 export const PrivacySettingsPage = ({ onBack }: { onBack: () => void; key?: string }) => {
   const [isEncrypted, setIsEncrypted] = React.useState(false);
 
-  const encryptPhotoPayload = (file: any) => {
-    console.log("Client-side encryption triggered for:", file);
-    // Placeholder for actual encryption logic
-  };
-
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -20 }}
@@ -41,7 +37,12 @@ export const PrivacySettingsPage = ({ onBack }: { onBack: () => void; key?: stri
       <div className="flex-1 flex flex-col items-center justify-center space-y-12">
         <div className="text-center space-y-4">
           <div className="w-20 h-20 neu-extruded rounded-full flex items-center justify-center mx-auto relative">
-            <Shield className={cn("w-8 h-8 transition-colors duration-500", isEncrypted ? "text-accent-sage" : "text-text-main/20")} />
+            <Shield
+              className={cn(
+                "w-8 h-8 transition-colors duration-500",
+                isEncrypted ? "text-accent-sage" : "text-text-main/20",
+              )}
+            />
             <AnimatePresence>
               {isEncrypted && (
                 <motion.div
@@ -61,8 +62,7 @@ export const PrivacySettingsPage = ({ onBack }: { onBack: () => void; key?: stri
           </p>
         </div>
 
-        {/* Neumorphic Toggle */}
-        <button 
+        <button
           onClick={() => setIsEncrypted(!isEncrypted)}
           className="w-24 h-12 neu-depressed rounded-full p-1 transition-all duration-500 relative"
         >
@@ -71,10 +71,15 @@ export const PrivacySettingsPage = ({ onBack }: { onBack: () => void; key?: stri
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
             className={cn(
               "w-10 h-10 rounded-full neu-extruded flex items-center justify-center transition-colors duration-500",
-              isEncrypted ? "bg-accent-sage/10" : "bg-background"
+              isEncrypted ? "bg-accent-sage/10" : "bg-background",
             )}
           >
-            <div className={cn("w-2 h-2 rounded-full transition-colors", isEncrypted ? "bg-accent-sage" : "bg-text-main/20")} />
+            <div
+              className={cn(
+                "w-2 h-2 rounded-full transition-colors",
+                isEncrypted ? "bg-accent-sage" : "bg-text-main/20",
+              )}
+            />
           </motion.div>
         </button>
       </div>
@@ -82,39 +87,46 @@ export const PrivacySettingsPage = ({ onBack }: { onBack: () => void; key?: stri
   );
 };
 
-// 2. Offline Outbox Page
+// 2. Offline Outbox — reads localStorage queue, syncs via POST /api/moments/sync
 export const OfflineOutboxPage = ({ onBack }: { onBack: () => void; key?: string }) => {
   const [isOnline, setIsOnline] = React.useState(navigator.onLine);
-  const [queue, setQueue] = React.useState([
-    { id: 1, type: "Photo", time: "10:05 AM" },
-    { id: 2, type: "Voice Note", time: "10:12 AM" }
-  ]);
+  const [queue, setQueue] = React.useState<api.QueuedMoment[]>(() => api.getOfflineQueue());
   const [isSyncing, setIsSyncing] = React.useState(false);
 
-  React.useEffect(() => {
-    const handleOnline = () => {
-      setIsOnline(true);
-      syncQueuedPhotos();
-    };
-    const handleOffline = () => setIsOnline(false);
-
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
+  const syncQueue = React.useCallback(async () => {
+    const current = api.getOfflineQueue();
+    if (current.length === 0) return;
+    setIsSyncing(true);
+    try {
+      const result = await api.syncOfflineQueue(current);
+      const syncedIds = result.accepted.map((a) => a.client_id);
+      api.removeFromOfflineQueue(syncedIds);
+      setQueue(api.getOfflineQueue());
+    } catch {
+      // Retry next time the browser comes online
+    } finally {
+      setIsSyncing(false);
+    }
   }, []);
 
-  const syncQueuedPhotos = async () => {
-    setIsSyncing(true);
-    await new Promise(r => setTimeout(r, 2000));
-    setQueue([]);
-    setIsSyncing(false);
-  };
+  React.useEffect(() => {
+    const handleOnline = () => { setIsOnline(true); syncQueue(); };
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, [syncQueue]);
+
+  React.useEffect(() => {
+    setQueue(api.getOfflineQueue());
+    if (navigator.onLine && api.getOfflineQueue().length > 0) syncQueue();
+  }, [syncQueue]);
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -20 }}
@@ -132,7 +144,7 @@ export const OfflineOutboxPage = ({ onBack }: { onBack: () => void; key?: string
           {queue.length > 0 ? (
             queue.map((item) => (
               <motion.div
-                key={item.id}
+                key={item.client_id}
                 layout
                 initial={{ opacity: 0, scale: 0.9, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -144,8 +156,14 @@ export const OfflineOutboxPage = ({ onBack }: { onBack: () => void; key?: string
                     <WifiOff className="w-5 h-5 animate-pulse" />
                   </div>
                   <div>
-                    <p className="font-bold">{item.type}</p>
-                    <p className="text-xs opacity-40">Waiting to sync • {item.time}</p>
+                    <p className="font-bold capitalize">{item.type}</p>
+                    <p className="text-xs opacity-40">
+                      Waiting to sync •{" "}
+                      {new Date(item.captured_at).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </p>
                   </div>
                 </div>
                 <div className="w-2 h-2 rounded-full bg-accent-terracotta animate-pulse" />
@@ -180,24 +198,30 @@ export const OfflineOutboxPage = ({ onBack }: { onBack: () => void; key?: string
 };
 
 // 3. Monthly Mood Board Page
-export const MonthlyMoodBoardPage = ({ onBack, colors = ["#D97757", "#8A9A5B", "#5797D9"] }: { onBack: () => void; colors?: string[]; key?: string }) => {
+export const MonthlyMoodBoardPage = ({
+  onBack,
+  colors = ["#D97757", "#8A9A5B", "#5797D9"],
+}: {
+  onBack: () => void;
+  colors?: string[];
+  key?: string;
+}) => {
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       className="fixed inset-0 z-[100] bg-background flex flex-col"
     >
-      {/* Mesh Gradient Background */}
       <div className="absolute inset-0 -z-10 overflow-hidden">
-        <div 
+        <div
           className="absolute inset-0 opacity-30 blur-[120px]"
           style={{
             background: `
               radial-gradient(circle at 20% 20%, ${colors[0]} 0%, transparent 50%),
-              radial-gradient(circle at 80% 30%, ${colors[1]} 0%, transparent 50%),
-              radial-gradient(circle at 40% 80%, ${colors[2]} 0%, transparent 50%)
-            `
+              radial-gradient(circle at 80% 30%, ${colors[1] ?? colors[0]} 0%, transparent 50%),
+              radial-gradient(circle at 40% 80%, ${colors[2] ?? colors[0]} 0%, transparent 50%)
+            `,
           }}
         />
       </div>
@@ -215,19 +239,18 @@ export const MonthlyMoodBoardPage = ({ onBack, colors = ["#D97757", "#8A9A5B", "
       </div>
 
       <div className="flex-1 relative p-8">
-        {/* Scattered Photos */}
         <div className="grid grid-cols-2 gap-8">
           {[1, 2, 3, 4].map((i) => (
             <motion.div
               key={i}
-              initial={{ opacity: 0, scale: 0.8, rotate: (i % 2 === 0 ? 5 : -5) }}
+              initial={{ opacity: 0, scale: 0.8, rotate: i % 2 === 0 ? 5 : -5 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: i * 0.1 }}
-              className="aspect-[3/4] rounded-2xl overflow-hidden shadow-2xl border-[8px] border-white/50 backdrop-blur-sm"
+              className="aspect-[3/4] rounded-2xl overflow-hidden shadow-2xl border-[8px] border-white/50"
             >
-              <img 
-                src={`https://picsum.photos/seed/mood${i}/400/600`} 
-                alt="Memory" 
+              <img
+                src={`https://picsum.photos/seed/mood${i}/400/600`}
+                alt="Memory"
                 className="w-full h-full object-cover"
                 referrerPolicy="no-referrer"
               />
@@ -237,32 +260,49 @@ export const MonthlyMoodBoardPage = ({ onBack, colors = ["#D97757", "#8A9A5B", "
       </div>
 
       <div className="p-8 pb-12 text-center">
-        <span className="text-xs font-bold uppercase tracking-widest opacity-30">March 2026</span>
+        <span className="text-xs font-bold uppercase tracking-widest opacity-30">
+          {new Date().toLocaleString("en-US", { month: "long", year: "numeric" })}
+        </span>
         <p className="text-lg font-bold">A month of warmth and connection</p>
       </div>
     </motion.div>
   );
 };
 
-// 4. Data Archive Page
+// 4. Data Archive Page — GET /api/export/archive → browser JSON download
 export const DataArchivePage = ({ onBack }: { onBack: () => void; key?: string }) => {
   const [isExporting, setIsExporting] = React.useState(false);
-  const [progress, setProgress] = React.useState(0);
+  const [momentCount, setMomentCount] = React.useState<number | null>(null);
+
+  React.useEffect(() => {
+    api
+      .fetchArchive()
+      .then((data) => setMomentCount(data.moments.length))
+      .catch(() => {});
+  }, []);
 
   const handleExport = async () => {
     setIsExporting(true);
-    // Simulate async fetch to /api/export
-    for (let i = 0; i <= 100; i += 10) {
-      setProgress(i);
-      await new Promise(r => setTimeout(r, 300));
+    try {
+      const data = await api.fetchArchive();
+      const blob = new Blob([JSON.stringify(data, null, 2)], {
+        type: "application/json",
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `moments-archive-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      // Silently fall back — button returns to idle state
+    } finally {
+      setIsExporting(false);
     }
-    setIsExporting(false);
-    setProgress(0);
-    console.log("Export complete");
   };
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -20 }}
@@ -292,18 +332,24 @@ export const DataArchivePage = ({ onBack }: { onBack: () => void; key?: string }
             disabled={isExporting}
             className={cn(
               "w-full h-24 rounded-[40px] transition-all duration-500 flex flex-col items-center justify-center gap-2",
-              isExporting ? "neu-depressed" : "neu-extruded active:neu-depressed"
+              isExporting ? "neu-depressed" : "neu-extruded active:neu-depressed",
             )}
           >
             {isExporting ? (
               <>
                 <Loader2 className="w-6 h-6 animate-spin text-accent-terracotta" />
-                <span className="text-[10px] font-bold uppercase tracking-widest opacity-60">Preparing {progress}%</span>
+                <span className="text-[10px] font-bold uppercase tracking-widest opacity-60">
+                  Preparing...
+                </span>
               </>
             ) : (
               <>
-                <span className="text-lg font-bold text-accent-terracotta">Download Archive</span>
-                <span className="text-[10px] font-bold uppercase tracking-widest opacity-30">JSON + Media (124MB)</span>
+                <span className="text-lg font-bold text-accent-terracotta">
+                  Download Archive
+                </span>
+                <span className="text-[10px] font-bold uppercase tracking-widest opacity-30">
+                  JSON + Media URLs
+                </span>
               </>
             )}
           </button>
@@ -311,11 +357,13 @@ export const DataArchivePage = ({ onBack }: { onBack: () => void; key?: string }
           <div className="p-6 neu-depressed rounded-3xl text-left space-y-3">
             <div className="flex items-center gap-3">
               <ImageIcon className="w-4 h-4 opacity-30" />
-              <span className="text-xs font-bold opacity-60">428 Photos</span>
+              <span className="text-xs font-bold opacity-60">
+                {momentCount !== null ? `${momentCount} Moments` : "Loading..."}
+              </span>
             </div>
             <div className="flex items-center gap-3">
               <RefreshCw className="w-4 h-4 opacity-30" />
-              <span className="text-xs font-bold opacity-60">Last sync: 2 hours ago</span>
+              <span className="text-xs font-bold opacity-60">Last sync: just now</span>
             </div>
           </div>
         </div>

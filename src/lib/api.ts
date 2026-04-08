@@ -1,0 +1,291 @@
+/**
+ * Moments API client.
+ *
+ * All requests are sent to /api (proxied to the Laravel backend by Vite in
+ * dev, and to the Vercel serverless function in production).
+ *
+ * Token is read from / written to localStorage on every call — no module-
+ * level singleton that would break SSR or tests.
+ */
+
+const BASE = "/api";
+
+// ─── Storage helpers ────────────────────────────────────────────────────────
+
+export const TOKEN_KEY = "moments_token";
+export const QUEUE_KEY = "moments_offline_queue";
+
+export function getToken(): string | null {
+  return localStorage.getItem(TOKEN_KEY);
+}
+
+export function setToken(token: string): void {
+  localStorage.setItem(TOKEN_KEY, token);
+}
+
+export function clearToken(): void {
+  localStorage.removeItem(TOKEN_KEY);
+}
+
+// ─── Types ──────────────────────────────────────────────────────────────────
+
+export interface ApiUser {
+  id: string;
+  name: string;
+  phone: string;
+  invite_code: string;
+  couple_id: string | null;
+  timezone: string;
+  last_seen_at: string | null;
+  created_at: string;
+}
+
+export interface ApiCouple {
+  id: string;
+  status: string;
+  linked_at: string;
+}
+
+export interface ApiMoment {
+  id: string;
+  user_id: string;
+  couple_id: string;
+  type: "image" | "audio";
+  media_url: string;
+  caption_payload: string | null;
+  is_encrypted: boolean;
+  captured_at: string | null;
+  created_at: string;
+}
+
+export interface QueuedMoment {
+  client_id: string;
+  type: "image" | "audio";
+  fileDataUrl: string;    // base64 data URL stored offline
+  fileName: string;
+  mimeType: string;
+  caption_payload: string | null;
+  is_encrypted: boolean;
+  captured_at: string;
+}
+
+// ─── Core fetch wrapper ─────────────────────────────────────────────────────
+
+class ApiError extends Error {
+  constructor(
+    public readonly status: number,
+    message: string,
+    public readonly errors?: Record<string, string[]>,
+  ) {
+    super(message);
+    this.name = "ApiError";
+  }
+}
+
+async function request<T>(
+  path: string,
+  options: RequestInit = {},
+): Promise<T> {
+  const token = getToken();
+
+  const headers: Record<string, string> = {
+    Accept: "application/json",
+    ...(options.headers as Record<string, string> | undefined),
+  };
+
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
+  // Don't set Content-Type for FormData — the browser sets the boundary.
+  if (!(options.body instanceof FormData)) {
+    headers["Content-Type"] = "application/json";
+  }
+
+  const res = await fetch(`${BASE}${path}`, { ...options, headers });
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new ApiError(
+      res.status,
+      body.message ?? `HTTP ${res.status}`,
+      body.errors,
+    );
+  }
+
+  return res.json() as Promise<T>;
+}
+
+// ─── Auth ───────────────────────────────────────────────────────────────────
+
+export async function register(
+  name: string,
+  phone: string,
+  timezone: string,
+): Promise<{ user: ApiUser; token: string }> {
+  const res = await request<{ status: string; data: { user: ApiUser; token: string } }>(
+    "/auth/register",
+    {
+      method: "POST",
+      body: JSON.stringify({ name, phone, timezone }),
+    },
+  );
+  return res.data;
+}
+
+export async function connect(
+  partnerInviteCode: string,
+): Promise<{ couple: ApiCouple; user: ApiUser; partner: ApiUser }> {
+  const res = await request<{
+    status: string;
+    data: { couple: ApiCouple; user: ApiUser; partner: ApiUser };
+  }>("/auth/connect", {
+    method: "POST",
+    body: JSON.stringify({ partner_invite_code: partnerInviteCode }),
+  });
+  return res.data;
+}
+
+export async function me(): Promise<{ user: ApiUser; partner: ApiUser | null }> {
+  const res = await request<{
+    status: string;
+    data: { user: ApiUser; partner: ApiUser | null };
+  }>("/auth/me");
+  return res.data;
+}
+
+export async function logout(): Promise<void> {
+  await request("/auth/logout", { method: "POST" }).catch(() => {});
+  clearToken();
+}
+
+// ─── Moments ────────────────────────────────────────────────────────────────
+
+export async function uploadMoment(
+  file: File,
+  type: "image" | "audio",
+  captionPayload: string | null,
+  isEncrypted: boolean,
+): Promise<{ moment: ApiMoment; remaining_today: number }> {
+  const form = new FormData();
+  form.append("media", file);
+  form.append("type", type);
+  form.append("is_encrypted", isEncrypted ? "true" : "false");
+  form.append("captured_at", new Date().toISOString());
+  if (captionPayload !== null) {
+    form.append("caption_payload", captionPayload);
+  }
+
+  const res = await request<{
+    status: string;
+    data: { moment: ApiMoment; remaining_today: number };
+  }>("/moments", { method: "POST", body: form });
+  return res.data;
+}
+
+export async function fetchTodayMoments(): Promise<{
+  moments: ApiMoment[];
+  window: { start_utc: string; end_utc: string; timezone: string };
+}> {
+  const res = await request<{
+    status: string;
+    data: { moments: ApiMoment[]; window: { start_utc: string; end_utc: string; timezone: string } };
+  }>("/moments/today");
+  return res.data;
+}
+
+export async function syncOfflineQueue(
+  queued: QueuedMoment[],
+): Promise<{
+  accepted: Array<{ client_id: string; moment: ApiMoment }>;
+  rejected: Array<{ client_id: string; reason: string }>;
+  remaining_today: number;
+}> {
+  // Sync endpoint expects multipart, one file per queued item
+  const form = new FormData();
+
+  const blobs = await Promise.all(
+    queued.map(async (item, i) => {
+      const res = await fetch(item.fileDataUrl);
+      const blob = await res.blob();
+      return { blob, item, i };
+    }),
+  );
+
+  blobs.forEach(({ blob, item, i }) => {
+    form.append(`moments[${i}][media]`, blob, item.fileName);
+    form.append(`moments[${i}][type]`, item.type);
+    form.append(`moments[${i}][client_id]`, item.client_id);
+    form.append(`moments[${i}][is_encrypted]`, item.is_encrypted ? "true" : "false");
+    if (item.caption_payload) {
+      form.append(`moments[${i}][caption_payload]`, item.caption_payload);
+    }
+    form.append(`moments[${i}][captured_at]`, item.captured_at);
+  });
+
+  const res = await request<{
+    status: string;
+    data: {
+      accepted: Array<{ client_id: string; moment: ApiMoment }>;
+      rejected: Array<{ client_id: string; reason: string }>;
+      remaining_today: number;
+    };
+  }>("/moments/sync", { method: "POST", body: form });
+  return res.data;
+}
+
+// ─── Interactions ────────────────────────────────────────────────────────────
+
+export async function sendPing(): Promise<void> {
+  await request("/pings", { method: "POST" });
+}
+
+// ─── Export ──────────────────────────────────────────────────────────────────
+
+export async function fetchArchive(): Promise<{
+  generated_at: string;
+  user: ApiUser;
+  partner: ApiUser | null;
+  moments: ApiMoment[];
+  media: string[];
+}> {
+  const res = await request<{
+    status: string;
+    data: {
+      generated_at: string;
+      user: ApiUser;
+      partner: ApiUser | null;
+      moments: ApiMoment[];
+      media: string[];
+    };
+  }>("/export/archive");
+  return res.data;
+}
+
+// ─── Offline queue helpers ────────────────────────────────────────────────────
+
+export function getOfflineQueue(): QueuedMoment[] {
+  try {
+    return JSON.parse(localStorage.getItem(QUEUE_KEY) ?? "[]");
+  } catch {
+    return [];
+  }
+}
+
+export function addToOfflineQueue(item: Omit<QueuedMoment, "client_id">): QueuedMoment {
+  const queued: QueuedMoment = {
+    ...item,
+    client_id: `offline-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+  };
+  const q = getOfflineQueue();
+  q.push(queued);
+  localStorage.setItem(QUEUE_KEY, JSON.stringify(q));
+  return queued;
+}
+
+export function removeFromOfflineQueue(clientIds: string[]): void {
+  const q = getOfflineQueue().filter((item) => !clientIds.includes(item.client_id));
+  localStorage.setItem(QUEUE_KEY, JSON.stringify(q));
+}
+
+export { ApiError };
