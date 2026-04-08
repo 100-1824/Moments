@@ -15,9 +15,13 @@ import {
   Image as ImageIcon,
   Send,
   ArrowLeft,
-  Bell
+  Bell,
+  Lock as LockIcon,
+  RefreshCw,
+  Download
 } from "lucide-react";
 import { cn } from "@/src/lib/utils";
+import { ErrorBoundary } from "@/src/components/ErrorBoundary";
 import { 
   NeuCard, 
   NeuButton, 
@@ -25,26 +29,96 @@ import {
   NeuTextArea, 
   DailyProgress 
 } from "@/src/components/ui/Neumorphic";
+import {
+  HapticPingButton,
+  AmbientContext,
+  AudioCaption,
+  DailyPrompt,
+  TimeCapsule
+} from "@/src/components/Features";
+import {
+  AmbientGlowWrapper,
+  VaultScreen,
+  PresenceIndicator,
+  SocialBatterySlider
+} from "@/src/components/AdvancedFeatures";
+import {
+  DigitalLocket,
+  HoldToReveal,
+  NowPlayingPlayer,
+  FoggyMirror
+} from "@/src/components/TactileFeatures";
+import {
+  PrivacySettingsPage,
+  OfflineOutboxPage,
+  MonthlyMoodBoardPage,
+  DataArchivePage
+} from "@/src/components/UtilityPages";
 
-type Screen = "welcome" | "auth" | "connect" | "home" | "feed" | "settings" | "upload";
+type Screen = "welcome" | "auth" | "connect" | "home" | "feed" | "settings" | "upload" | "privacy" | "outbox" | "moodboard" | "archive";
 
 export default function App() {
   const [currentScreen, setCurrentScreen] = React.useState<Screen>("welcome");
   const [dailyCount, setDailyCount] = React.useState(1);
   const [isPartnerConnected, setIsPartnerConnected] = React.useState(false);
   const [showSuccessRipple, setShowSuccessRipple] = React.useState(false);
+  const [isOffline, setIsOffline] = React.useState(false);
+  const [isLocked, setIsLocked] = React.useState(false);
+  const [glowColor, setGlowColor] = React.useState("#D97757");
+
+  React.useEffect(() => {
+    const handleOnline = () => setIsOffline(false);
+    const handleOffline = () => setIsOffline(true);
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, []);
 
   const navigate = (screen: Screen) => setCurrentScreen(screen);
 
   const handleUploadSuccess = () => {
     setDailyCount(prev => Math.min(prev + 1, 3));
     setShowSuccessRipple(true);
+    // Simulate color extraction from photo
+    const randomColors = ["#D97757", "#8A9A5B", "#5797D9", "#D957A5"];
+    setGlowColor(randomColors[Math.floor(Math.random() * randomColors.length)]);
+    
     setTimeout(() => setShowSuccessRipple(false), 2000);
     navigate("home");
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col max-w-md mx-auto relative overflow-hidden">
+    <ErrorBoundary>
+      <AmbientGlowWrapper color={glowColor}>
+      <div className={cn(
+        "min-h-screen flex flex-col max-w-md mx-auto relative overflow-hidden transition-opacity duration-500",
+        isOffline && "opacity-60 grayscale-[0.5] pointer-events-none"
+      )}>
+        <AnimatePresence>
+          {isLocked && (
+            <VaultScreen key="vault" onUnlock={() => setIsLocked(false)} />
+          )}
+        </AnimatePresence>
+      {/* Offline Banner */}
+      <AnimatePresence>
+        {isOffline && (
+          <motion.div 
+            initial={{ y: -100 }}
+            animate={{ y: 0 }}
+            exit={{ y: -100 }}
+            className="fixed top-0 left-0 right-0 z-[200] p-4 flex justify-center"
+          >
+            <div className="neu-extruded bg-accent-terracotta/10 px-6 py-2 rounded-full flex items-center gap-2 border border-accent-terracotta/20">
+              <div className="w-2 h-2 rounded-full bg-accent-terracotta animate-pulse" />
+              <span className="text-xs font-bold text-accent-terracotta">Waiting for connection...</span>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Success Ripple Effect */}
       <AnimatePresence>
         {showSuccessRipple && (
@@ -81,6 +155,7 @@ export default function App() {
             key="home" 
             count={dailyCount} 
             onUpload={() => navigate("upload")} 
+            onOutbox={() => navigate("outbox")}
           />
         )}
         {currentScreen === "upload" && (
@@ -91,20 +166,47 @@ export default function App() {
           />
         )}
         {currentScreen === "feed" && (
-          <FeedScreen key="feed" />
+          <FeedScreen 
+            key="feed" 
+            onMoodBoard={() => navigate("moodboard")}
+          />
         )}
         {currentScreen === "settings" && (
-          <SettingsScreen key="settings" onBack={() => navigate("home")} />
+          <SettingsScreen 
+            key="settings" 
+            onBack={() => navigate("home")} 
+            onLock={() => setIsLocked(true)}
+            onPrivacy={() => navigate("privacy")}
+            onArchive={() => navigate("archive")}
+          />
+        )}
+        {currentScreen === "privacy" && (
+          <PrivacySettingsPage key="privacy" onBack={() => navigate("settings")} />
+        )}
+        {currentScreen === "archive" && (
+          <DataArchivePage key="archive" onBack={() => navigate("settings")} />
+        )}
+        {currentScreen === "outbox" && (
+          <OfflineOutboxPage key="outbox" onBack={() => navigate("home")} />
+        )}
+        {currentScreen === "moodboard" && (
+          <MonthlyMoodBoardPage key="moodboard" onBack={() => navigate("feed")} />
         )}
       </AnimatePresence>
 
       {/* Bottom Navigation */}
       {["home", "feed", "settings"].includes(currentScreen) && (
-        <motion.div 
-          initial={{ y: 100 }}
-          animate={{ y: 0 }}
-          className="fixed bottom-0 left-0 right-0 max-w-md mx-auto p-6 bg-background/80 backdrop-blur-md"
-        >
+        <>
+          {/* Fixed Haptic Ping Button (Bottom Left) */}
+          <div className="fixed bottom-24 left-6 z-[150]">
+            <HapticPingButton />
+          </div>
+
+          <motion.div 
+            initial={{ y: 100 }}
+            animate={{ y: 0 }}
+            className="fixed bottom-0 left-0 right-0 max-w-md mx-auto p-6 bg-background/80 backdrop-blur-md"
+          >
           <div className="neu-extruded rounded-full flex justify-around items-center p-2">
             <NavButton 
               active={currentScreen === "home"} 
@@ -123,8 +225,11 @@ export default function App() {
             />
           </div>
         </motion.div>
+        </>
       )}
-    </div>
+      </div>
+    </AmbientGlowWrapper>
+    </ErrorBoundary>
   );
 }
 
@@ -221,49 +326,93 @@ function ConnectScreen({ onSuccess }: { onSuccess: () => void; key?: string }) {
   );
 }
 
-function HomeScreen({ count, onUpload }: { count: number; onUpload: () => void; key?: string }) {
+function HomeScreen({ count, onUpload, onOutbox }: { count: number; onUpload: () => void; onOutbox: () => void; key?: string }) {
+  const [isShaking, setIsShaking] = React.useState(false);
+  const [showTooltip, setShowTooltip] = React.useState(false);
+
+  const handleUploadClick = () => {
+    if (count >= 3) {
+      setIsShaking(true);
+      setShowTooltip(true);
+      setTimeout(() => {
+        setIsShaking(false);
+        setShowTooltip(false);
+      }, 2000);
+    } else {
+      onUpload();
+    }
+  };
+
   return (
     <motion.div 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="flex-1 flex flex-col p-8 pt-16 pb-32"
+      className="flex-1 flex flex-col p-8 pt-12 pb-32 gap-8"
     >
-      <div className="flex justify-between items-center mb-12">
-        <div>
+      <div className="flex justify-between items-start">
+        <div className="space-y-1">
           <h2 className="text-3xl font-bold">Today</h2>
-          <p className="text-text-main/40 font-medium">April 8, 2026</p>
+          <div className="flex items-center gap-3">
+            <PresenceIndicator isPartnerActive={true} />
+            <button 
+              onClick={onOutbox}
+              className="w-6 h-6 neu-extruded-sm rounded-full flex items-center justify-center"
+            >
+              <RefreshCw className="w-3 h-3 text-accent-terracotta" />
+            </button>
+          </div>
         </div>
-        <NeuButton size="sm" className="w-12 h-12">
-          <Bell className="w-5 h-5 opacity-40" />
-        </NeuButton>
+        <DigitalLocket imageUrl="https://picsum.photos/seed/locket/400/400" />
       </div>
 
-      <NeuCard className="flex flex-col items-center py-12 mb-12">
+      <div className="flex justify-end -mt-4">
+        <AmbientContext partnerTime="11:32 PM" weatherCondition="night" />
+      </div>
+
+      <NeuCard className="flex flex-col items-center py-10">
         <DailyProgress count={count} />
         <p className="mt-6 text-sm font-semibold opacity-40">
           {count === 3 ? "All moments shared!" : `${3 - count} moments left today`}
         </p>
       </NeuCard>
 
-      <div className="flex-1 flex flex-col items-center justify-center">
-        {count < 3 ? (
-          <div className="text-center">
-            <NeuButton 
-              onClick={onUpload} 
-              className="w-32 h-32 mx-auto mb-6 text-accent-terracotta"
+      <DailyPrompt />
+
+      <NowPlayingPlayer title="Midnight City" artist="M83" />
+
+      <FoggyMirror />
+
+      <div className="flex-1 flex flex-col items-center justify-center relative min-h-[200px]">
+        <AnimatePresence>
+          {showTooltip && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 10 }}
+              className="absolute top-0 bg-text-main text-background text-[10px] font-bold py-2 px-4 rounded-full shadow-lg z-10"
             >
-              <Plus className="w-12 h-12" />
+              You've shared all 3 moments today.
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <div className="text-center flex flex-col items-center gap-12">
+          <motion.div
+            animate={isShaking ? { x: [-4, 4, -4, 4, 0] } : {}}
+            transition={{ duration: 0.4 }}
+          >
+            <NeuButton 
+              onClick={handleUploadClick} 
+              active={count >= 3}
+              className={cn(
+                "w-32 h-32 mx-auto transition-colors duration-500",
+                count < 3 ? "text-accent-terracotta" : "text-text-main/20"
+              )}
+            >
+              {count < 3 ? <Plus className="w-12 h-12" /> : <Heart className="w-12 h-12" />}
             </NeuButton>
-            <p className="text-lg font-bold opacity-60">Share a moment</p>
-          </div>
-        ) : (
-          <div className="text-center opacity-40">
-            <div className="w-32 h-32 neu-depressed rounded-full mx-auto mb-6 flex items-center justify-center">
-              <Heart className="w-12 h-12" />
-            </div>
-            <p className="text-lg font-bold">See you tomorrow</p>
-          </div>
-        )}
+          </motion.div>
+        </div>
       </div>
     </motion.div>
   );
@@ -295,18 +444,24 @@ function UploadScreen({ onBack, onSuccess }: { onBack: () => void; onSuccess: ()
           </div>
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-4">
           <div className="flex justify-between items-center px-2">
-            <label className="text-sm font-semibold opacity-60">Caption</label>
-            <span className="text-[10px] font-bold opacity-30">{caption.length}/120</span>
+            <label className="text-sm font-semibold opacity-60">Moment Details</label>
+            <AudioCaption />
           </div>
-          <NeuTextArea 
-            placeholder="What's on your mind?" 
-            rows={4} 
-            maxLength={120}
-            value={caption}
-            onChange={(e) => setCaption(e.target.value)}
-          />
+          <div className="space-y-2">
+            <div className="flex justify-between items-center px-2">
+              <span className="text-[10px] font-bold opacity-30 uppercase tracking-widest">Caption</span>
+              <span className="text-[10px] font-bold opacity-30">{caption.length}/120</span>
+            </div>
+            <NeuTextArea 
+              placeholder="What's on your mind?" 
+              rows={4} 
+              maxLength={120}
+              value={caption}
+              onChange={(e) => setCaption(e.target.value)}
+            />
+          </div>
         </div>
       </div>
 
@@ -321,7 +476,7 @@ function UploadScreen({ onBack, onSuccess }: { onBack: () => void; onSuccess: ()
   );
 }
 
-function FeedScreen() {
+function FeedScreen({ onMoodBoard }: { onMoodBoard: () => void; key?: string }) {
   const mockMoments = [
     { id: 1, time: "2h ago", caption: "Thinking of you while having my morning coffee ☕️", img: "https://picsum.photos/seed/coffee/400/400" },
     { id: 2, time: "5h ago", caption: "The sky looked so pretty today!", img: "https://picsum.photos/seed/sky/400/400" },
@@ -333,18 +488,26 @@ function FeedScreen() {
       animate={{ opacity: 1 }}
       className="flex-1 flex flex-col p-8 pt-16 pb-32"
     >
-      <h2 className="text-3xl font-bold mb-8">Partner Feed</h2>
+      <div className="flex justify-between items-center mb-8">
+        <h2 className="text-3xl font-bold">Partner Feed</h2>
+        <TimeCapsule onClick={onMoodBoard} />
+      </div>
+      
       <div className="space-y-10">
-        {mockMoments.map(moment => (
+        {mockMoments.map((moment, idx) => (
           <div key={moment.id} className="space-y-4">
-            <NeuCard className="p-2 overflow-hidden">
-              <img 
-                src={moment.img} 
-                alt="Moment" 
-                className="w-full aspect-square object-cover rounded-[28px]"
-                referrerPolicy="no-referrer"
-              />
-            </NeuCard>
+            {idx === 0 ? (
+              <HoldToReveal imageUrl={moment.img} />
+            ) : (
+              <NeuCard className="p-2 overflow-hidden">
+                <img 
+                  src={moment.img} 
+                  alt="Moment" 
+                  className="w-full aspect-square object-cover rounded-[28px]"
+                  referrerPolicy="no-referrer"
+                />
+              </NeuCard>
+            )}
             <div className="px-2">
               <p className="font-medium leading-relaxed">{moment.caption}</p>
               <span className="text-xs font-bold opacity-30 uppercase tracking-widest">{moment.time}</span>
@@ -356,7 +519,7 @@ function FeedScreen() {
   );
 }
 
-function SettingsScreen({ onBack }: { onBack: () => void; key?: string }) {
+function SettingsScreen({ onBack, onLock, onPrivacy, onArchive }: { onBack: () => void; onLock: () => void; onPrivacy: () => void; onArchive: () => void; key?: string }) {
   return (
     <motion.div 
       initial={{ opacity: 0 }}
@@ -373,12 +536,13 @@ function SettingsScreen({ onBack }: { onBack: () => void; key?: string }) {
           <div className="space-y-4">
             <SettingItem label="Daily Reminders" active />
             <SettingItem label="Haptic Feedback" active />
-            <SettingItem label="Dark Mode" />
+            <SettingItem label="Privacy & Encryption" onClick={onPrivacy} />
           </div>
         </section>
 
         <section className="space-y-4">
           <h3 className="text-xs font-bold uppercase tracking-widest opacity-40 px-2">Account</h3>
+          <SocialBatterySlider />
           <NeuCard className="p-4 flex items-center gap-4">
             <div className="w-12 h-12 neu-depressed rounded-full flex items-center justify-center">
               <Users className="w-6 h-6 opacity-40" />
@@ -388,6 +552,23 @@ function SettingsScreen({ onBack }: { onBack: () => void; key?: string }) {
               <p className="text-xs opacity-40">Connected since Jan 2024</p>
             </div>
           </NeuCard>
+          
+          <div className="grid grid-cols-2 gap-4">
+            <NeuButton 
+              onClick={onLock}
+              className="h-14 text-sm font-bold text-accent-terracotta"
+            >
+              <LockIcon className="w-4 h-4 mr-2" />
+              Vault
+            </NeuButton>
+            <NeuButton 
+              onClick={onArchive}
+              className="h-14 text-sm font-bold opacity-60"
+            >
+              <Download className="w-4 h-4 mr-2" />
+              Archive
+            </NeuButton>
+          </div>
         </section>
 
         <NeuButton className="w-full h-14 text-sm font-bold text-accent-terracotta/60">
@@ -398,22 +579,32 @@ function SettingsScreen({ onBack }: { onBack: () => void; key?: string }) {
   );
 }
 
-function SettingItem({ label, active = false }: { label: string; active?: boolean }) {
+function SettingItem({ label, active, onClick }: { label: string; active?: boolean; onClick?: () => void }) {
   return (
-    <div className="flex justify-between items-center px-2">
+    <div 
+      className={cn(
+        "flex justify-between items-center px-2 py-1 rounded-xl transition-colors",
+        onClick && "cursor-pointer hover:bg-black/5 active:scale-[0.98]"
+      )}
+      onClick={onClick}
+    >
       <span className="font-semibold">{label}</span>
-      <button className={cn(
-        "w-12 h-6 rounded-full transition-all duration-300 p-1",
-        active ? "neu-depressed bg-accent-sage/20" : "neu-depressed"
-      )}>
-        <motion.div 
-          animate={{ x: active ? 24 : 0 }}
-          className={cn(
-            "w-4 h-4 rounded-full",
-            active ? "bg-accent-sage shadow-[0_0_8px_rgba(138,154,91,0.5)]" : "bg-text-main/20"
-          )}
-        />
-      </button>
+      {active !== undefined ? (
+        <button className={cn(
+          "w-12 h-6 rounded-full transition-all duration-300 p-1",
+          active ? "neu-depressed bg-accent-sage/20" : "neu-depressed"
+        )}>
+          <motion.div 
+            animate={{ x: active ? 24 : 0 }}
+            className={cn(
+              "w-4 h-4 rounded-full",
+              active ? "bg-accent-sage shadow-[0_0_8px_rgba(138,154,91,0.5)]" : "bg-text-main/20"
+            )}
+          />
+        </button>
+      ) : onClick ? (
+        <ChevronRight className="w-5 h-5 opacity-30" />
+      ) : null}
     </div>
   );
 }
