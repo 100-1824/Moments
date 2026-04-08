@@ -10,6 +10,39 @@ if (($_SERVER['REQUEST_URI'] ?? '') === '/api/health' || ($_SERVER['REQUEST_PATH
 // Lightweight diagnostics for production troubleshooting.
 $requestPath = parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH) ?: '';
 if ($requestPath === '/api/diagnostics' && ($_GET['diagnose'] ?? '') === '1') {
+    $dbConnection = $_ENV['DB_CONNECTION'] ?? $_SERVER['DB_CONNECTION'] ?? null;
+    $dbHost = $_ENV['DB_HOST'] ?? $_SERVER['DB_HOST'] ?? null;
+    $dbPort = $_ENV['DB_PORT'] ?? $_SERVER['DB_PORT'] ?? '5432';
+    $dbDatabase = $_ENV['DB_DATABASE'] ?? $_SERVER['DB_DATABASE'] ?? null;
+    $dbUsername = $_ENV['DB_USERNAME'] ?? $_SERVER['DB_USERNAME'] ?? null;
+    $dbPassword = $_ENV['DB_PASSWORD'] ?? $_SERVER['DB_PASSWORD'] ?? null;
+    $dbSslmode = $_ENV['DB_SSLMODE'] ?? $_SERVER['DB_SSLMODE'] ?? 'require';
+
+    $dbTest = [
+        'driver' => $dbConnection,
+        'supported' => false,
+        'status' => 'skipped',
+        'message' => null,
+    ];
+
+    if ($dbConnection === 'pgsql') {
+        $dbTest['supported'] = extension_loaded('pdo_pgsql');
+        if ($dbTest['supported']) {
+            try {
+                $dsn = sprintf('pgsql:host=%s;port=%s;dbname=%s;sslmode=%s', $dbHost, $dbPort, $dbDatabase, $dbSslmode);
+                $pdo = new PDO($dsn, $dbUsername, $dbPassword, [PDO::ATTR_TIMEOUT => 5]);
+                $pdo->query('SELECT 1');
+                $dbTest['status'] = 'ok';
+            } catch (\Throwable $e) {
+                $dbTest['status'] = 'failed';
+                $dbTest['message'] = $e->getMessage();
+            }
+        } else {
+            $dbTest['status'] = 'unsupported';
+            $dbTest['message'] = 'pdo_pgsql extension is not loaded';
+        }
+    }
+
     header('Content-Type: application/json');
     echo json_encode([
         'status' => 'ok',
@@ -22,17 +55,18 @@ if ($requestPath === '/api/diagnostics' && ($_GET['diagnose'] ?? '') === '1') {
         'environment' => [
             'app_key_present' => !empty($_ENV['APP_KEY'] ?? $_SERVER['APP_KEY'] ?? null),
             'app_debug' => $_ENV['APP_DEBUG'] ?? $_SERVER['APP_DEBUG'] ?? null,
-            'db_connection' => $_ENV['DB_CONNECTION'] ?? $_SERVER['DB_CONNECTION'] ?? null,
+            'db_connection' => $dbConnection,
             'db_url_present' => !empty($_ENV['DB_URL'] ?? $_SERVER['DB_URL'] ?? null),
-            'db_host_present' => !empty($_ENV['DB_HOST'] ?? $_SERVER['DB_HOST'] ?? null),
-            'db_port' => $_ENV['DB_PORT'] ?? $_SERVER['DB_PORT'] ?? null,
-            'db_database_present' => !empty($_ENV['DB_DATABASE'] ?? $_SERVER['DB_DATABASE'] ?? null),
-            'db_username_present' => !empty($_ENV['DB_USERNAME'] ?? $_SERVER['DB_USERNAME'] ?? null),
-            'db_password_present' => !empty($_ENV['DB_PASSWORD'] ?? $_SERVER['DB_PASSWORD'] ?? null),
-            'db_sslmode' => $_ENV['DB_SSLMODE'] ?? $_SERVER['DB_SSLMODE'] ?? null,
+            'db_host_present' => !empty($dbHost),
+            'db_port' => $dbPort,
+            'db_database_present' => !empty($dbDatabase),
+            'db_username_present' => !empty($dbUsername),
+            'db_password_present' => !empty($dbPassword),
+            'db_sslmode' => $dbSslmode,
             'cache_driver' => $_ENV['CACHE_DRIVER'] ?? $_SERVER['CACHE_DRIVER'] ?? null,
             'session_driver' => $_ENV['SESSION_DRIVER'] ?? $_SERVER['SESSION_DRIVER'] ?? null,
         ],
+        'db_test' => $dbTest,
         'php' => [
             'version' => PHP_VERSION,
             'pdo_available' => extension_loaded('pdo'),
