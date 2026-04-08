@@ -20,10 +20,10 @@ return [
     | Filesystem Disks
     |--------------------------------------------------------------------------
     |
-    | Only the `s3` disk is exposed. The framework still references a
-    | placeholder `local` driver internally for transient operations on the
-    | Vercel `/tmp` partition, but no application code should ever read or
-    | write to it. All persistent storage MUST flow through S3.
+    | Only the `s3` disk is exposed. The driver is AWS S3-compatible and
+    | works with any S3-compatible provider — this app uses Cloudflare R2
+    | (free tier). Set AWS_ENDPOINT to your R2 account endpoint and set
+    | AWS_DEFAULT_REGION=auto. No local disk persistence is allowed.
     |
     */
 
@@ -33,11 +33,13 @@ return [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),
             'secret' => env('AWS_SECRET_ACCESS_KEY'),
-            'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
+            // R2 uses 'auto' as region; standard AWS regions also work.
+            'region' => env('AWS_DEFAULT_REGION', 'auto'),
             'bucket' => env('AWS_BUCKET'),
             'url' => env('AWS_URL'),
             'endpoint' => env('AWS_ENDPOINT'),
-            'use_path_style_endpoint' => env('AWS_USE_PATH_STYLE_ENDPOINT', false),
+            // R2 requires path-style endpoint access (not virtual-hosted).
+            'use_path_style_endpoint' => env('AWS_USE_PATH_STYLE_ENDPOINT', true),
             'visibility' => 'private',
             'throw' => true,
             'report' => true,
