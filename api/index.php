@@ -33,6 +33,23 @@ if ($requestPath === '/api/diagnostics' && ($_GET['diagnose'] ?? '') === '1') {
             'cache_driver' => $_ENV['CACHE_DRIVER'] ?? $_SERVER['CACHE_DRIVER'] ?? null,
             'session_driver' => $_ENV['SESSION_DRIVER'] ?? $_SERVER['SESSION_DRIVER'] ?? null,
         ],
+        'php' => [
+            'version' => PHP_VERSION,
+            'pdo_available' => extension_loaded('pdo'),
+            'pdo_drivers' => PDO::getAvailableDrivers(),
+            'pdo_pgsql_available' => extension_loaded('pdo_pgsql'),
+            'pdo_mysql_available' => extension_loaded('pdo_mysql'),
+            'extensions' => [
+                'openssl' => extension_loaded('openssl'),
+                'mbstring' => extension_loaded('mbstring'),
+                'tokenizer' => extension_loaded('tokenizer'),
+                'xml' => extension_loaded('xml'),
+                'ctype' => extension_loaded('ctype'),
+                'json' => extension_loaded('json'),
+                'fileinfo' => extension_loaded('fileinfo'),
+                'phar' => extension_loaded('phar'),
+            ],
+        ],
         'request' => [
             'uri' => $_SERVER['REQUEST_URI'] ?? null,
             'path' => $requestPath,
