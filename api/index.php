@@ -24,6 +24,7 @@ if ($requestPath === '/api/diagnostics' && ($_GET['diagnose'] ?? '') === '1') {
         'status' => 'skipped',
         'message' => null,
     ];
+    $dbTables = [];
 
     if ($dbConnection === 'pgsql') {
         $dbTest['supported'] = extension_loaded('pdo_pgsql');
@@ -33,6 +34,13 @@ if ($requestPath === '/api/diagnostics' && ($_GET['diagnose'] ?? '') === '1') {
                 $pdo = new PDO($dsn, $dbUsername, $dbPassword, [PDO::ATTR_TIMEOUT => 5]);
                 $pdo->query('SELECT 1');
                 $dbTest['status'] = 'ok';
+
+                $tableNames = ['users', 'personal_access_tokens', 'couples', 'moments', 'pings', 'migrations'];
+                foreach ($tableNames as $tableName) {
+                    $stmt = $pdo->prepare('SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = :schema AND table_name = :table) AS exists');
+                    $stmt->execute(['schema' => 'public', 'table' => $tableName]);
+                    $dbTables[$tableName] = (bool) $stmt->fetchColumn();
+                }
             } catch (\Throwable $e) {
                 $dbTest['status'] = 'failed';
                 $dbTest['message'] = $e->getMessage();
@@ -67,6 +75,8 @@ if ($requestPath === '/api/diagnostics' && ($_GET['diagnose'] ?? '') === '1') {
             'session_driver' => $_ENV['SESSION_DRIVER'] ?? $_SERVER['SESSION_DRIVER'] ?? null,
         ],
         'db_test' => $dbTest,
+        'db_test' => $dbTest,
+        'db_tables' => $dbTables,
         'php' => [
             'version' => PHP_VERSION,
             'pdo_available' => extension_loaded('pdo'),
