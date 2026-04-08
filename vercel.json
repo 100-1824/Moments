@@ -29,5 +29,5 @@
         "FILESYSTEM_DISK": "s3",
         "AWS_REGION": "us-east-1",
         "AWS_USE_PATH_STYLE_ENDPOINT": "true"
-AWS_SECRET_ACCESS_KEY=https://36141b1be9f6c9842f9d73d2c4925158.r2.cloudflarestorage.com<z<<<<<<<<<<<<<<<zZ    }
+    }
 }
