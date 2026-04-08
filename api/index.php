@@ -7,6 +7,30 @@ if (($_SERVER['REQUEST_URI'] ?? '') === '/api/health' || ($_SERVER['REQUEST_PATH
     exit;
 }
 
+// Lightweight diagnostics for production troubleshooting.
+$requestPath = parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH) ?: '';
+if ($requestPath === '/api/diagnostics' && ($_GET['diagnose'] ?? '') === '1') {
+    header('Content-Type: application/json');
+    echo json_encode([
+        'status' => 'ok',
+        'paths' => [
+            'vendor_autoload' => __DIR__ . '/../backend/vendor/autoload.php',
+            'vendor_autoload_exists' => file_exists(__DIR__ . '/../backend/vendor/autoload.php'),
+            'bootstrap_app' => __DIR__ . '/../backend/bootstrap/app.php',
+            'bootstrap_app_exists' => file_exists(__DIR__ . '/../backend/bootstrap/app.php'),
+        ],
+        'environment' => [
+            'app_key_present' => !empty($_ENV['APP_KEY'] ?? $_SERVER['APP_KEY'] ?? null),
+            'db_connection' => $_ENV['DB_CONNECTION'] ?? $_SERVER['DB_CONNECTION'] ?? null,
+            'db_host_present' => !empty($_ENV['DB_HOST'] ?? $_SERVER['DB_HOST'] ?? null),
+            'db_database_present' => !empty($_ENV['DB_DATABASE'] ?? $_SERVER['DB_DATABASE'] ?? null),
+            'cache_driver' => $_ENV['CACHE_DRIVER'] ?? $_SERVER['CACHE_DRIVER'] ?? null,
+            'session_driver' => $_ENV['SESSION_DRIVER'] ?? $_SERVER['SESSION_DRIVER'] ?? null,
+        ],
+    ]);
+    exit;
+}
+
 // Create writable directories for Laravel internals
 $tmpDirs = ['/tmp/storage/framework/views', '/tmp/storage/framework/cache', '/tmp/storage/framework/sessions', '/tmp/logs'];
 foreach ($tmpDirs as $dir) {
