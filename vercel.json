@@ -4,7 +4,8 @@
     "functions": {
         "api/index.php": {
             "runtime": "vercel-php@0.7.3",
-            "maxDuration": 30
+            "maxDuration": 30,
+            "buildCommand": "cd backend && composer install --no-dev --optimize-autoloader"
         }
     },
     "rewrites": [
