@@ -9,6 +9,30 @@
  * the framework.
  */
 
+// Suppress PHP's default HTML error output. Any uncaught exception that
+// occurs before Laravel's exception handler is registered (e.g. missing
+// APP_KEY) will be returned as a JSON envelope instead of an HTML page.
+ini_set('display_errors', '0');
+error_reporting(E_ALL);
+
+header('Content-Type: application/json');
+
+set_exception_handler(function (\Throwable $e) {
+    http_response_code(500);
+    echo json_encode([
+        'status'  => 'error',
+        'message' => 'Server configuration error: ' . $e->getMessage(),
+    ]);
+    exit(1);
+});
+
+set_error_handler(function (int $severity, string $message, string $file, int $line) {
+    if ($severity & error_reporting()) {
+        throw new \ErrorException($message, 0, $severity, $file, $line);
+    }
+    return false;
+});
+
 // Redirect Laravel's writable directories to the Vercel-writable /tmp partition.
 $tmpPath = '/tmp';
 $writablePaths = [
