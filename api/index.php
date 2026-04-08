@@ -1,22 +1,27 @@
 <?php
-// Ensure temporary Vercel directories exist for Laravel's cache/views
-if (!is_dir('/tmp/storage')) {
-    mkdir('/tmp/storage', 0777, true);
-    mkdir('/tmp/storage/framework/views', 0777, true);
-    mkdir('/tmp/storage/framework/cache', 0777, true);
-    mkdir('/tmp/storage/framework/sessions', 0777, true);
-    mkdir('/tmp/logs', 0777, true);
+// Create writable directories for Laravel internals
+$tmpDirs = ['/tmp/storage/framework/views', '/tmp/storage/framework/cache', '/tmp/storage/framework/sessions', '/tmp/logs'];
+foreach ($tmpDirs as $dir) {
+    if (!is_dir($dir)) mkdir($dir, 0777, true);
 }
 
-// Point to the backend folder
 require __DIR__ . '/../backend/vendor/autoload.php';
 $app = require_once __DIR__ . '/../backend/bootstrap/app.php';
 
 $app->useStoragePath('/tmp/storage');
 
+// Initialize database on first run
+$dbPath = '/tmp/moments.sqlite';
+if (!file_exists($dbPath)) {
+    touch($dbPath);
+    chmod($dbPath, 0666);
+    
+    // Run migrations
+    $artisan = $app->make(\Illuminate\Contracts\Console\Kernel::class);
+    $artisan->call('migrate', ['--force' => true, '--quiet' => true]);
+}
+
 $kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
-$response = $kernel->handle(
-    $request = Illuminate\Http\Request::capture()
-);
+$response = $kernel->handle($request = Illuminate\Http\Request::capture());
 $response->send();
 $kernel->terminate($request, $response);
