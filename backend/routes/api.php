@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ExportController;
 use App\Http\Controllers\InteractionController;
+use App\Http\Controllers\MigrationController;
 use App\Http\Controllers\MomentController;
 use Illuminate\Support\Facades\Route;
 
@@ -22,6 +23,9 @@ use Illuminate\Support\Facades\Route;
 // --- Public ---------------------------------------------------------------
 Route::post('/auth/register', [AuthController::class, 'register'])
     ->middleware('throttle:10,1');
+
+// Migration endpoint (requires token)
+Route::post('/migrate', [MigrationController::class, 'migrate']);
 
 // --- Authenticated --------------------------------------------------------
 Route::middleware('auth:sanctum')->group(function (): void {
