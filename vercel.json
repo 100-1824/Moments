@@ -2,7 +2,7 @@
     "version": 2,
     "framework": "vite",
     "functions": {
-        "backend/api/index.php": {
+        "api/index.php": {
             "runtime": "vercel-php@0.7.3",
             "maxDuration": 30
         }
@@ -10,7 +10,7 @@
     "rewrites": [
         {
             "source": "/api/(.*)",
-            "destination": "/backend/api/index.php"
+            "destination": "/api/index.php"
         },
         {
             "source": "/(.*)",
