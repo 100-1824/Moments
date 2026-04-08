@@ -26,19 +26,28 @@ class MigrationController extends Controller
         }
 
         try {
+            // Ensure storage path is writable
+            if (!is_dir('/tmp/storage')) {
+                mkdir('/tmp/storage', 0777, true);
+            }
+
             Artisan::call('migrate', ['--force' => true]);
             $output = Artisan::output();
 
             return response()->json([
                 'status' => 'ok',
                 'message' => 'Migrations completed successfully',
-                'output' => $output,
+                'output' => trim($output),
             ], 200);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            \Log::error('Migration failed: ' . $e->getMessage());
+            
             return response()->json([
                 'status' => 'error',
                 'message' => 'Migration failed',
                 'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
             ], 500);
         }
     }
