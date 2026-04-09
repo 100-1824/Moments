@@ -1,8 +1,9 @@
 {
     "version": 2,
-    "framework": "vite",
+    "buildCommand": "npm run build",
+    "outputDirectory": "dist",
     "functions": {
-        "api/index.php": {
+        "backend/api/index.php": {
             "runtime": "vercel-php@0.7.3",
             "maxDuration": 30
         }
@@ -10,7 +11,7 @@
     "rewrites": [
         {
             "source": "/api/(.*)",
-            "destination": "/api/index.php"
+            "destination": "/backend/api/index.php"
         },
         {
             "source": "/(.*)",
@@ -25,6 +26,7 @@
         "CACHE_DRIVER": "array",
         "SESSION_DRIVER": "array",
         "QUEUE_CONNECTION": "sync",
-        "FILESYSTEM_DISK": "s3"
+        "FILESYSTEM_DISK": "s3",
+        "AWS_DEFAULT_REGION": "auto"
     }
 }
