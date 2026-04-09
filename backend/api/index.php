@@ -66,8 +66,23 @@ $app->useStoragePath($tmpPath . '/storage');
 
 $kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
 
-$response = $kernel->handle(
-    $request = Illuminate\Http\Request::capture()
-)->send();
+$request  = Illuminate\Http\Request::capture();
+$response = $kernel->handle($request);
+
+// Send status + headers manually. Calling $response->send() triggers
+// Symfony's closeOutputBuffers() which flushes and closes the output
+// capture buffer that vercel-php uses, resulting in a truncated or
+// empty response body. Manually sending avoids that problem.
+http_response_code($response->getStatusCode());
+
+foreach ($response->headers->allPreserveCase() as $name => $values) {
+    $replace = true;
+    foreach ($values as $value) {
+        header("{$name}: {$value}", $replace, $response->getStatusCode());
+        $replace = false;
+    }
+}
+
+echo $response->getContent();
 
 $kernel->terminate($request, $response);
