@@ -19,13 +19,24 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-// --- Health (no DB, no auth) ----------------------------------------------
+// --- Health (no auth) -------------------------------------------------------
 Route::get('/health', function () {
+    try {
+        \DB::connection()->getPdo();
+        $dbOk    = true;
+        $dbError = null;
+    } catch (\Throwable $e) {
+        $dbOk    = false;
+        $dbError = $e->getMessage();
+    }
+
     return response()->json([
-        'status'     => 'ok',
-        'php'        => PHP_VERSION,
-        'pdo_pgsql'  => extension_loaded('pdo_pgsql'),
+        'status'      => 'ok',
+        'php'         => PHP_VERSION,
+        'pdo_pgsql'   => extension_loaded('pdo_pgsql'),
         'app_key_set' => (bool) config('app.key'),
+        'db_ok'       => $dbOk,
+        'db_error'    => $dbError,
     ]);
 });
 

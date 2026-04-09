@@ -66,23 +66,33 @@ $app->useStoragePath($tmpPath . '/storage');
 
 $kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
 
-$request  = Illuminate\Http\Request::capture();
-$response = $kernel->handle($request);
+try {
+    $request  = Illuminate\Http\Request::capture();
+    $response = $kernel->handle($request);
 
-// Send status + headers manually. Calling $response->send() triggers
-// Symfony's closeOutputBuffers() which flushes and closes the output
-// capture buffer that vercel-php uses, resulting in a truncated or
-// empty response body. Manually sending avoids that problem.
-http_response_code($response->getStatusCode());
+    // Send status + headers manually. Calling $response->send() triggers
+    // Symfony's closeOutputBuffers() which flushes and closes the output
+    // capture buffer that vercel-php uses, resulting in a truncated or
+    // empty response body. Manually sending avoids that problem.
+    http_response_code($response->getStatusCode());
 
-foreach ($response->headers->allPreserveCase() as $name => $values) {
-    $replace = true;
-    foreach ($values as $value) {
-        header("{$name}: {$value}", $replace, $response->getStatusCode());
-        $replace = false;
+    foreach ($response->headers->allPreserveCase() as $name => $values) {
+        $replace = true;
+        foreach ($values as $value) {
+            header("{$name}: {$value}", $replace, $response->getStatusCode());
+            $replace = false;
+        }
     }
+
+    echo $response->getContent();
+
+    $kernel->terminate($request, $response);
+} catch (\Throwable $e) {
+    // Last-resort: catches anything that escaped Laravel's exception handler
+    // (e.g. a crash inside the render closure itself).
+    http_response_code(500);
+    echo json_encode([
+        'status'  => 'error',
+        'message' => $e->getMessage() . ' — ' . basename($e->getFile()) . ':' . $e->getLine(),
+    ], JSON_PARTIAL_OUTPUT_ON_ERROR | JSON_UNESCAPED_UNICODE);
 }
-
-echo $response->getContent();
-
-$kernel->terminate($request, $response);
