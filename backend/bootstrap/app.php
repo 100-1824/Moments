@@ -10,7 +10,7 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use Symfony\Component\HttpKernel\Exception\ThrottleRequestsException;
+use Illuminate\Http\Exceptions\ThrottleRequestsException;
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         api: __DIR__.'/../routes/api.php',
@@ -68,7 +68,10 @@ return Application::configure(basePath: dirname(__DIR__))
                     'message' => $e->getMessage() ?: 'Request failed.',
                 ], $e->getStatusCode()),
 
-                default => null,
+                default => response()->json([
+                    'status'  => 'error',
+                    'message' => $e->getMessage() ?: 'An unexpected error occurred.',
+                ], 500),
             };
         });
     })->create();
