@@ -19,6 +19,16 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
+// --- Health (no DB, no auth) ----------------------------------------------
+Route::get('/health', function () {
+    return response()->json([
+        'status'     => 'ok',
+        'php'        => PHP_VERSION,
+        'pdo_pgsql'  => extension_loaded('pdo_pgsql'),
+        'app_key_set' => (bool) config('app.key'),
+    ]);
+});
+
 // --- Public ---------------------------------------------------------------
 Route::post('/auth/register', [AuthController::class, 'register'])
     ->middleware('throttle:10,1');
