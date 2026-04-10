@@ -36,39 +36,39 @@ return Application::configure(basePath: dirname(__DIR__))
             }
 
             return match (true) {
-                $e instanceof ValidationException => response()->json([
+                $e instanceof ValidationException => new \Illuminate\Http\JsonResponse([
                     'status'  => 'error',
                     'message' => 'The given data was invalid.',
                     'errors'  => $e->errors(),
                 ], 422),
 
-                $e instanceof AuthenticationException => response()->json([
+                $e instanceof AuthenticationException => new \Illuminate\Http\JsonResponse([
                     'status'  => 'error',
                     'message' => 'Unauthenticated.',
                 ], 401),
 
-                $e instanceof AuthorizationException => response()->json([
+                $e instanceof AuthorizationException => new \Illuminate\Http\JsonResponse([
                     'status'  => 'error',
                     'message' => $e->getMessage() ?: 'This action is unauthorized.',
                 ], 403),
 
                 $e instanceof ModelNotFoundException,
-                $e instanceof NotFoundHttpException => response()->json([
+                $e instanceof NotFoundHttpException => new \Illuminate\Http\JsonResponse([
                     'status'  => 'error',
                     'message' => 'Resource not found.',
                 ], 404),
 
-                $e instanceof ThrottleRequestsException => response()->json([
+                $e instanceof ThrottleRequestsException => new \Illuminate\Http\JsonResponse([
                     'status'  => 'error',
                     'message' => 'Too many requests. Please slow down.',
                 ], 429),
 
-                $e instanceof HttpException => response()->json([
+                $e instanceof HttpException => new \Illuminate\Http\JsonResponse([
                     'status'  => 'error',
                     'message' => $e->getMessage() ?: 'Request failed.',
                 ], $e->getStatusCode()),
 
-                default => response()->json([
+                default => new \Illuminate\Http\JsonResponse([
                     'status'  => 'error',
                     'message' => 'Internal server error.',
                     'debug'   => config('app.debug') ? $e->getMessage() : null,
