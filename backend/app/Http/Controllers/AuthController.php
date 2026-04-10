@@ -27,7 +27,7 @@ class AuthController extends Controller
     {
         try {
             $user = DB::transaction(function () use ($request): User {
-                return User::create([
+                return User::firstOrCreate(['phone' => $request->string('phone')->trim()], [
                     'name'        => $request->string('name')->trim(),
                     'phone'       => $request->string('phone')->trim(),
                     'invite_code' => InviteCode::generateUnique(),
