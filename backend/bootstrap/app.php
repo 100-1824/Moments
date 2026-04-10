@@ -70,7 +70,8 @@ return Application::configure(basePath: dirname(__DIR__))
 
                 default => response()->json([
                     'status'  => 'error',
-                    'message' => 'An unexpected server error occurred.',
+                    'message' => 'Internal server error.',
+                    'debug'   => config('app.debug') ? $e->getMessage() : null,
                 ], 500),
             };
         });

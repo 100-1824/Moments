@@ -3,28 +3,37 @@ import { motion, AnimatePresence } from "motion/react";
 import { Heart, Sun, Moon, Cloud, Mic, Square, Play, Layers } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 import { NeuCard, NeuButton } from "@/src/components/ui/Neumorphic";
+import { sendPing } from "@/src/lib/api";
 
 // 1. "Thinking of You" Haptic Ping Button
 export const HapticPingButton = () => {
   const [isPressing, setIsPressing] = React.useState(false);
   const [isSuccess, setIsSuccess] = React.useState(false);
+  const [isRateLimited, setIsRateLimited] = React.useState(false);
   const timerRef = React.useRef<NodeJS.Timeout | null>(null);
 
   const triggerHaptic = () => {
     if ("vibrate" in navigator) {
       navigator.vibrate([100, 50, 100]);
     }
-    console.log("Haptic feedback triggered!");
   };
 
   const handleStart = () => {
+    if (isRateLimited) return;
     setIsPressing(true);
-    timerRef.current = setTimeout(() => {
+    timerRef.current = setTimeout(async () => {
       triggerHaptic();
-      setIsSuccess(true);
       setIsPressing(false);
-      setTimeout(() => setIsSuccess(false), 2000);
-    }, 1500); // 1.5s long press
+      try {
+        await sendPing();
+        setIsSuccess(true);
+        setTimeout(() => setIsSuccess(false), 2000);
+      } catch {
+        // 429 = rate limited; show brief cooldown state
+        setIsRateLimited(true);
+        setTimeout(() => setIsRateLimited(false), 60_000);
+      }
+    }, 1500);
   };
 
   const handleEnd = () => {
@@ -66,7 +75,7 @@ export const HapticPingButton = () => {
         </button>
       </div>
       <span className="text-[10px] font-bold uppercase tracking-widest opacity-30">
-        {isSuccess ? "Sent!" : "Hold to Ping"}
+        {isSuccess ? "Sent!" : isRateLimited ? "1/min limit" : "Hold to Ping"}
       </span>
     </div>
   );

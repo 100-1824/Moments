@@ -1,0 +1,38 @@
+{
+    "version": 2,
+    "framework": "vite",
+    "functions": {
+        "api/index.php": {
+            "runtime": "vercel-php@0.7.3",
+            "maxDuration": 30
+        }
+    },
+    "rewrites": [
+        {
+            "source": "/api/(.*)",
+            "destination": "/api/index.php"
+        },
+        {
+            "source": "/(.*)",
+            "destination": "/index.html"
+        }
+    ],
+    "env": {
+        "APP_NAME": "Moments",
+        "APP_ENV": "production",
+        "APP_DEBUG": "false",
+        "APP_TIMEZONE": "UTC",
+        "LOG_CHANNEL": "stderr",
+        "LOG_LEVEL": "info",
+        "VIEW_COMPILED_PATH": "/tmp/views",
+        "CACHE_DRIVER": "array",
+        "SESSION_DRIVER": "array",
+        "QUEUE_CONNECTION": "sync",
+        "FILESYSTEM_DISK": "s3",
+        "AWS_REGION": "us-east-1",
+        "AWS_USE_PATH_STYLE_ENDPOINT": "true",
+        "DB_SSLMODE": "require",
+        "DB_CONNECT_TIMEOUT": "5",
+        "SANCTUM_TOKEN_PREFIX": "mom_"
+    }
+}
