@@ -104,7 +104,7 @@ if ($requestPath === '/api/diagnostics' && ($_GET['diagnose'] ?? '') === '1') {
 }
 
 // Create writable directories for Laravel internals
-$tmpDirs = ['/tmp/storage/framework/views', '/tmp/storage/framework/cache', '/tmp/storage/framework/sessions', '/tmp/logs'];
+$tmpDirs = ['/tmp/storage/framework/views', '/tmp/storage/framework/cache', '/tmp/storage/framework/sessions', '/tmp/bootstrap/cache', '/tmp/logs'];
 foreach ($tmpDirs as $dir) {
     if (!is_dir($dir)) {
         @mkdir($dir, 0777, true);
