@@ -7,10 +7,28 @@ Your application is now configured for:
 - **Database**: Neon PostgreSQL
 - **File Storage**: Cloudflare R2
 
-## Issue Resolved
-Fixed the "Unexpected token '<'" JSON parsing error by ensuring all API responses return proper JSON instead of HTML error pages.
+## Issues Resolved
 
-## Required Setup Steps
+### 1. "Internal Server Error" on /auth/register
+**Root Cause**: Missing environment variables on Vercel deployment
+- APP_KEY not configured → Laravel cannot initialize
+- Database variables not configured → Cannot connect to database
+- Database tables not initialized → SQLSTATE errors
+
+**Solution**: 
+- Added environment variable validation in api/index.php
+- Returns specific error messages if configuration is missing
+- Provides diagnostics to identify what's missing
+- See "Vercel Configuration" section below
+
+### 2. "Unexpected token '<'" JSON parsing error  
+**Root Cause**: API returning HTML error pages instead of JSON
+**Solution**: Implemented JSON-only error handler in bootstrap/app.php
+
+## Vercel Configuration
+
+### Critical: Environment Variables Required
+Vercel **does not deploy .env files** (they're in .gitignore). You MUST set all environment variables in the Vercel dashboard.
 
 ### 1. Update Vercel Environment Variables
 Go to **Vercel Dashboard** → Your Project → **Settings** → **Environment Variables**
@@ -35,7 +53,17 @@ CORS_ALLOWED_ORIGINS = https://moments-rnbsk9env-100-1824s-projects.vercel.app
 
 **⚠️ IMPORTANT**: These variables will be automatically deployed when you redeploy.
 
-### 2. Run Database Migrations
+### 2. Initialize Database
+Once environment variables are set in Vercel, initialize the database:
+
+**Option A - Using Migration Endpoint (Recommended)**:
+```bash
+curl -X POST "https://your-vercel-domain.vercel.app/api/migrate?token=YOUR_MIGRATION_TOKEN"
+```
+
+This will create all required tables (users, couples, moments, pings, personal_access_tokens).
+
+**Option B - Using Vercel CLI**:
 Once environment variables are set, run migrations on your Neon database:
 
 **Option A - Using Vercel CLI (Recommended)**:
@@ -133,6 +161,29 @@ Since credentials were exposed in chat, you should:
 - `POST /api/moments/sync` - Sync offline queue
 
 ## Troubleshooting
+
+### Still getting "Internal Server Error" on registration?
+
+1. **Check environment variables are set**:
+   ```bash
+   curl "https://your-vercel-domain.vercel.app/api/diagnostics?diagnose=1"
+   ```
+   This will show what environment variables are missing and their values.
+
+2. **Common missing variables**:
+   - `APP_KEY` - Required for Laravel encryption
+   - `DB_CONNECTION`, `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD` - Required for database
+
+3. **Verify database is initialized**:
+   ```bash
+   curl -X POST "https://your-vercel-domain.vercel.app/api/migrate?token=YOUR_MIGRATION_TOKEN"
+   ```
+
+4. **Check Vercel function logs**:
+   - Go to Vercel dashboard
+   - Click on your project
+   - Go to "Functions" tab
+   - Look at `/api/index.php` logs for detailed errors
 
 ### Still getting "Unexpected token" error?
 1. Check Vercel function logs in dashboard
