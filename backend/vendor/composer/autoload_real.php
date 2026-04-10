@@ -22,8 +22,6 @@ class ComposerAutoloaderInit51622c07c667c234d7b8482fcd72b72e
             return self::$loader;
         }
 
-        require __DIR__ . '/platform_check.php';
-
         spl_autoload_register(array('ComposerAutoloaderInit51622c07c667c234d7b8482fcd72b72e', 'loadClassLoader'), true, true);
         self::$loader = $loader = new \Composer\Autoload\ClassLoader(\dirname(__DIR__));
         spl_autoload_unregister(array('ComposerAutoloaderInit51622c07c667c234d7b8482fcd72b72e', 'loadClassLoader'));
