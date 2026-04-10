@@ -106,9 +106,20 @@ async function request<T>(
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
+
+    // For validation errors (422), extract field-specific error messages
+    let errorMessage = body.message ?? `HTTP ${res.status}`;
+    if (res.status === 422 && body.errors && typeof body.errors === 'object') {
+      // Get the first validation error message
+      const firstField = Object.keys(body.errors)[0];
+      if (firstField && Array.isArray(body.errors[firstField])) {
+        errorMessage = body.errors[firstField][0];
+      }
+    }
+
     throw new ApiError(
       res.status,
-      body.message ?? `HTTP ${res.status}`,
+      errorMessage,
       body.errors,
     );
   }
