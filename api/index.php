@@ -112,6 +112,31 @@ foreach ($tmpDirs as $dir) {
 }
 
 try {
+    // Validate critical environment variables before loading Laravel
+    $requiredEnvVars = [
+        'APP_KEY' => 'Laravel encryption key is required',
+    ];
+
+    $missingVars = [];
+    foreach ($requiredEnvVars as $varName => $description) {
+        if (empty($_ENV[$varName] ?? $_SERVER[$varName] ?? null)) {
+            $missingVars[] = "$varName - $description";
+        }
+    }
+
+    if (!empty($missingVars)) {
+        http_response_code(500);
+        header('Content-Type: application/json');
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'Server configuration error',
+            'details' => 'Required environment variables are not configured',
+            'missing_variables' => $missingVars,
+            'help' => 'Ensure all required environment variables are set in your Vercel project settings',
+        ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+        exit;
+    }
+
     // Load Laravel
     require __DIR__ . '/../backend/vendor/autoload.php';
     $app = require_once __DIR__ . '/../backend/bootstrap/app.php';
@@ -153,6 +178,16 @@ try {
             'line' => $e->getLine(),
             'trace' => array_slice(explode("\n", $e->getTraceAsString()), 0, 20),
         ];
+
+        // Add helpful information about common issues
+        $message = $e->getMessage();
+        if (stripos($message, 'database') !== false || stripos($message, 'connection') !== false) {
+            $response['debug']['hint'] = 'Database connection error - verify DB_* environment variables are set correctly';
+        } elseif (stripos($message, 'table') !== false || stripos($message, 'column') !== false) {
+            $response['debug']['hint'] = 'Database schema error - run POST /api/migrate?token=YOUR_MIGRATION_TOKEN to initialize tables';
+        } elseif (stripos($message, 'key') !== false) {
+            $response['debug']['hint'] = 'Encryption error - verify APP_KEY environment variable is set';
+        }
     }
 
     echo json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
