@@ -55,8 +55,8 @@ if ($requestPath === '/api/diagnostics' && ($_GET['diagnose'] ?? '') === '1') {
     echo json_encode([
         'status' => 'ok',
         'paths' => [
-            'vendor_autoload' => __DIR__ . '/../backend/vendor/autoload.php',
-            'vendor_autoload_exists' => file_exists(__DIR__ . '/../backend/vendor/autoload.php'),
+            'vendor_autoload' => __DIR__ . '/../vendor/autoload.php',
+            'vendor_autoload_exists' => file_exists(__DIR__ . '/../vendor/autoload.php'),
             'bootstrap_app' => __DIR__ . '/../backend/bootstrap/app.php',
             'bootstrap_app_exists' => file_exists(__DIR__ . '/../backend/bootstrap/app.php'),
         ],
@@ -138,7 +138,7 @@ try {
     }
 
     // Load Laravel
-    require __DIR__ . '/../backend/vendor/autoload.php';
+    require __DIR__ . '/../vendor/autoload.php';
     $app = require_once __DIR__ . '/../backend/bootstrap/app.php';
 
     $app->useStoragePath('/tmp/storage');
