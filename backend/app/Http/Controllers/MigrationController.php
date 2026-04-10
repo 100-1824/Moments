@@ -27,8 +27,11 @@ class MigrationController extends Controller
         }
 
         try {
+            $isFresh = (bool) request()->input('fresh', false);
+            $command = $isFresh ? 'migrate:fresh' : 'migrate';
+            
             // Run standard Laravel migrations using the --force flag for production environments
-            $exitCode = Artisan::call('migrate', [
+            $exitCode = Artisan::call($command, [
                 '--force' => true,
             ]);
 
@@ -36,7 +39,7 @@ class MigrationController extends Controller
 
             return response()->json([
                 'status' => 'ok',
-                'message' => 'Migrations command executed',
+                'message' => "Database {$command} executed",
                 'exit_code' => $exitCode,
                 'output' => trim($output),
             ], 200);
