@@ -22,7 +22,7 @@ class RegisterRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'min:1', 'max:80'],
-            'phone' => ['required', 'string', 'min:6', 'max:32', 'unique:users,phone'],
+            'phone' => ['required', 'string', 'min:6', 'max:32', ',phone'],
             'timezone' => ['required', 'string', 'max:64', function (string $attribute, mixed $value, \Closure $fail): void {
                 if (! in_array($value, DateTimeZone::listIdentifiers(), true)) {
                     $fail('The :attribute must be a valid IANA timezone identifier.');
