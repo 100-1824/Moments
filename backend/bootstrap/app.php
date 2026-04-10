@@ -68,7 +68,10 @@ return Application::configure(basePath: dirname(__DIR__))
                     'message' => $e->getMessage() ?: 'Request failed.',
                 ], $e->getStatusCode()),
 
-                default => null,
+                default => response()->json([
+                    'status'  => 'error',
+                    'message' => 'An unexpected server error occurred.',
+                ], 500),
             };
         });
     })->create();

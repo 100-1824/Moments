@@ -139,7 +139,7 @@ export default function App() {
           <WelcomeScreen key="welcome" onStart={() => navigate("auth")} />
         )}
         {currentScreen === "auth" && (
-          <AuthScreen key="auth" onNext={() => navigate("connect")} />
+          <AuthScreen key="auth" onNext={(_token) => navigate("connect")} />
         )}
         {currentScreen === "connect" && (
           <ConnectScreen 
@@ -271,9 +271,50 @@ function WelcomeScreen({ onStart }: { onStart: () => void; key?: string }) {
   );
 }
 
-function AuthScreen({ onNext }: { onNext: () => void; key?: string }) {
+function AuthScreen({ onNext }: { onNext: (token: string) => void; key?: string }) {
+  const [name, setName] = React.useState("");
+  const [phone, setPhone] = React.useState("");
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+
+  const handleSubmit = async () => {
+    setError(null);
+    if (!name.trim() || !phone.trim()) {
+      setError("Please fill in your name and phone number.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const apiBase = (import.meta as unknown as { env: Record<string, string> }).env?.VITE_API_URL ?? "";
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      const res = await fetch(`${apiBase}/api/auth/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Accept": "application/json" },
+        body: JSON.stringify({ name: name.trim(), phone: phone.trim(), timezone }),
+      });
+
+      const json = await res.json();
+
+      if (!res.ok) {
+        const firstError = json?.errors
+          ? Object.values(json.errors as Record<string, string[]>).flat()[0]
+          : json?.message;
+        setError(firstError ?? "Registration failed. Please try again.");
+        return;
+      }
+
+      localStorage.setItem("moments_token", json.data.token);
+      onNext(json.data.token);
+    } catch {
+      setError("Network error. Please check your connection.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <motion.div 
+    <motion.div
       initial={{ x: "100%" }}
       animate={{ x: 0 }}
       exit={{ x: "-100%" }}
@@ -283,15 +324,30 @@ function AuthScreen({ onNext }: { onNext: () => void; key?: string }) {
       <div className="space-y-6 mb-12">
         <div className="space-y-2">
           <label className="text-sm font-semibold ml-2 opacity-60">Your Name</label>
-          <NeuInput placeholder="Alex" />
+          <NeuInput
+            placeholder="Alex"
+            value={name}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
+          />
         </div>
         <div className="space-y-2">
           <label className="text-sm font-semibold ml-2 opacity-60">Phone Number</label>
-          <NeuInput placeholder="+1 (555) 000-0000" />
+          <NeuInput
+            placeholder="+1 (555) 000-0000"
+            value={phone}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPhone(e.target.value)}
+          />
         </div>
+        {error && (
+          <p className="text-sm font-semibold text-accent-terracotta ml-2">{error}</p>
+        )}
       </div>
-      <NeuButton onClick={onNext} className="w-full max-w-xs mx-auto text-accent-terracotta">
-        <ChevronRight className="w-8 h-8" />
+      <NeuButton
+        onClick={handleSubmit}
+        className="w-full max-w-xs mx-auto text-accent-terracotta"
+        disabled={loading}
+      >
+        {loading ? <RefreshCw className="w-6 h-6 animate-spin" /> : <ChevronRight className="w-8 h-8" />}
       </NeuButton>
     </motion.div>
   );
