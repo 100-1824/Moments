@@ -20,7 +20,9 @@ interface AuthState {
 }
 
 interface AuthActions {
-  register: (name: string, phone: string, timezone: string) => Promise<void>;
+  sendOtp: (email: string) => Promise<{ otp?: string }>;
+  verifyOtp: (email: string, code: string, name?: string) => Promise<void>;
+  register: (name: string, email: string, timezone: string) => Promise<void>;
   connect: (partnerCode: string) => Promise<void>;
   refreshMe: () => Promise<void>;
   logout: () => Promise<void>;
@@ -58,8 +60,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
   }, []);
 
-  const register = async (name: string, phone: string, timezone: string) => {
-    const { user, token } = await api.register(name, phone, timezone);
+  const sendOtp = async (email: string) => {
+    return await api.sendOtp(email);
+  };
+
+  const verifyOtp = async (email: string, code: string, name?: string) => {
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+    const { user, token } = await api.verifyOtp({ email, code, name, timezone });
+    api.setToken(token);
+    setState((s) => ({ ...s, user, token, partner: null, dailyCount: 0 }));
+  };
+
+  const register = async (name: string, email: string, timezone: string) => {
+    const { user, token } = await api.register(name, email, timezone);
     api.setToken(token);
     setState((s) => ({ ...s, user, token, partner: null, dailyCount: 0 }));
   };
@@ -87,7 +100,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ ...state, register, connect, refreshMe, logout, setDailyCount, setPartner }}
+      value={{ ...state, sendOtp, verifyOtp, register, connect, refreshMe, logout, setDailyCount, setPartner }}
     >
       {children}
     </AuthContext.Provider>

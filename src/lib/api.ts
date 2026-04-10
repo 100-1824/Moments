@@ -32,7 +32,8 @@ export function clearToken(): void {
 export interface ApiUser {
   id: string;
   name: string;
-  phone: string;
+  email: string;
+  phone: string | null;
   invite_code: string;
   couple_id: string | null;
   timezone: string;
@@ -129,16 +130,47 @@ async function request<T>(
 
 // ─── Auth ───────────────────────────────────────────────────────────────────
 
+export async function sendOtp(
+  email: string,
+): Promise<{ message: string; otp?: string }> {
+  const res = await request<{
+    status: string;
+    data: { message: string; otp?: string };
+  }>("/auth/send-otp", {
+    method: "POST",
+    body: JSON.stringify({ email }),
+  });
+  return res.data;
+}
+
+export async function verifyOtp(
+  params: {
+    email: string;
+    code: string;
+    name?: string;
+    timezone?: string;
+  }
+): Promise<{ user: ApiUser; token: string }> {
+  const res = await request<{
+    status: string;
+    data: { user: ApiUser; token: string };
+  }>("/auth/verify-otp", {
+    method: "POST",
+    body: JSON.stringify(params),
+  });
+  return res.data;
+}
+
 export async function register(
   name: string,
-  phone: string,
+  email: string,
   timezone: string,
 ): Promise<{ user: ApiUser; token: string }> {
   const res = await request<{ status: string; data: { user: ApiUser; token: string } }>(
     "/auth/register",
     {
       method: "POST",
-      body: JSON.stringify({ name, phone, timezone }),
+      body: JSON.stringify({ name, email, timezone }),
     },
   );
   return res.data;

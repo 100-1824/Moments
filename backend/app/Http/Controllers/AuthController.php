@@ -4,24 +4,125 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\ConnectRequest;
 use App\Http\Requests\RegisterRequest;
+use App\Mail\OtpMail;
 use App\Models\Couple;
 use App\Models\User;
 use App\Support\ApiResponse;
 use App\Support\InviteCode;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Validator;
 
 class AuthController extends Controller
 {
     use ApiResponse;
 
     /**
-     * Register a fresh user. Generates a unique invite code, creates a
-     * Sanctum bearer token, and returns the bootstrap payload the
-     * frontend needs to land in the dashboard.
+     * Send a 6-digit OTP to the provided email.
+     */
+    public function sendOtp(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->error('Please provide a valid email address.', 422);
+        }
+
+        $email = $request->string('email')->trim()->lower()->toString();
+        $otp = (string) random_int(100000, 999999);
+
+        // Store OTP in cache for 10 minutes.
+        Cache::put("otp_{$email}", $otp, now()->addMinutes(10));
+
+        try {
+            Mail::to($email)->send(new OtpMail($otp));
+        } catch (\Throwable $e) {
+            \Log::error("Failed to send OTP email to {$email}: " . $e->getMessage());
+            // In development, we might want to return the OTP for testing if mail is not configured.
+            if (config('app.env') === 'local') {
+                return $this->success(['message' => 'OTP sent (local mode)', 'otp' => $otp]);
+            }
+            return $this->error('Failed to send verification email. Please try again later.', 500);
+        }
+
+        return $this->success(['message' => 'Verification code sent to your email.']);
+    }
+
+    /**
+     * Verify the OTP and log the user in.
+     * If the user doesn't exist, we expect metadata (name, timezone) to create them.
+     */
+    public function verifyOtp(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'email'    => 'required|email',
+            'code'     => 'required|string|size:6',
+            'name'     => 'nullable|string|max:255',
+            'timezone' => 'nullable|string|max:64',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->error('Invalid verification details.', 422);
+        }
+
+        $email = $request->string('email')->trim()->lower()->toString();
+        $code = $request->string('code')->toString();
+
+        $cachedOtp = Cache::get("otp_{$email}");
+
+        if (! $cachedOtp || $cachedOtp !== $code) {
+            return $this->error('Invalid or expired verification code.', 422);
+        }
+
+        // OTP is valid, clear it.
+        Cache::forget("otp_{$email}");
+
+        try {
+            $user = DB::transaction(function () use ($email, $request): User {
+                $user = User::query()->where('email', $email)->first();
+
+                if (! $user) {
+                    // New user registration
+                    if (! $request->has('name')) {
+                        throw new \Exception('REGISTRATION_REQUIRED');
+                    }
+
+                    return User::create([
+                        'email'       => $email,
+                        'name'        => $request->string('name')->trim(),
+                        'invite_code' => InviteCode::generateUnique(),
+                        'timezone'    => $request->string('timezone', 'UTC')->trim(),
+                    ]);
+                }
+
+                return $user;
+            });
+
+            $token = $user->createToken('moments-app')->plainTextToken;
+
+            return $this->success([
+                'user'  => $this->presentUser($user),
+                'token' => $token,
+            ], $user->wasRecentlyCreated ? 201 : 200);
+
+        } catch (\Throwable $e) {
+            if ($e->getMessage() === 'REGISTRATION_REQUIRED') {
+                return $this->error('User not found. Please complete registration.', 404, ['needs_registration' => true]);
+            }
+
+            \Log::error('Verification failed: ' . $e->getMessage());
+            return $this->error('Authentication failed.', 500);
+        }
+    }
+
+    /**
+     * Register a fresh user. (Deprecated in favor of verifyOtp)
      */
     public function register(RegisterRequest $request): JsonResponse
     {
@@ -148,6 +249,7 @@ class AuthController extends Controller
         return [
             'id'           => $user->id,
             'name'         => $user->name,
+            'email'        => $user->email,
             'phone'        => $user->phone,
             'invite_code'  => $user->invite_code,
             'couple_id'    => $user->couple_id,

@@ -20,12 +20,12 @@ class SyncMomentsRequest extends FormRequest
     {
         return [
             'moments' => ['required', 'array', 'min:1', 'max:10'],
-            'moments.*.media' => ['required', 'file', 'max:25600'],
+            'moments.*.media' => ['required', 'file', 'max:25600', 'mimes:jpeg,jpg,png,gif,webp,heic,heif,mp3,m4a,ogg,aac,wav,opus'],
             'moments.*.type' => ['required', 'in:image,audio'],
-            'moments.*.caption_payload' => ['nullable', 'string'],
+            'moments.*.caption_payload' => ['nullable', 'string', 'max:65536'],
             'moments.*.is_encrypted' => ['sometimes', 'boolean'],
             'moments.*.client_id' => ['required', 'string', 'max:64'],
-            'moments.*.captured_at' => ['sometimes', 'nullable', 'date'],
+            'moments.*.captured_at' => ['sometimes', 'nullable', 'date', 'before_or_equal:now'],
         ];
     }
 }

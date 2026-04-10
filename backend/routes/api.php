@@ -21,6 +21,12 @@ use Illuminate\Support\Facades\Route;
 */
 
 // --- Public ---------------------------------------------------------------
+Route::post('/auth/send-otp', [AuthController::class, 'sendOtp'])
+    ->middleware('throttle:5,1'); // Limit to 5 attempts per minute
+
+Route::post('/auth/verify-otp', [AuthController::class, 'verifyOtp'])
+    ->middleware('throttle:10,1');
+
 Route::post('/auth/register', [AuthController::class, 'register'])
     ->middleware('throttle:10,1');
 

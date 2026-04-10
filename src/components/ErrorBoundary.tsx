@@ -9,7 +9,7 @@ interface State {
   error: Error | null;
 }
 
-export class ErrorBoundary extends (React.Component as any) {
+export class ErrorBoundary extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = { hasError: false, error: null };
@@ -40,9 +40,11 @@ export class ErrorBoundary extends (React.Component as any) {
           >
             Refresh App
           </button>
-          <pre className="mt-8 p-4 neu-depressed rounded-xl text-[10px] text-left overflow-auto max-w-full">
-            {this.state.error?.toString()}
-          </pre>
+          {import.meta.env.DEV && (
+            <pre className="mt-8 p-4 neu-depressed rounded-xl text-[10px] text-left overflow-auto max-w-full">
+              {this.state.error?.toString()}
+            </pre>
+          )}
         </div>
       );
     }

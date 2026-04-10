@@ -34,8 +34,7 @@ export const VaultScreen = ({ onUnlock }: { onUnlock: () => void; key?: string }
     // Simulate biometric delay
     await new Promise((resolve) => setTimeout(resolve, 1500));
     
-    console.log("Biometric auth successful");
-    setIsUnlocked(true);
+setIsUnlocked(true);
     setIsAuthenticating(false);
     
     setTimeout(() => {

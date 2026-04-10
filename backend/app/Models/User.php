@@ -15,7 +15,8 @@ use Laravel\Sanctum\HasApiTokens;
 /**
  * @property string $id
  * @property string $name
- * @property string $phone
+ * @property string $email
+ * @property string|null $phone
  * @property string $invite_code
  * @property string|null $couple_id
  * @property string $timezone
@@ -30,6 +31,7 @@ class User extends Authenticatable
 
     protected $fillable = [
         'name',
+        'email',
         'phone',
         'invite_code',
         'couple_id',
@@ -77,7 +79,7 @@ class User extends Authenticatable
             return null;
         }
 
-        $couple = $this->couple()->first();
+        $couple = $this->couple;
 
         if (! $couple) {
             return null;

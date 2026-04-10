@@ -9,9 +9,9 @@ use App\Models\User;
 /**
  * Generates the human-friendly invite code partners exchange in person.
  *
- * Format: MOM-XXX where XXX is a base36-ish 3-character group derived from
- * cryptographically secure random bytes. We retry on collision against the
- * `users.invite_code` unique index.
+ * Format: MOM-XXXXXX where XXXXXX is a base32-ish 6-character group derived from
+ * cryptographically secure random bytes (~1 billion possible codes). We retry
+ * on collision against the `users.invite_code` unique index.
  */
 final class InviteCode
 {
@@ -36,7 +36,7 @@ final class InviteCode
         $length = strlen($alphabet);
         $chars = '';
 
-        for ($i = 0; $i < 3; $i++) {
+        for ($i = 0; $i < 6; $i++) {
             $chars .= $alphabet[random_int(0, $length - 1)];
         }
 

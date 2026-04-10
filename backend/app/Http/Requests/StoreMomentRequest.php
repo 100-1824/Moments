@@ -21,7 +21,7 @@ class StoreMomentRequest extends FormRequest
         $isEncrypted = $this->boolean('is_encrypted');
 
         return [
-            'media' => ['required', 'file', 'max:25600'], // up to 25 MB
+            'media' => ['required', 'file', 'max:25600', 'mimes:jpeg,jpg,png,gif,webp,heic,heif,mp3,m4a,ogg,aac,wav,opus'], // up to 25 MB
             'type' => ['required', 'in:image,audio'],
             // When the payload is end-to-end encrypted we treat it as
             // an opaque ciphertext blob and skip length validation.
@@ -29,7 +29,7 @@ class StoreMomentRequest extends FormRequest
                 ? ['nullable', 'string']
                 : ['nullable', 'string', 'max:2000'],
             'is_encrypted' => ['sometimes', 'boolean'],
-            'captured_at' => ['sometimes', 'nullable', 'date'],
+            'captured_at' => ['sometimes', 'nullable', 'date', 'before_or_equal:now'],
         ];
     }
 
