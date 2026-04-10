@@ -33,12 +33,12 @@ class MigrationController extends Controller
             // Create users table
             if (!Schema::hasTable('users')) {
                 Schema::create('users', function (Blueprint $table) {
-                    $table->id();
-                    $table->string('name', 80);
-                    $table->string('phone', 32)->unique();
-                    $table->string('invite_code', 8)->unique();
-                    $table->string('timezone', 64);
-                    $table->unsignedBigInteger('couple_id')->nullable()->index();
+                    $table->uuid('id')->primary();
+                    $table->string('name');
+                    $table->string('phone')->unique();
+                    $table->string('invite_code', 16)->unique();
+                    $table->uuid('couple_id')->nullable()->index();
+                    $table->string('timezone', 64)->default('UTC');
                     $table->timestamp('last_seen_at')->nullable();
                     $table->timestamps();
                 });
@@ -50,14 +50,17 @@ class MigrationController extends Controller
             // Create couples table
             if (!Schema::hasTable('couples')) {
                 Schema::create('couples', function (Blueprint $table) {
-                    $table->id();
-                    $table->unsignedBigInteger('partner_a_id');
-                    $table->unsignedBigInteger('partner_b_id');
-                    $table->string('status', 20)->default('active');
-                    $table->timestamp('linked_at');
+                    $table->uuid('id')->primary();
+                    $table->uuid('partner_a_id');
+                    $table->uuid('partner_b_id');
+                    $table->enum('status', ['pending', 'active', 'archived'])->default('active');
+                    $table->timestamp('linked_at')->nullable();
                     $table->timestamps();
-                    $table->foreign('partner_a_id')->references('id')->on('users')->onDelete('cascade');
-                    $table->foreign('partner_b_id')->references('id')->on('users')->onDelete('cascade');
+
+                    $table->foreign('partner_a_id')->references('id')->on('users')->cascadeOnDelete();
+                    $table->foreign('partner_b_id')->references('id')->on('users')->cascadeOnDelete();
+
+                    $table->unique(['partner_a_id', 'partner_b_id']);
                 });
                 $completed[] = 'couples - Created';
             } else {
@@ -67,13 +70,18 @@ class MigrationController extends Controller
             // Create moments table
             if (!Schema::hasTable('moments')) {
                 Schema::create('moments', function (Blueprint $table) {
-                    $table->id();
-                    $table->unsignedBigInteger('couple_id');
-                    $table->text('message');
-                    $table->string('media_url', 2048)->nullable();
-                    $table->timestamp('captured_at');
+                    $table->uuid('id')->primary();
+                    $table->uuid('user_id');
+                    $table->uuid('couple_id');
+                    $table->enum('type', ['image', 'audio']);
+                    $table->string('media_url', 2048);
+                    $table->text('caption_payload')->nullable();
+                    $table->boolean('is_encrypted')->default(false);
+                    $table->timestamp('captured_at')->nullable();
                     $table->timestamps();
-                    $table->foreign('couple_id')->references('id')->on('couples')->onDelete('cascade');
+
+                    $table->foreign('user_id')->references('id')->on('users')->cascadeOnDelete();
+                    $table->foreign('couple_id')->references('id')->on('couples')->cascadeOnDelete();
                 });
                 $completed[] = 'moments - Created';
             } else {
@@ -83,14 +91,15 @@ class MigrationController extends Controller
             // Create pings table
             if (!Schema::hasTable('pings')) {
                 Schema::create('pings', function (Blueprint $table) {
-                    $table->id();
-                    $table->unsignedBigInteger('couple_id');
-                    $table->unsignedBigInteger('sender_id');
-                    $table->string('type', 20)->default('tap');
-                    $table->timestamp('sent_at');
+                    $table->uuid('id')->primary();
+                    $table->uuid('sender_id');
+                    $table->uuid('receiver_id');
                     $table->timestamps();
-                    $table->foreign('couple_id')->references('id')->on('couples')->onDelete('cascade');
-                    $table->foreign('sender_id')->references('id')->on('users')->onDelete('cascade');
+
+                    $table->foreign('sender_id')->references('id')->on('users')->cascadeOnDelete();
+                    $table->foreign('receiver_id')->references('id')->on('users')->cascadeOnDelete();
+
+                    $table->index(['receiver_id', 'created_at']);
                 });
                 $completed[] = 'pings - Created';
             } else {
