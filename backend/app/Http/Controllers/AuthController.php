@@ -25,21 +25,30 @@ class AuthController extends Controller
      */
     public function register(RegisterRequest $request): JsonResponse
     {
-        $user = DB::transaction(function () use ($request): User {
-            return User::create([
-                'name'        => $request->string('name')->trim(),
-                'phone'       => $request->string('phone')->trim(),
-                'invite_code' => InviteCode::generateUnique(),
-                'timezone'    => $request->string('timezone')->trim(),
+        try {
+            $user = DB::transaction(function () use ($request): User {
+                return User::create([
+                    'name'        => $request->string('name')->trim(),
+                    'phone'       => $request->string('phone')->trim(),
+                    'invite_code' => InviteCode::generateUnique(),
+                    'timezone'    => $request->string('timezone')->trim(),
+                ]);
+            });
+
+            $token = $user->createToken('moments-app')->plainTextToken;
+
+            return $this->success([
+                'user'  => $this->presentUser($user),
+                'token' => $token,
+            ], 201);
+        } catch (\Throwable $e) {
+            \Log::error('Registration failed: ' . get_class($e) . ': ' . $e->getMessage(), [
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString(),
             ]);
-        });
-
-        $token = $user->createToken('moments-app')->plainTextToken;
-
-        return $this->success([
-            'user'  => $this->presentUser($user),
-            'token' => $token,
-        ], 201);
+            throw $e;
+        }
     }
 
     /**

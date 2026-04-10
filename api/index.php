@@ -115,7 +115,7 @@ try {
     // Load Laravel
     require __DIR__ . '/../backend/vendor/autoload.php';
     $app = require_once __DIR__ . '/../backend/bootstrap/app.php';
-    
+
     $app->useStoragePath('/tmp/storage');
 
     // Handle the request
@@ -123,33 +123,37 @@ try {
     $response = $kernel->handle($request = Illuminate\Http\Request::capture());
     $response->send();
     $kernel->terminate($request, $response);
-    
+
 } catch (\Throwable $e) {
     // Always return JSON, never HTML error pages
     http_response_code(500);
     header('Content-Type: application/json');
     header('X-Powered-By: Moments-API');
-    
-    error_log('[Moments API Error] ' . get_class($e) . ': ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
-    
+
+    $errorMsg = get_class($e) . ': ' . $e->getMessage();
+    $errorLocation = $e->getFile() . ':' . $e->getLine();
+
+    error_log('[Moments API Error] ' . $errorMsg . ' in ' . $errorLocation);
+    error_log('[Moments API Trace] ' . $e->getTraceAsString());
+
     $isDebug = filter_var($_ENV['APP_DEBUG'] ?? $_SERVER['APP_DEBUG'] ?? 'false', FILTER_VALIDATE_BOOLEAN);
     $isDiagnostics = $requestPath === '/api/diagnostics' && ($_GET['diagnose'] ?? '') === '1';
     $isMigration = $requestPath === '/api/migrate' && !empty($_GET['token'] ?? null);
-    
-    echo json_encode([
+
+    $response = [
         'status' => 'error',
         'message' => 'Internal server error',
-        'debug' => ($isDiagnostics || $isMigration) ? [
+    ];
+
+    if ($isDiagnostics || $isMigration || $isDebug) {
+        $response['debug'] = [
             'exception' => get_class($e),
             'message' => $e->getMessage(),
             'file' => $e->getFile(),
             'line' => $e->getLine(),
-            'trace' => explode("\n", $e->getTraceAsString()),
-        ] : ($isDebug ? [
-            'exception' => get_class($e),
-            'message' => $e->getMessage(),
-            'file' => $e->getFile(),
-            'line' => $e->getLine()
-        ] : null),
-    ], JSON_PRETTY_PRINT);
+            'trace' => array_slice(explode("\n", $e->getTraceAsString()), 0, 20),
+        ];
+    }
+
+    echo json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
 }
