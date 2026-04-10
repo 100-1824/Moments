@@ -138,10 +138,15 @@ try {
     }
 
     // Load Laravel
+putenv('APP_SERVICES_CACHE=/tmp/services.php');
+putenv('APP_PACKAGES_CACHE=/tmp/packages.php');
     require __DIR__ . '/../vendor/autoload.php';
     $app = require_once __DIR__ . '/../backend/bootstrap/app.php';
 
     $app->useStoragePath('/tmp/storage');
+    $app->useBootstrapPath('/tmp/bootstrap');
+    $_ENV['APP_PACKAGES_CACHE'] = '/tmp/bootstrap/cache/packages.php';
+    $_ENV['APP_SERVICES_CACHE'] = '/tmp/bootstrap/cache/services.php';
 
     // Handle the request
     $kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
