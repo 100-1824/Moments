@@ -76,5 +76,10 @@ try {
     error_log('[Moments API Trace] ' . $e->getTraceAsString());
 
 
-    echo json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+    echo json_encode([
+        'status' => 'error',
+        'message' => 'Internal Server Error',
+        'error' => $errorMsg,
+        'location' => config('app.debug') ? $errorLocation : null,
+    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
 }
