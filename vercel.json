@@ -21,19 +21,13 @@
     "env": {
         "APP_NAME": "Moments",
         "APP_ENV": "production",
-        "APP_DEBUG": "false",
-        "APP_TIMEZONE": "UTC",
+        "APP_DEBUG": "true",
+        "APP_SERVICES_CACHE": "/tmp/services.php",
+        "APP_PACKAGES_CACHE": "/tmp/packages.php",
         "LOG_CHANNEL": "stderr",
-        "LOG_LEVEL": "info",
         "VIEW_COMPILED_PATH": "/tmp/views",
         "CACHE_DRIVER": "array",
         "SESSION_DRIVER": "array",
-        "QUEUE_CONNECTION": "sync",
-        "FILESYSTEM_DISK": "s3",
-        "AWS_REGION": "us-east-1",
-        "AWS_USE_PATH_STYLE_ENDPOINT": "true",
-        "DB_SSLMODE": "require",
-        "DB_CONNECT_TIMEOUT": "5",
-        "SANCTUM_TOKEN_PREFIX": "mom_"
+        "DB_SSLMODE": "require"
     }
 }
