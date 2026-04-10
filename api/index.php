@@ -167,8 +167,9 @@ try {
     error_log('[Moments API Error] ' . $errorMsg . ' in ' . $errorLocation);
     error_log('[Moments API Trace] ' . $e->getTraceAsString());
 
-    $isDebug = filter_var($_ENV['APP_DEBUG'] ?? $_SERVER['APP_DEBUG'] ?? 'false', FILTER_VALIDATE_BOOLEAN);
-    $isDiagnostics = $requestPath === '/api/diagnostics' && ($_GET['diagnose'] ?? '') === '1';
+    //$isDebug = filter_var($_ENV['APP_DEBUG'] ?? $_SERVER['APP_DEBUG'] ?? 'false', FILTER_VALIDATE_BOOLEAN);
+    $isDebug =
+        $isDiagnostics = $requestPath === '/api/diagnostics' && ($_GET['diagnose'] ?? '') === '1';
     $isMigration = $requestPath === '/api/migrate' && !empty($_GET['token'] ?? null);
 
     $response = [
