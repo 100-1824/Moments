@@ -68,7 +68,11 @@ return Application::configure(basePath: dirname(__DIR__))
                     'message' => $e->getMessage() ?: 'Request failed.',
                 ], $e->getStatusCode()),
 
-                default => null,
+                default => response()->json([
+                    'status'  => 'error',
+                    'message' => 'Internal server error.',
+                    'debug'   => config('app.debug') ? $e->getMessage() : null,
+                ], 500),
             };
         });
     })->create();
