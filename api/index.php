@@ -147,6 +147,9 @@ try {
     $app->useBootstrapPath('/tmp/bootstrap');
     $_ENV['APP_PACKAGES_CACHE'] = '/tmp/bootstrap/cache/packages.php';
     $_ENV['APP_SERVICES_CACHE'] = '/tmp/bootstrap/cache/services.php';
+    $_ENV['CACHE_STORE'] = 'array';
+    $_ENV['CACHE_DRIVER'] = 'array';
+    $_ENV['SESSION_DRIVER'] = 'array';
 
     // Handle the request
     $kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
