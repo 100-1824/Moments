@@ -45,7 +45,7 @@ class MomentController extends Controller
             $count = Moment::query()
                 ->where('user_id', $user->id)
                 ->whereBetween('created_at', [$startUtc, $endUtc])
-                ->lockForUpdate()
+                
                 ->count();
 
             if ($count >= self::DAILY_LIMIT) {
@@ -128,7 +128,7 @@ class MomentController extends Controller
             $existingCount = Moment::query()
                 ->where('user_id', $user->id)
                 ->whereBetween('created_at', [$startUtc, $endUtc])
-                ->lockForUpdate()
+                
                 ->count();
 
             foreach ($request->input('moments', []) as $index => $payload) {
