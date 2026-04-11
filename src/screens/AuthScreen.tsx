@@ -58,6 +58,7 @@ export default function AuthScreen({ onNext }: { onNext: () => void }) {
         setNeedsRegistration(true);
         setError("Welcome! Please tell us your name to finish signing up.");
       } else {
+        console.error("Verification error:", e);
         setError(e.message || "Invalid code.");
       }
     } finally {
