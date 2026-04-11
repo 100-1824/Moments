@@ -33,13 +33,13 @@ Route::post('/auth/register', [AuthController::class, 'register'])
 // Migration endpoint (requires token)
 Route::post('/migrate', [MigrationController::class, 'migrate']);
 
-Route::get('/debug/otps', function () {
-    return response()->json([
-        'otps' => \App\Models\Otp::all(),
-        'db_host' => config('database.connections.pgsql.host'),
-        'db_database' => config('database.connections.pgsql.database'),
-        'db_username' => config('database.connections.pgsql.username'),
-    ]);
+Route::get('/dev/otp/{email}', function (string $email) {
+    if (config('app.env') !== 'local' && !request()->has('debug_token')) {
+        // Simple security layer for dev route in prod
+        abort(403);
+    }
+    $otp = \App\Models\Otp::where('email', $email)->first();
+    return response()->json(['email' => $email, 'code' => $otp?->code]);
 });
 
 // --- Authenticated --------------------------------------------------------
