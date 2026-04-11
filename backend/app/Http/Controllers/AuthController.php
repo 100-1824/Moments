@@ -112,9 +112,11 @@ class AuthController extends Controller
                     return [
                         'key' => $row->key,
                         'expiration' => $row->expiration,
-                        'value_preview' => substr($row->value, 0, 50)
                     ];
                 }),
+                'db_connection' => config('database.default'),
+                'db_database'   => config('database.connections.'.config('database.default').'.database'),
+                'db_host'       => config('database.connections.'.config('database.default').'.host'),
             ] : [];
             
             return $this->error('Invalid or expired verification code.', 422, $debugData);
