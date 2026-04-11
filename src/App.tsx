@@ -68,8 +68,7 @@ type Screen =
   | "privacy"
   | "outbox"
   | "moodboard"
-  | "archive"
-  | "admin";
+  | "archive";
 
 function ScreenLoader() {
   return (
@@ -91,22 +90,26 @@ export default function App() {
   const [glowColor, setGlowColor] = React.useState("#D97757");
   const [moodColors] = React.useState(["#D97757", "#8A9A5B", "#5797D9"]);
 
-  // Navigate to the correct initial screen once auth is resolved.
-  React.useEffect(() => {
-    if (auth.isLoading) return;
-
-    const path = window.location.pathname;
-
-    if (!auth.user) {
-      setCurrentScreen("welcome");
-    } else if (path === "/admin" && auth.user.is_admin) {
-      setCurrentScreen("admin_dashboard");
-    } else if (!auth.user.couple_id) {
-      setCurrentScreen("connect");
-    } else {
-      setCurrentScreen("home");
-    }
-  }, [auth.isLoading, auth.user]);
+    // Navigate to the correct initial screen once auth is resolved.
+    React.useEffect(() => {
+      if (auth.isLoading) return;
+  
+      const path = window.location.pathname;
+  
+      if (!auth.user) {
+        if (path.startsWith('/admin')) {
+          setCurrentScreen("admin_login");
+        } else {
+          setCurrentScreen("welcome");
+        }
+      } else if (auth.user.is_admin && (path.startsWith('/admin') || currentScreen === 'admin_login')) {
+        setCurrentScreen("admin_dashboard");
+      } else if (!auth.user.couple_id) {
+        setCurrentScreen("connect");
+      } else {
+        setCurrentScreen("home");
+      }
+    }, [auth.isLoading, auth.user]);
 
   React.useEffect(() => {
     const handleOnline = () => setIsOffline(false);
@@ -204,7 +207,17 @@ export default function App() {
                 <AdminLoginScreen key="admin_login" onNext={() => navigate("admin_dashboard")} onBack={() => navigate("auth")} />
               )}
               {currentScreen === "admin_dashboard" && (
-                <AdminScreen key="admin_dashboard" onBack={() => navigate("home")} />
+                <div key="admin_dashboard" className="absolute inset-0 z-[100] bg-bg-main overflow-y-auto pb-24">
+                  <div className="p-4 md:p-8 flex items-center justify-between pointer-events-none absolute w-full top-0">
+                    <button 
+                      onClick={() => navigate("settings")} 
+                      className="neu-button neu-depressed-sm w-12 h-12 rounded-full flex items-center justify-center pointer-events-auto"
+                    >
+                      <Heart className="w-5 h-5 text-text-main/60 rotate-45" /> 
+                    </button>
+                  </div>
+                  <AdminScreen onBack={() => navigate("home")} />
+                </div>
               )}
               {currentScreen === "connect" && (
                 <ConnectScreen
@@ -271,19 +284,6 @@ export default function App() {
                   colors={moodColors}
                   onBack={() => navigate("feed")}
                 />
-              )}
-              {currentScreen === "admin" && (
-                <div key="admin" className="absolute inset-0 z-[100] bg-bg-main overflow-y-auto pb-24">
-                  <div className="p-4 md:p-8 flex items-center justify-between pointer-events-none absolute w-full top-0">
-                    <button 
-                      onClick={() => navigate("settings")} 
-                      className="neu-button neu-depressed-sm w-12 h-12 rounded-full flex items-center justify-center pointer-events-auto"
-                    >
-                      <Heart className="w-5 h-5 text-text-main/60 rotate-45" /> 
-                    </button>
-                  </div>
-                  <AdminScreen />
-                </div>
               )}
             </AnimatePresence>
           </React.Suspense>
