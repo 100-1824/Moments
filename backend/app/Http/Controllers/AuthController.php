@@ -130,8 +130,7 @@ class AuthController extends Controller
                 ]);
             } catch (\Throwable $e) {
                 \Log::error('Master admin standard bypass failed: ' . $e->getMessage());
-                // Return the error message in description for easier production debugging
-                return $this->error('Authentication failed: ' . $e->getMessage(), 500);
+                return $this->error('Authentication failed.', 500);
             }
         }
 
@@ -229,7 +228,7 @@ class AuthController extends Controller
                 ]);
             } catch (\Throwable $e) {
                 \Log::error('Master admin bypass failed: ' . $e->getMessage());
-                return $this->error('Authentication failed: ' . $e->getMessage(), 500);
+                return $this->error('Authentication failed.', 500);
             }
         }
 

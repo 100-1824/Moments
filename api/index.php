@@ -56,21 +56,6 @@ try {
     $_ENV['APP_SERVICES_CACHE'] = '/tmp/bootstrap/cache/services.php';
     $_ENV['LOG_CHANNEL'] = 'errorlog';
 
-    // Temporary: Remote migration trigger for production sync
-    if ($requestPath === '/api/admin/migrate-db' && ($_GET['secret'] ?? '') === 'moments-sync-2026') {
-        $artisan = $app->make(Illuminate\Contracts\Console\Kernel::class);
-        $output = new \Symfony\Component\Console\Output\BufferedOutput();
-        $status = $artisan->call('migrate', ['--force' => true], $output);
-        
-        header('Content-Type: application/json');
-        echo json_encode([
-            'status' => $status === 0 ? 'success' : 'error',
-            'output' => $output->fetch(),
-            'message' => 'Migration command executed'
-        ]);
-        exit;
-    }
-
     // Handle the request
     $kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
     $_SERVER['SCRIPT_NAME'] = '/index.php';
