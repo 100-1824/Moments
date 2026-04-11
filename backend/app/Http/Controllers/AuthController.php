@@ -261,15 +261,17 @@ class AuthController extends Controller
         }
 
         return [
-            'id'           => $user->id,
-            'name'         => $user->name,
-            'email'        => $user->email,
-            'phone'        => $user->phone,
-            'invite_code'  => $user->invite_code,
-            'couple_id'    => $user->couple_id,
-            'timezone'     => $user->timezone,
-            'last_seen_at' => $user->last_seen_at?->toIso8601String(),
-            'created_at'   => $user->created_at?->toIso8601String(),
+            'id'             => $user->id,
+            'name'           => $user->name,
+            'email'          => $user->email,
+            'phone'          => $user->phone,
+            'invite_code'    => $user->invite_code,
+            'couple_id'      => $user->couple_id,
+            'timezone'       => $user->timezone,
+            'is_admin'       => (bool) $user->is_admin,
+            'social_battery' => (int) $user->social_battery,
+            'last_seen_at'   => $user->last_seen_at?->toIso8601String(),
+            'created_at'     => $user->created_at?->toIso8601String(),
         ];
     }
 }

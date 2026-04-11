@@ -76,8 +76,12 @@ export default function App() {
   React.useEffect(() => {
     if (auth.isLoading) return;
 
+    const path = window.location.pathname;
+
     if (!auth.user) {
       setCurrentScreen("welcome");
+    } else if (path === "/admin" && auth.user.is_admin) {
+      setCurrentScreen("admin");
     } else if (!auth.user.couple_id) {
       setCurrentScreen("connect");
     } else {
