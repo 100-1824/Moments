@@ -37,19 +37,19 @@ class AuthController extends Controller
         $email = $request->string('email')->trim()->lower()->toString();
         $otp = (string) random_int(100000, 999999);
 
-        // Store OTP in cache for 10 minutes.
+        // Store OTP in database cache for 10 minutes.
         $key = "otp_{$email}";
-        Cache::put($key, $otp, now()->addMinutes(10));
+        Cache::store('database')->put($key, $otp, now()->addMinutes(10));
         
         // SELF-TEST: Can we read it back immediately?
-        $testRead = Cache::get($key);
+        $testRead = Cache::store('database')->get($key);
         
         \Log::info("OTP Write-Test for email: {$email}", [
             'key' => $key,
             'stored_value' => $otp,
             'read_back_value' => $testRead,
             'success' => ($otp === $testRead),
-            'driver' => config('cache.default'),
+            'driver' => 'database',
         ]);
 
         if ($otp !== $testRead) {
@@ -90,13 +90,13 @@ class AuthController extends Controller
         $email = $request->string('email')->trim()->lower()->toString();
         $code = $request->string('code')->toString();
 
-        $cachedOtp = Cache::get("otp_{$email}");
+        $cachedOtp = Cache::store('database')->get("otp_{$email}");
 
         \Log::info("OTP verification attempt for: {$email}", [
             'provided_code' => $code,
             'cached_code' => $cachedOtp,
             'key' => "otp_{$email}",
-            'driver' => config('cache.default')
+            'driver' => 'database'
         ]);
 
         if (! $cachedOtp || $cachedOtp !== $code) {
