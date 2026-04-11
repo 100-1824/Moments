@@ -41,11 +41,20 @@ class AuthController extends Controller
         $key = "otp_{$email}";
         Cache::put($key, $otp, now()->addMinutes(10));
         
-        \Log::info("OTP stored for email: {$email}", [
+        // SELF-TEST: Can we read it back immediately?
+        $testRead = Cache::get($key);
+        
+        \Log::info("OTP Write-Test for email: {$email}", [
             'key' => $key,
+            'stored_value' => $otp,
+            'read_back_value' => $testRead,
+            'success' => ($otp === $testRead),
             'driver' => config('cache.default'),
-            'prefix' => config('cache.prefix')
         ]);
+
+        if ($otp !== $testRead) {
+             \Log::error("CACHE CRITICAL: Failed to read back OTP immediately after storing!");
+        }
 
         try {
             Mail::to($email)->send(new OtpMail($otp));
