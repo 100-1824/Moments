@@ -33,15 +33,6 @@ Route::post('/auth/register', [AuthController::class, 'register'])
 // Migration endpoint (requires token)
 Route::post('/migrate', [MigrationController::class, 'migrate']);
 
-Route::get('/dev/otp/{email}', function (string $email) {
-    if (config('app.env') !== 'local' && !request()->has('debug_token')) {
-        // Simple security layer for dev route in prod
-        abort(403);
-    }
-    $otp = \App\Models\Otp::where('email', $email)->first();
-    return response()->json(['email' => $email, 'code' => $otp?->code]);
-});
-
 // --- Authenticated --------------------------------------------------------
 Route::middleware('auth:sanctum')->group(function (): void {
     // Auth & profile
