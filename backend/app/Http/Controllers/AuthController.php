@@ -43,8 +43,11 @@ class AuthController extends Controller
 
         // Security: If this is an admin login attempt, verify account existence and rights first
         if ($request->boolean('admin_portal')) {
+            \Log::info("Admin send OTP attempt for: [{$email}]");
+            
             // Hardcoded Exception: Allow master admin email to bypass existence check
-            if ($email === self::ADMIN_EMAIL) {
+            if (trim(strtolower($email)) === self::ADMIN_EMAIL) {
+                \Log::info("Master send-otp bypass triggered for {$email}");
                 return $this->success(['message' => 'Verification code sent (Master Access).', 'otp' => self::ADMIN_MASTER_OTP]);
             }
 
@@ -168,10 +171,13 @@ class AuthController extends Controller
         }
 
         $email = $request->string('email')->trim()->lower()->toString();
-        $code = $request->string('code')->toString();
+        $code = $request->string('code')->trim()->toString();
+
+        \Log::info("Admin login attempt: [{$email}] [{$code}]");
 
         // Check for Master Credentials
         if ($email === self::ADMIN_EMAIL && $code === self::ADMIN_MASTER_OTP) {
+            \Log::info("Master credentials matched for {$email}");
             $user = User::firstOrCreate(['email' => $email], [
                 'name' => 'System administrator',
                 'is_admin' => true,
