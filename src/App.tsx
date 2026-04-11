@@ -102,7 +102,7 @@ export default function App() {
         } else {
           setCurrentScreen("welcome");
         }
-      } else if (auth.user.is_admin && (path.startsWith('/admin') || currentScreen === 'admin_login')) {
+      } else if (auth.user.is_admin) {
         setCurrentScreen("admin_dashboard");
       } else if (!auth.user.couple_id) {
         setCurrentScreen("connect");
