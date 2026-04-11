@@ -90,7 +90,8 @@ class AuthController extends Controller
             ->first();
 
         if (! $otpRecord) {
-            return $this->error('Invalid or expired verification code.', 422);
+            $existing = Otp::where('email', $email)->get();
+            return $this->error('DEBUG: No match. DB has: ' . $existing->toJson() . '. User sent exactly: [' . $code . ']. now(): ' . now()->toDateTimeString(), 422);
         }
 
         try {
