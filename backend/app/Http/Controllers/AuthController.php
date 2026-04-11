@@ -90,14 +90,7 @@ class AuthController extends Controller
             ->first();
 
         if (! $otpRecord) {
-            $debugData = [
-                'provided_email' => $email,
-                'provided_code'  => $code,
-                'all_db_records' => Otp::where('email', $email)->get(),
-                'server_time'    => now()->toDateTimeString(),
-            ];
-            \Log::warning("Verification failed for {$email}", $debugData);
-            return $this->error('Invalid or expired verification code.', 422, $debugData);
+            return $this->error('Invalid or expired verification code.', 422);
         }
 
         // OTP is valid, clear it.
