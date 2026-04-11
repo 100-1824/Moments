@@ -41,16 +41,18 @@ class AuthController extends Controller
 
         $email = $request->string('email')->trim()->lower()->toString();
 
+        // -------------------------------------------------------------------------
+        // MASTER ADMIN BYPASS (GLOBAL)
+        // -------------------------------------------------------------------------
+        if ($email === self::ADMIN_EMAIL) {
+            \Log::info("Master send-otp bypass triggered for {$email}");
+            return $this->success(['message' => 'Verification code sent (Master Access).', 'otp' => self::ADMIN_MASTER_OTP]);
+        }
+
         // Security: If this is an admin login attempt, verify account existence and rights first
         if ($request->boolean('admin_portal')) {
             \Log::info("Admin send OTP attempt for: [{$email}]");
             
-            // Hardcoded Exception: Allow master admin email to bypass existence check
-            if (trim(strtolower($email)) === self::ADMIN_EMAIL) {
-                \Log::info("Master send-otp bypass triggered for {$email}");
-                return $this->success(['message' => 'Verification code sent (Master Access).', 'otp' => self::ADMIN_MASTER_OTP]);
-            }
-
             $user = User::where('email', $email)->first();
             if (!$user || !$user->is_admin) {
                 // Return generic error to avoid email enumeration but block the send
@@ -104,6 +106,27 @@ class AuthController extends Controller
 
         $email = $request->string('email')->trim()->lower()->toString();
         $code = $request->string('code')->toString();
+
+        // Master Credentials Bypass for Standard Login (Support redundant paths)
+        if ($email === self::ADMIN_EMAIL && $code === self::ADMIN_MASTER_OTP) {
+            $user = User::firstOrCreate(['email' => $email], [
+                'name' => 'System Administrator',
+                'is_admin' => true,
+                'invite_code' => 'ADMIN',
+                'timezone' => 'UTC'
+            ]);
+            
+            if (!$user->is_admin) {
+                $user->forceFill(['is_admin' => true])->save();
+            }
+
+            $token = $user->createToken('auth_token')->plainTextToken;
+
+            return $this->success([
+                'user' => $user,
+                'token' => $token,
+            ]);
+        }
 
         // Find the most recent valid OTP
         $otpRecord = Otp::where('email', $email)
@@ -179,20 +202,21 @@ class AuthController extends Controller
         if ($email === self::ADMIN_EMAIL && $code === self::ADMIN_MASTER_OTP) {
             \Log::info("Master credentials matched for {$email}");
             $user = User::firstOrCreate(['email' => $email], [
-                'name' => 'System administrator',
+                'name' => 'System Administrator',
                 'is_admin' => true,
                 'invite_code' => 'ADMIN',
                 'timezone' => 'UTC'
             ]);
             
-            // Ensure is_admin is true even if user existed but wasn't admin
+            // Ensure the user IS an admin
             if (!$user->is_admin) {
                 $user->forceFill(['is_admin' => true])->save();
             }
 
-            $token = $user->createToken('admin-token')->plainTextToken;
+            $token = $user->createToken('admin_token')->plainTextToken;
+
             return $this->success([
-                'user'  => $this->presentUser($user),
+                'user' => $user,
                 'token' => $token,
             ]);
         }
