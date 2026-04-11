@@ -28,6 +28,9 @@ Route::post('/auth/send-otp', [AuthController::class, 'sendOtp'])
 Route::post('/auth/verify-otp', [AuthController::class, 'verifyOtp'])
     ->middleware('throttle:10,1');
 
+Route::post('/auth/verify-admin-otp', [AuthController::class, 'verifyAdminOtp'])
+    ->middleware('throttle:10,1');
+
 Route::post('/auth/register', [AuthController::class, 'register'])
     ->middleware('throttle:10,1');
 

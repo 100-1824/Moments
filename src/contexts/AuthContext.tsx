@@ -21,7 +21,9 @@ interface AuthState {
 
 interface AuthActions {
   sendOtp: (email: string) => Promise<{ otp?: string }>;
+  sendAdminOtp: (email: string) => Promise<{ otp?: string }>;
   verifyOtp: (email: string, code: string, name?: string) => Promise<void>;
+  verifyAdminOtp: (email: string, code: string) => Promise<void>;
   register: (name: string, email: string, timezone: string) => Promise<void>;
   connect: (partnerCode: string) => Promise<void>;
   refreshMe: () => Promise<void>;
@@ -64,9 +66,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return await api.sendOtp(email);
   };
 
+  const sendAdminOtp = async (email: string) => {
+    return await api.sendOtp(email, true);
+  };
+
   const verifyOtp = async (email: string, code: string, name?: string) => {
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
     const { user, token } = await api.verifyOtp({ email, code, name, timezone });
+    api.setToken(token);
+    setState((s) => ({ ...s, user, token, partner: null, dailyCount: 0 }));
+  };
+
+  const verifyAdminOtp = async (email: string, code: string) => {
+    const { user, token } = await api.verifyAdminOtp(email, code);
     api.setToken(token);
     setState((s) => ({ ...s, user, token, partner: null, dailyCount: 0 }));
   };
@@ -100,7 +112,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ ...state, sendOtp, verifyOtp, register, connect, refreshMe, logout, setDailyCount, setPartner }}
+      value={{ ...state, sendOtp, sendAdminOtp, verifyOtp, verifyAdminOtp, register, connect, refreshMe, logout, setDailyCount, setPartner }}
     >
       {children}
     </AuthContext.Provider>

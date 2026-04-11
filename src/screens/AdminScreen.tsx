@@ -4,7 +4,7 @@ import {
   Users, Heart, ShieldAlert, BarChart3, Settings2,
   Activity, Zap, Server, RefreshCw, Unlink, Lock,
   Wifi, WifiOff, Database, HardDrive, ChevronDown, ChevronUp,
-  Search, X, AlertTriangle, CheckCircle, Clock,
+  Search, X, AlertTriangle, CheckCircle, Clock, ArrowLeft,
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -760,7 +760,7 @@ interface AdminAnalytics {
   moments_encrypted: number;
 }
 
-export function AdminScreen() {
+export function AdminScreen({ onBack }: { onBack: () => void }) {
   const [activeTab, setActiveTab] = useState<AdminTab>("overview");
   const [analytics, setAnalytics] = useState<AdminAnalytics | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -777,6 +777,7 @@ export function AdminScreen() {
         <ShieldAlert className="w-16 h-16 text-accent-terracotta mb-4" />
         <h2 className="text-xl font-bold text-text-main mb-2">Access Denied</h2>
         <p className="text-text-main/60 text-center text-sm">{error}</p>
+        <NeuButton onClick={onBack} className="mt-6">Return to App</NeuButton>
       </div>
     );
   }
@@ -803,6 +804,12 @@ export function AdminScreen() {
         <div className="max-w-6xl mx-auto px-4 pt-5 pb-3">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
+              <button 
+                onClick={onBack}
+                className="p-2 -ml-2 hover:bg-text-main/5 rounded-xl transition-colors text-text-main/40 hover:text-text-main"
+              >
+                <ArrowLeft className="w-5 h-5" />
+              </button>
               <Settings2 className="w-7 h-7 text-accent-terracotta" />
               <h1 className="text-2xl font-black text-text-main tracking-tight">Admin Console</h1>
             </div>

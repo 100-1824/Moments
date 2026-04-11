@@ -14,8 +14,6 @@ use Symfony\Component\HttpFoundation\Response;
  */
 class IsAdmin
 {
-    private const ADMIN_PHONE = '+923098127755';
-
     public function handle(Request $request, Closure $next): Response
     {
         $user = $request->user();
@@ -24,7 +22,7 @@ class IsAdmin
             abort(403, 'Unauthenticated.');
         }
 
-        if ($user->phone !== self::ADMIN_PHONE && ! $user->is_admin) {
+        if (! $user->is_admin) {
             abort(403, 'Admin access required.');
         }
 

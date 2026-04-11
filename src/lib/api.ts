@@ -133,13 +133,14 @@ async function request<T>(
 
 export async function sendOtp(
   email: string,
+  adminPortal: boolean = false,
 ): Promise<{ message: string; otp?: string }> {
   const res = await request<{
     status: string;
     data: { message: string; otp?: string };
   }>("/auth/send-otp", {
     method: "POST",
-    body: JSON.stringify({ email }),
+    body: JSON.stringify({ email, admin_portal: adminPortal }),
   });
   return res.data;
 }
@@ -158,6 +159,20 @@ export async function verifyOtp(
   }>("/auth/verify-otp", {
     method: "POST",
     body: JSON.stringify(params),
+  });
+  return res.data;
+}
+
+export async function verifyAdminOtp(
+  email: string,
+  code: string,
+): Promise<{ user: ApiUser; token: string }> {
+  const res = await request<{
+    status: string;
+    data: { user: ApiUser; token: string };
+  }>("/auth/verify-admin-otp", {
+    method: "POST",
+    body: JSON.stringify({ email, code }),
   });
   return res.data;
 }

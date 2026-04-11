@@ -9,7 +9,23 @@ import {
   Heart,
   Users,
   Settings,
+  Loader2,
+  Wifi,
+  WifiOff,
+  Database,
+  HardDrive,
+  ChevronDown,
+  ChevronUp,
+  Search,
+  X,
+  AlertTriangle,
+  CheckCircle,
+  Clock,
+  ArrowLeft,
 } from "lucide-react";
+import { CameraScreen } from "@/src/screens/CameraScreen";
+import { AudioScreen } from "@/src/screens/AudioScreen";
+import { SocialBatteryScreen } from "@/src/screens/SocialBatteryScreen";
 import { cn } from "@/src/lib/utils";
 import { useAuth } from "@/src/contexts/AuthContext";
 import { ErrorBoundary } from "@/src/components/ErrorBoundary";
@@ -35,12 +51,15 @@ const HomeScreen = React.lazy(() => import("@/src/screens/HomeScreen"));
 const UploadScreen = React.lazy(() => import("@/src/screens/UploadScreen"));
 const FeedScreen = React.lazy(() => import("@/src/screens/FeedScreen"));
 const SettingsScreen = React.lazy(() => import("@/src/screens/SettingsScreen"));
+const AdminLoginScreen = React.lazy(() => import("@/src/screens/AdminLoginScreen").then(m => ({ default: m.AdminLoginScreen })));
 const AdminScreen = React.lazy(() => import("@/src/screens/AdminScreen").then(m => ({ default: m.AdminScreen })));
 
 type Screen =
   | "loading"
   | "welcome"
   | "auth"
+  | "admin_login"
+  | "admin_dashboard"
   | "connect"
   | "home"
   | "feed"
@@ -81,7 +100,7 @@ export default function App() {
     if (!auth.user) {
       setCurrentScreen("welcome");
     } else if (path === "/admin" && auth.user.is_admin) {
-      setCurrentScreen("admin");
+      setCurrentScreen("admin_dashboard");
     } else if (!auth.user.couple_id) {
       setCurrentScreen("connect");
     } else {
@@ -181,6 +200,12 @@ export default function App() {
                   onNext={() => navigate("connect")}
                 />
               )}
+              {currentScreen === "admin_login" && (
+                <AdminLoginScreen key="admin_login" onNext={() => navigate("admin_dashboard")} onBack={() => navigate("auth")} />
+              )}
+              {currentScreen === "admin_dashboard" && (
+                <AdminScreen key="admin_dashboard" onBack={() => navigate("home")} />
+              )}
               {currentScreen === "connect" && (
                 <ConnectScreen
                   key="connect"
@@ -215,7 +240,7 @@ export default function App() {
                   onLock={() => setIsLocked(true)}
                   onPrivacy={() => navigate("privacy")}
                   onArchive={() => navigate("archive")}
-                  onAdmin={() => navigate("admin")}
+                  onAdmin={() => navigate("admin_login")}
                   onLogout={async () => {
                     await auth.logout();
                     navigate("welcome");
