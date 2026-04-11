@@ -96,12 +96,18 @@ export default function App() {
   
       const path = window.location.pathname;
   
-      if (!auth.user) {
-        if (path.startsWith('/admin')) {
-          setCurrentScreen("admin_login");
+      // Prioritize Admin paths
+      if (path.startsWith('/admin')) {
+        if (auth.user?.is_admin) {
+          setCurrentScreen("admin_dashboard");
         } else {
-          setCurrentScreen("welcome");
+          setCurrentScreen("admin_login");
         }
+        return;
+      }
+
+      if (!auth.user) {
+        setCurrentScreen("welcome");
       } else if (auth.user.is_admin) {
         setCurrentScreen("admin_dashboard");
       } else if (!auth.user.couple_id) {
