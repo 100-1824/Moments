@@ -8,6 +8,7 @@ use App\Http\Requests\RegisterRequest;
 use App\Mail\OtpMail;
 use App\Models\Couple;
 use App\Models\User;
+use App\Models\Otp;
 use App\Support\ApiResponse;
 use App\Support\InviteCode;
 use Illuminate\Http\JsonResponse;
@@ -37,20 +38,24 @@ class AuthController extends Controller
         $email = $request->string('email')->trim()->lower()->toString();
         $otp = (string) random_int(100000, 999999);
 
-        // Store OTP in database cache for 10 minutes.
-        $key = "otp_{$email}";
-        Cache::store('database')->put($key, $otp, now()->addMinutes(10));
+        // Store OTP in database table for 10 minutes.
+        $expiresAt = now()->addMinutes(10);
+        
+        Otp::updateOrCreate(
+            ['email' => $email],
+            ['code' => $otp, 'expires_at' => $expiresAt]
+        );
         
         // SELF-TEST: Can we read it back immediately?
-        $testRead = Cache::store('database')->get($key);
+        $testRead = Otp::where('email', $email)->first();
         
-        if ($otp !== $testRead) {
-             throw new \Exception("CACHE CRITICAL: Could not verify write to 'cache' table on host " . config('database.connections.pgsql.host') . ". Read-back returned: " . json_encode($testRead));
+        if (! $testRead || $testRead->code !== $otp) {
+             throw new \Exception("DB CRITICAL: Could not verify write to 'otps' table. Read-back failed for " . $email);
         }
 
-        \Log::info("OTP Write-Test Success for email: {$email}", [
-            'key' => $key,
-            'driver' => 'database',
+        \Log::info("OTP Table Write Success for email: {$email}", [
+            'id' => $testRead->id,
+            'expires_at' => $expiresAt->toDateTimeString(),
         ]);
 
         try {
@@ -71,6 +76,9 @@ class AuthController extends Controller
      * Verify the OTP and log the user in.
      * If the user doesn't exist, we expect metadata (name, timezone) to create them.
      */
+    /**
+     * Verify the OTP and log the user in.
+     */
     public function verifyOtp(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
@@ -87,40 +95,31 @@ class AuthController extends Controller
         $email = $request->string('email')->trim()->lower()->toString();
         $code = $request->string('code')->toString();
 
-        $cachedOtp = Cache::store('database')->get("otp_{$email}");
+        // Find the most recent valid OTP
+        $otpRecord = Otp::where('email', $email)
+            ->where('code', $code)
+            ->where('expires_at', '>', now())
+            ->first();
 
         \Log::info("OTP verification attempt for: {$email}", [
             'provided_code' => $code,
-            'cached_code' => $cachedOtp,
-            'key' => "otp_{$email}",
-            'driver' => 'database'
+            'record_found' => (bool)$otpRecord,
+            'db_host' => config('database.connections.pgsql.host')
         ]);
 
-        if (! $cachedOtp || $cachedOtp !== $code) {
+        if (! $otpRecord) {
             $debugData = config('app.debug') ? [
-                'expected' => $cachedOtp,
                 'provided' => $code,
-                'key'      => "otp_{$email}",
-                'driver'   => config('cache.default'),
-                'prefix'   => config('cache.prefix'),
+                'email'    => $email,
+                'db_records' => Otp::where('email', $email)->get(),
                 'server_time' => now()->toDateTimeString(),
-                'unix_time'   => time(),
-                'raw_cache_rows' => \DB::table('cache')->get()->map(function($row) {
-                    return [
-                        'key' => $row->key,
-                        'expiration' => $row->expiration,
-                    ];
-                }),
-                'db_connection' => config('database.default'),
-                'db_database'   => config('database.connections.'.config('database.default').'.database'),
-                'db_host'       => config('database.connections.'.config('database.default').'.host'),
             ] : [];
             
             return $this->error('Invalid or expired verification code.', 422, $debugData);
         }
 
         // OTP is valid, clear it.
-        Cache::forget("otp_{$email}");
+        $otpRecord->delete();
 
         try {
             $user = DB::transaction(function () use ($email, $request): User {
