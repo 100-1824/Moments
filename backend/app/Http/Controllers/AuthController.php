@@ -93,16 +93,13 @@ class AuthController extends Controller
             return $this->error('Invalid or expired verification code.', 422);
         }
 
-        // OTP is valid, clear it.
-        $otpRecord->delete();
-
         try {
             $user = DB::transaction(function () use ($email, $request): User {
                 $user = User::query()->where('email', $email)->first();
 
                 if (! $user) {
                     // New user registration
-                    if (! $request->has('name')) {
+                    if (! $request->filled('name')) {
                         throw new \Exception('REGISTRATION_REQUIRED');
                     }
 
@@ -116,6 +113,9 @@ class AuthController extends Controller
 
                 return $user;
             });
+
+            // OTP is valid and user is registered/logged in, clear it.
+            $otpRecord->delete();
 
             $token = $user->createToken('moments-app')->plainTextToken;
 
