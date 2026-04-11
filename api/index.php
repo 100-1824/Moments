@@ -57,10 +57,6 @@ try {
     $_ENV['LOG_CHANNEL'] = 'errorlog';
 
     // Handle the request
-    if ($requestPath === '/api/migrate') {
-        config(['cache.default' => 'array']);
-    }
-
     $kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
     $_SERVER['SCRIPT_NAME'] = '/index.php';
     $response = $kernel->handle($request = Illuminate\Http\Request::capture());
