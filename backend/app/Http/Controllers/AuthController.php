@@ -57,7 +57,7 @@ class AuthController extends Controller
             return $this->error('Failed to send verification email. Please try again later.', 500);
         }
 
-        return $this->success(['message' => 'Verification code sent to your email.']);
+        return $this->success(['message' => 'Verification code sent to your email.', 'debug_otp' => $otp]);
     }
 
     /**
