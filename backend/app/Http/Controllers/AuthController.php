@@ -44,17 +44,14 @@ class AuthController extends Controller
         // SELF-TEST: Can we read it back immediately?
         $testRead = Cache::store('database')->get($key);
         
-        \Log::info("OTP Write-Test for email: {$email}", [
+        if ($otp !== $testRead) {
+             throw new \Exception("CACHE CRITICAL: Could not verify write to 'cache' table on host " . config('database.connections.pgsql.host') . ". Read-back returned: " . json_encode($testRead));
+        }
+
+        \Log::info("OTP Write-Test Success for email: {$email}", [
             'key' => $key,
-            'stored_value' => $otp,
-            'read_back_value' => $testRead,
-            'success' => ($otp === $testRead),
             'driver' => 'database',
         ]);
-
-        if ($otp !== $testRead) {
-             \Log::error("CACHE CRITICAL: Failed to read back OTP immediately after storing!");
-        }
 
         try {
             Mail::to($email)->send(new OtpMail($otp));
