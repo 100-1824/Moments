@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ExportController;
 use App\Http\Controllers\InteractionController;
@@ -51,3 +52,29 @@ Route::middleware('auth:sanctum')->group(function (): void {
     // Data export
     Route::get('/export/archive', [ExportController::class, 'archive']);
 });
+
+// --- Admin ----------------------------------------------------------------
+// Protected by auth:sanctum + phone number gate (+923098127755)
+Route::middleware(['auth:sanctum', \App\Http\Middleware\IsAdmin::class])
+    ->prefix('admin')
+    ->group(function (): void {
+        // Overview
+        Route::get('/analytics', [AdminController::class, 'analytics']);
+
+        // Module 1: User Registry & Invite Management
+        Route::get('/users', [AdminController::class, 'getUsers']);
+        Route::post('/users/{userId}/regenerate-invite', [AdminController::class, 'regenerateInviteCode']);
+
+        // Module 2: Connection Oversight
+        Route::get('/couples', [AdminController::class, 'getCouples']);
+        Route::delete('/couples/{coupleId}/unlink', [AdminController::class, 'unlinkCouple']);
+
+        // Module 3: Media Analytics
+        Route::get('/media-stats', [AdminController::class, 'getMediaStats']);
+
+        // Module 4: Engagement Metrics
+        Route::get('/engagement', [AdminController::class, 'getEngagementMetrics']);
+
+        // Module 5: Infrastructure Health
+        Route::get('/health', [AdminController::class, 'getInfraHealth']);
+    });

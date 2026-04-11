@@ -63,12 +63,14 @@ export default function SettingsScreen({
   onLock,
   onPrivacy,
   onArchive,
+  onAdmin,
   onLogout,
 }: {
   onBack: () => void;
   onLock: () => void;
   onPrivacy: () => void;
   onArchive: () => void;
+  onAdmin: () => void;
   onLogout: () => void;
 }) {
   const { user, partner } = useAuth();
@@ -140,6 +142,15 @@ export default function SettingsScreen({
               Archive
             </NeuButton>
           </div>
+          {user?.is_admin && (
+            <NeuButton
+              onClick={onAdmin}
+              className="w-full h-14 text-sm font-bold text-accent-terracotta border border-accent-terracotta/20 mt-4"
+            >
+              <Users className="w-4 h-4 mr-2" />
+              Admin Dashboard
+            </NeuButton>
+          )}
         </section>
 
         <NeuButton

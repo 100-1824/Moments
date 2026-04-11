@@ -39,6 +39,7 @@ export interface ApiUser {
   timezone: string;
   last_seen_at: string | null;
   created_at: string;
+  is_admin: boolean;
 }
 
 export interface ApiCouple {

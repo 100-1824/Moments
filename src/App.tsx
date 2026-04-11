@@ -35,6 +35,7 @@ const HomeScreen = React.lazy(() => import("@/src/screens/HomeScreen"));
 const UploadScreen = React.lazy(() => import("@/src/screens/UploadScreen"));
 const FeedScreen = React.lazy(() => import("@/src/screens/FeedScreen"));
 const SettingsScreen = React.lazy(() => import("@/src/screens/SettingsScreen"));
+const AdminScreen = React.lazy(() => import("@/src/screens/AdminScreen").then(m => ({ default: m.AdminScreen })));
 
 type Screen =
   | "loading"
@@ -48,7 +49,8 @@ type Screen =
   | "privacy"
   | "outbox"
   | "moodboard"
-  | "archive";
+  | "archive"
+  | "admin";
 
 function ScreenLoader() {
   return (
@@ -209,6 +211,7 @@ export default function App() {
                   onLock={() => setIsLocked(true)}
                   onPrivacy={() => navigate("privacy")}
                   onArchive={() => navigate("archive")}
+                  onAdmin={() => navigate("admin")}
                   onLogout={async () => {
                     await auth.logout();
                     navigate("welcome");
@@ -239,6 +242,19 @@ export default function App() {
                   colors={moodColors}
                   onBack={() => navigate("feed")}
                 />
+              )}
+              {currentScreen === "admin" && (
+                <div key="admin" className="absolute inset-0 z-[100] bg-bg-main overflow-y-auto pb-24">
+                  <div className="p-4 md:p-8 flex items-center justify-between pointer-events-none absolute w-full top-0">
+                    <button 
+                      onClick={() => navigate("settings")} 
+                      className="neu-button neu-depressed-sm w-12 h-12 rounded-full flex items-center justify-center pointer-events-auto"
+                    >
+                      <Heart className="w-5 h-5 text-text-main/60 rotate-45" /> 
+                    </button>
+                  </div>
+                  <AdminScreen />
+                </div>
               )}
             </AnimatePresence>
           </React.Suspense>

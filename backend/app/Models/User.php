@@ -21,6 +21,7 @@ use Laravel\Sanctum\HasApiTokens;
  * @property string|null $couple_id
  * @property string $timezone
  * @property \Illuminate\Support\Carbon|null $last_seen_at
+ * @property bool $is_admin
  */
 class User extends Authenticatable
 {
@@ -47,6 +48,7 @@ class User extends Authenticatable
     {
         return [
             'last_seen_at' => 'datetime',
+            'is_admin' => 'boolean',
         ];
     }
 
