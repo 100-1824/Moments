@@ -71,6 +71,7 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\IsAdmin::class])
         // Module 2: Connection Oversight
         Route::get('/couples', [AdminController::class, 'getCouples']);
         Route::delete('/couples/{coupleId}/unlink', [AdminController::class, 'unlinkCouple']);
+        Route::delete('/couples/{coupleId}/purge', [AdminController::class, 'purgeCouple']);
 
         // Module 3: Media Analytics
         Route::get('/media-stats', [AdminController::class, 'getMediaStats']);

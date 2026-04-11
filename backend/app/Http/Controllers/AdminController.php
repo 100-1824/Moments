@@ -95,6 +95,27 @@ class AdminController extends Controller
         return response()->json(['status' => 'success', 'message' => 'Couple unlinked.']);
     }
 
+    /**
+     * Permanently hard-delete a couple record from the database.
+     * Used to purge zombie/archived records that block re-linking.
+     */
+    public function purgeCouple(string $coupleId): JsonResponse
+    {
+        DB::transaction(function () use ($coupleId): void {
+            $couple = Couple::findOrFail($coupleId);
+
+            // Ensure users are cleared (safety net if unlink was partial)
+            User::whereIn('id', [$couple->partner_a_id, $couple->partner_b_id])
+                ->where('couple_id', $couple->id)
+                ->update(['couple_id' => null]);
+
+            // Hard delete — removes the unique-constraint row permanently
+            $couple->delete();
+        });
+
+        return response()->json(['status' => 'success', 'message' => 'Couple record purged.']);
+    }
+
     // ─── Module 3: Media Analytics ────────────────────────────────────────────
 
     /**

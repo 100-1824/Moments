@@ -318,12 +318,34 @@ class AuthController extends Controller
         }
 
         $couple = DB::transaction(function () use ($user, $partner): Couple {
-            $couple = Couple::create([
-                'partner_a_id' => $user->id,
-                'partner_b_id' => $partner->id,
-                'status'       => 'active',
-                'linked_at'    => now(),
-            ]);
+            // Check for an existing couple record (in either column order)
+            // covering the case where a previous link was archived by admin.
+            $existing = Couple::query()
+                ->where(function ($q) use ($user, $partner): void {
+                    $q->where('partner_a_id', $user->id)
+                      ->where('partner_b_id', $partner->id);
+                })
+                ->orWhere(function ($q) use ($user, $partner): void {
+                    $q->where('partner_a_id', $partner->id)
+                      ->where('partner_b_id', $user->id);
+                })
+                ->first();
+
+            if ($existing) {
+                // Reactivate the archived record instead of creating a duplicate
+                $existing->update([
+                    'status'    => 'active',
+                    'linked_at' => now(),
+                ]);
+                $couple = $existing;
+            } else {
+                $couple = Couple::create([
+                    'partner_a_id' => $user->id,
+                    'partner_b_id' => $partner->id,
+                    'status'       => 'active',
+                    'linked_at'    => now(),
+                ]);
+            }
 
             $user->forceFill(['couple_id' => $couple->id])->save();
             $partner->forceFill(['couple_id' => $couple->id])->save();

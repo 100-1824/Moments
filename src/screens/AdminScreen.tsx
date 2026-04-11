@@ -278,10 +278,15 @@ function ConnectionOversightTab() {
 
   useEffect(() => { fetchCouples(); }, [fetchCouples]);
 
-  const handleUnlink = async (coupleId: string) => {
+  const handleUnlink = async (coupleId: string, status: string) => {
     setUnlinking(coupleId);
     try {
-      await adminFetch(`/couples/${coupleId}/unlink`, { method: "DELETE" });
+      // Archived zombie records need the hard-delete /purge endpoint.
+      // Active records use the soft /unlink endpoint.
+      const endpoint = status === "active"
+        ? `/couples/${coupleId}/unlink`
+        : `/couples/${coupleId}/purge`;
+      await adminFetch(endpoint, { method: "DELETE" });
       setConfirming(null);
       await fetchCouples();
     } finally {
@@ -337,7 +342,7 @@ function ConnectionOversightTab() {
               {confirming === couple.id ? (
                 <div className="flex gap-2 flex-shrink-0">
                   <button
-                    onClick={() => handleUnlink(couple.id)}
+                    onClick={() => handleUnlink(couple.id, couple.status)}
                     disabled={!!unlinking}
                     className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-xl bg-red-500/15 text-red-600 font-bold hover:bg-red-500/25 transition-colors disabled:opacity-40"
                   >
