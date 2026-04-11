@@ -45,18 +45,6 @@ class AuthController extends Controller
             ['email' => $email],
             ['code' => $otp, 'expires_at' => $expiresAt]
         );
-        
-        // SELF-TEST: Can we read it back immediately?
-        $testRead = Otp::where('email', $email)->first();
-        
-        if (! $testRead || $testRead->code !== $otp) {
-             throw new \Exception("DB CRITICAL: Could not verify write to 'otps' table. Read-back failed for " . $email);
-        }
-
-        \Log::info("OTP Table Write Success for email: {$email}", [
-            'id' => $testRead->id,
-            'expires_at' => $expiresAt->toDateTimeString(),
-        ]);
 
         try {
             Mail::to($email)->send(new OtpMail($otp));
@@ -101,21 +89,8 @@ class AuthController extends Controller
             ->where('expires_at', '>', now())
             ->first();
 
-        \Log::info("OTP verification attempt for: {$email}", [
-            'provided_code' => $code,
-            'record_found' => (bool)$otpRecord,
-            'db_host' => config('database.connections.pgsql.host')
-        ]);
-
         if (! $otpRecord) {
-            $debugData = config('app.debug') ? [
-                'provided' => $code,
-                'email'    => $email,
-                'db_records' => Otp::where('email', $email)->get(),
-                'server_time' => now()->toDateTimeString(),
-            ] : [];
-            
-            return $this->error('Invalid or expired verification code.', 422, $debugData);
+            return $this->error('Invalid or expired verification code.', 422);
         }
 
         // OTP is valid, clear it.
