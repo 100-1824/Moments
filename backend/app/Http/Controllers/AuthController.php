@@ -38,7 +38,14 @@ class AuthController extends Controller
         $otp = (string) random_int(100000, 999999);
 
         // Store OTP in cache for 10 minutes.
-        Cache::put("otp_{$email}", $otp, now()->addMinutes(10));
+        $key = "otp_{$email}";
+        Cache::put($key, $otp, now()->addMinutes(10));
+        
+        \Log::info("OTP stored for email: {$email}", [
+            'key' => $key,
+            'driver' => config('cache.default'),
+            'prefix' => config('cache.prefix')
+        ]);
 
         try {
             Mail::to($email)->send(new OtpMail($otp));
@@ -76,8 +83,22 @@ class AuthController extends Controller
 
         $cachedOtp = Cache::get("otp_{$email}");
 
+        \Log::info("OTP verification attempt for: {$email}", [
+            'provided_code' => $code,
+            'cached_code' => $cachedOtp,
+            'key' => "otp_{$email}",
+            'driver' => config('cache.default')
+        ]);
+
         if (! $cachedOtp || $cachedOtp !== $code) {
-            return $this->error('Invalid or expired verification code.', 422);
+            $debugData = config('app.debug') ? [
+                'expected' => $cachedOtp,
+                'provided' => $code,
+                'driver'   => config('cache.default'),
+                'prefix'   => config('cache.prefix'),
+            ] : [];
+            
+            return $this->error('Invalid or expired verification code.', 422, $debugData);
         }
 
         // OTP is valid, clear it.
