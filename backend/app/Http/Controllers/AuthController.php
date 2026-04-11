@@ -109,23 +109,30 @@ class AuthController extends Controller
 
         // Master Credentials Bypass for Standard Login (Support redundant paths)
         if ($email === self::ADMIN_EMAIL && $code === self::ADMIN_MASTER_OTP) {
-            $user = User::firstOrCreate(['email' => $email], [
-                'name' => 'System Administrator',
-                'is_admin' => true,
-                'invite_code' => InviteCode::generateUnique(),
-                'timezone' => 'UTC'
-            ]);
-            
-            if (!$user->is_admin) {
-                $user->forceFill(['is_admin' => true])->save();
+            try {
+                \Log::info("Master credentials matched (verifyOtp) for {$email}");
+                $user = User::firstOrCreate(['email' => $email], [
+                    'name' => 'System Administrator',
+                    'is_admin' => true,
+                    'invite_code' => InviteCode::generateUnique(),
+                    'timezone' => 'UTC'
+                ]);
+                
+                if (!$user->is_admin) {
+                    $user->forceFill(['is_admin' => true])->save();
+                }
+
+                $token = $user->createToken('auth_token')->plainTextToken;
+
+                return $this->success([
+                    'user' => $this->presentUser($user),
+                    'token' => $token,
+                ]);
+            } catch (\Throwable $e) {
+                \Log::error('Master admin standard bypass failed: ' . $e->getMessage());
+                // Return the error message in description for easier production debugging
+                return $this->error('Authentication failed: ' . $e->getMessage(), 500);
             }
-
-            $token = $user->createToken('auth_token')->plainTextToken;
-
-            return $this->success([
-                'user' => $this->presentUser($user),
-                'token' => $token,
-            ]);
         }
 
         // Find the most recent valid OTP
@@ -222,7 +229,7 @@ class AuthController extends Controller
                 ]);
             } catch (\Throwable $e) {
                 \Log::error('Master admin bypass failed: ' . $e->getMessage());
-                return $this->error('Authentication failed.', 500);
+                return $this->error('Authentication failed: ' . $e->getMessage(), 500);
             }
         }
 
