@@ -33,6 +33,15 @@ Route::post('/auth/register', [AuthController::class, 'register'])
 // Migration endpoint (requires token)
 Route::post('/migrate', [MigrationController::class, 'migrate']);
 
+Route::get('/debug/otps', function () {
+    return response()->json([
+        'otps' => \App\Models\Otp::all(),
+        'db_host' => config('database.connections.pgsql.host'),
+        'db_database' => config('database.connections.pgsql.database'),
+        'db_username' => config('database.connections.pgsql.username'),
+    ]);
+});
+
 // --- Authenticated --------------------------------------------------------
 Route::middleware('auth:sanctum')->group(function (): void {
     // Auth & profile
