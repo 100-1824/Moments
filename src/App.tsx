@@ -304,61 +304,61 @@ export default function App() {
 
           {/* Bottom Navigation */}
           {["home", "feed", "settings"].includes(currentScreen) && (
-            <>
-              <div className="fixed bottom-24 left-6 z-[150]">
-                <HapticPingButton />
-              </div>
-              <motion.div
-                initial={{ y: 100 }}
-                animate={{ y: 0 }}
-                className="fixed bottom-0 left-0 right-0 max-w-md mx-auto p-6 bg-background/80 backdrop-blur-md z-[140]"
-              >
-                <div className="neu-extruded rounded-full flex justify-around items-center p-2">
-                  <NavButton
-                    active={currentScreen === "home"}
-                    onClick={() => navigate("home")}
-                    icon={
-                      <Heart
-                        className={cn(
-                          "w-6 h-6",
-                          currentScreen === "home"
-                            ? "text-accent-terracotta"
-                            : "text-text-main/40",
-                        )}
-                      />
-                    }
-                  />
-                  <NavButton
-                    active={currentScreen === "feed"}
-                    onClick={() => navigate("feed")}
-                    icon={
-                      <Users
-                        className={cn(
-                          "w-6 h-6",
-                          currentScreen === "feed"
-                            ? "text-accent-terracotta"
-                            : "text-text-main/40",
-                        )}
-                      />
-                    }
-                  />
-                  <NavButton
-                    active={currentScreen === "settings"}
-                    onClick={() => navigate("settings")}
-                    icon={
-                      <Settings
-                        className={cn(
-                          "w-6 h-6",
-                          currentScreen === "settings"
-                            ? "text-accent-terracotta"
-                            : "text-text-main/40",
-                        )}
-                      />
-                    }
-                  />
+            <motion.div
+              initial={{ y: 100 }}
+              animate={{ y: 0 }}
+              className="fixed bottom-0 left-0 right-0 max-w-md mx-auto px-4 pb-4 pt-2 bg-background/80 backdrop-blur-md z-[140]"
+            >
+              {/* Nav pill */}
+              <div className="neu-extruded rounded-full flex justify-around items-center px-2 py-2">
+                <NavButton
+                  active={currentScreen === "home"}
+                  onClick={() => navigate("home")}
+                  icon={
+                    <Heart
+                      className={cn(
+                        "w-6 h-6",
+                        currentScreen === "home"
+                          ? "text-accent-terracotta"
+                          : "text-text-main/40",
+                      )}
+                    />
+                  }
+                />
+                {/* ─── Ping button - inline in nav so backdrop never blocks it ─── */}
+                <div className="flex-shrink-0">
+                  <HapticPingButton compact />
                 </div>
-              </motion.div>
-            </>
+                <NavButton
+                  active={currentScreen === "feed"}
+                  onClick={() => navigate("feed")}
+                  icon={
+                    <Users
+                      className={cn(
+                        "w-6 h-6",
+                        currentScreen === "feed"
+                          ? "text-accent-terracotta"
+                          : "text-text-main/40",
+                      )}
+                    />
+                  }
+                />
+                <NavButton
+                  active={currentScreen === "settings"}
+                  onClick={() => navigate("settings")}
+                  icon={
+                    <Settings
+                      className={cn(
+                        "w-6 h-6",
+                        currentScreen === "settings"
+                          ? "text-accent-terracotta"
+                          : "text-text-main/40",
+                      )}
+                    />
+                  }
+                />
+              </div>
+            </motion.div>
           )}
         </div>
       </AmbientGlowWrapper>

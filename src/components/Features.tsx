@@ -6,7 +6,7 @@ import { NeuCard, NeuButton } from "@/src/components/ui/Neumorphic";
 import { sendPing } from "@/src/lib/api";
 
 // 1. "Thinking of You" Haptic Ping Button
-export const HapticPingButton = () => {
+export const HapticPingButton = ({ compact = false }: { compact?: boolean }) => {
   const [isPressing, setIsPressing] = React.useState(false);
   const [isSuccess, setIsSuccess] = React.useState(false);
   const [isRateLimited, setIsRateLimited] = React.useState(false);
@@ -18,7 +18,8 @@ export const HapticPingButton = () => {
     }
   };
 
-  const handleStart = () => {
+  const handleStart = (e: React.TouchEvent | React.MouseEvent) => {
+    e.preventDefault(); // prevent ghost click on mobile
     if (isRateLimited) return;
     setIsPressing(true);
     timerRef.current = setTimeout(async () => {
@@ -36,11 +37,41 @@ export const HapticPingButton = () => {
     }, 1500);
   };
 
-  const handleEnd = () => {
+  const handleEnd = (e?: React.TouchEvent | React.MouseEvent) => {
+    e?.preventDefault();
     setIsPressing(false);
     if (timerRef.current) clearTimeout(timerRef.current);
   };
 
+  // ── Compact: fits inside the nav pill ────────────────────────────────────
+  if (compact) {
+    return (
+      <button
+        onMouseDown={handleStart}
+        onMouseUp={handleEnd}
+        onMouseLeave={handleEnd}
+        onTouchStart={handleStart}
+        onTouchEnd={handleEnd}
+        aria-label="Hold to send a ping"
+        className={cn(
+          "w-11 h-11 rounded-full flex items-center justify-center transition-all duration-200 touch-none select-none",
+          isPressing ? "scale-90 bg-accent-terracotta/20" : "hover:bg-white/[0.05]",
+          isSuccess && "text-accent-terracotta",
+          isRateLimited && "opacity-40"
+        )}
+      >
+        <Heart
+          className={cn(
+            "w-5 h-5 transition-all duration-300",
+            isSuccess ? "fill-accent-terracotta text-accent-terracotta scale-125" : "text-text-main/40",
+            isPressing && "text-accent-terracotta scale-110"
+          )}
+        />
+      </button>
+    );
+  }
+
+  // ── Full-size: standalone floating view ───────────────────────────────────
   return (
     <div className="flex flex-col items-center gap-4">
       <div className="relative">
@@ -61,7 +92,7 @@ export const HapticPingButton = () => {
           onTouchStart={handleStart}
           onTouchEnd={handleEnd}
           className={cn(
-            "w-24 h-24 rounded-full transition-all duration-300 flex items-center justify-center",
+            "w-24 h-24 rounded-full transition-all duration-300 flex items-center justify-center touch-none select-none",
             isPressing ? "neu-depressed scale-95" : "neu-extruded",
             isSuccess && "text-accent-terracotta"
           )}
