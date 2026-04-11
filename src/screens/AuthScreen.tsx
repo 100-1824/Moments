@@ -118,7 +118,7 @@ export default function AuthScreen({ onNext }: { onNext: () => void }) {
               </div>
 
               {/* Only show name input if we got a 404/needs_registration error */}
-              (needsRegistration || name) && (
+              {(needsRegistration || name) && (
                 <motion.div
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: "auto" }}
