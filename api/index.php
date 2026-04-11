@@ -80,6 +80,6 @@ try {
         'status' => 'error',
         'message' => 'Internal Server Error',
         'error' => $errorMsg,
-        'location' => config('app.debug') ? $errorLocation : null,
+        'location' => (isset($_ENV['APP_DEBUG']) && $_ENV['APP_DEBUG'] === 'true') ? $errorLocation : null,
     ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
 }
