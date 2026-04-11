@@ -103,8 +103,11 @@ class AuthController extends Controller
             $debugData = config('app.debug') ? [
                 'expected' => $cachedOtp,
                 'provided' => $code,
+                'key'      => "otp_{$email}",
                 'driver'   => config('cache.default'),
                 'prefix'   => config('cache.prefix'),
+                'server_time' => now()->toDateTimeString(),
+                'unix_time'   => time(),
             ] : [];
             
             return $this->error('Invalid or expired verification code.', 422, $debugData);
