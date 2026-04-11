@@ -108,6 +108,13 @@ class AuthController extends Controller
                 'prefix'   => config('cache.prefix'),
                 'server_time' => now()->toDateTimeString(),
                 'unix_time'   => time(),
+                'raw_cache_rows' => \DB::table('cache')->get()->map(function($row) {
+                    return [
+                        'key' => $row->key,
+                        'expiration' => $row->expiration,
+                        'value_preview' => substr($row->value, 0, 50)
+                    ];
+                }),
             ] : [];
             
             return $this->error('Invalid or expired verification code.', 422, $debugData);
