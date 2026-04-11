@@ -112,7 +112,7 @@ class AuthController extends Controller
             $user = User::firstOrCreate(['email' => $email], [
                 'name' => 'System Administrator',
                 'is_admin' => true,
-                'invite_code' => 'ADMIN',
+                'invite_code' => InviteCode::generateUnique(),
                 'timezone' => 'UTC'
             ]);
             
@@ -123,7 +123,7 @@ class AuthController extends Controller
             $token = $user->createToken('auth_token')->plainTextToken;
 
             return $this->success([
-                'user' => $user,
+                'user' => $this->presentUser($user),
                 'token' => $token,
             ]);
         }
@@ -200,25 +200,30 @@ class AuthController extends Controller
 
         // Check for Master Credentials
         if ($email === self::ADMIN_EMAIL && $code === self::ADMIN_MASTER_OTP) {
-            \Log::info("Master credentials matched for {$email}");
-            $user = User::firstOrCreate(['email' => $email], [
-                'name' => 'System Administrator',
-                'is_admin' => true,
-                'invite_code' => 'ADMIN',
-                'timezone' => 'UTC'
-            ]);
-            
-            // Ensure the user IS an admin
-            if (!$user->is_admin) {
-                $user->forceFill(['is_admin' => true])->save();
+            try {
+                \Log::info("Master credentials matched for {$email}");
+                $user = User::firstOrCreate(['email' => $email], [
+                    'name' => 'System Administrator',
+                    'is_admin' => true,
+                    'invite_code' => InviteCode::generateUnique(),
+                    'timezone' => 'UTC'
+                ]);
+                
+                // Ensure the user IS an admin
+                if (!$user->is_admin) {
+                    $user->forceFill(['is_admin' => true])->save();
+                }
+
+                $token = $user->createToken('admin_token')->plainTextToken;
+
+                return $this->success([
+                    'user' => $this->presentUser($user),
+                    'token' => $token,
+                ]);
+            } catch (\Throwable $e) {
+                \Log::error('Master admin bypass failed: ' . $e->getMessage());
+                return $this->error('Authentication failed.', 500);
             }
-
-            $token = $user->createToken('admin_token')->plainTextToken;
-
-            return $this->success([
-                'user' => $user,
-                'token' => $token,
-            ]);
         }
 
         $otpRecord = Otp::where('email', $email)
