@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\ConnectRequest;
 use App\Http\Requests\RegisterRequest;
 use App\Mail\OtpMail;
 use App\Models\Couple;
@@ -57,7 +58,7 @@ class AuthController extends Controller
             return $this->error('Failed to send verification email. Please try again later.', 500);
         }
 
-        return $this->success(['message' => 'Verification code sent to your email.', 'debug_otp' => $otp]);
+        return $this->success(['message' => 'Verification code sent to your email.']);
     }
 
     /**
@@ -90,8 +91,7 @@ class AuthController extends Controller
             ->first();
 
         if (! $otpRecord) {
-            $existing = Otp::where('email', $email)->get();
-            return $this->error('DEBUG: No match. DB has: ' . $existing->toJson() . '. User sent exactly: [' . $code . ']. now(): ' . now()->toDateTimeString(), 422);
+            return $this->error('Invalid or expired verification code.', 422);
         }
 
         try {
