@@ -74,7 +74,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
     const { user, token } = await api.verifyOtp({ email, code, name, timezone });
     api.setToken(token);
+    // Optimistic state so the UI can proceed immediately
     setState((s) => ({ ...s, user, token, partner: null, dailyCount: 0 }));
+    // Then force a full server sync to pick up any existing couple_id / partner
+    try {
+      const { user: freshUser, partner: freshPartner } = await api.me();
+      setState((s) => ({ ...s, user: freshUser, partner: freshPartner }));
+    } catch {
+      // Non-fatal: optimistic state still lets the app render
+    }
   };
 
   const verifyAdminOtp = async (email: string, code: string) => {
@@ -92,6 +100,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const connect = async (partnerCode: string) => {
     const { user, partner } = await api.connect(partnerCode);
     setState((s) => ({ ...s, user, partner }));
+    // Force a full server sync after connecting to ensure couple_id is populated
+    try {
+      const { user: freshUser, partner: freshPartner } = await api.me();
+      setState((s) => ({ ...s, user: freshUser, partner: freshPartner }));
+    } catch {
+      // Non-fatal: optimistic pair state is already set
+    }
   };
 
   const refreshMe = async () => {

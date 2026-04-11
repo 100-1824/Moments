@@ -333,34 +333,37 @@ function ConnectionOversightTab() {
                 </div>
               </div>
 
-              {/* Unlink action */}
-              {couple.status === "active" && (
-                confirming === couple.id ? (
-                  <div className="flex gap-2 flex-shrink-0">
-                    <button
-                      onClick={() => handleUnlink(couple.id)}
-                      disabled={!!unlinking}
-                      className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-xl bg-red-500/15 text-red-600 font-bold hover:bg-red-500/25 transition-colors disabled:opacity-40"
-                    >
-                      <Unlink className={cn("w-3 h-3", unlinking === couple.id && "animate-spin")} />
-                      Confirm
-                    </button>
-                    <button
-                      onClick={() => setConfirming(null)}
-                      className="text-xs px-3 py-2 rounded-xl text-text-main/40 neu-depressed-sm"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                ) : (
+              {/* Unlink / Purge action — available for ALL statuses (archived zombies included) */}
+              {confirming === couple.id ? (
+                <div className="flex gap-2 flex-shrink-0">
                   <button
-                    onClick={() => setConfirming(couple.id)}
-                    className="flex items-center gap-1.5 text-xs px-3 py-2 neu-button rounded-xl text-text-main/50 hover:text-red-500 transition-colors flex-shrink-0"
+                    onClick={() => handleUnlink(couple.id)}
+                    disabled={!!unlinking}
+                    className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-xl bg-red-500/15 text-red-600 font-bold hover:bg-red-500/25 transition-colors disabled:opacity-40"
                   >
-                    <Unlink className="w-3 h-3" />
-                    Unlink
+                    <Unlink className={cn("w-3 h-3", unlinking === couple.id && "animate-spin")} />
+                    Confirm Purge
                   </button>
-                )
+                  <button
+                    onClick={() => setConfirming(null)}
+                    className="text-xs px-3 py-2 rounded-xl text-text-main/40 neu-depressed-sm"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setConfirming(couple.id)}
+                  className={cn(
+                    "flex items-center gap-1.5 text-xs px-3 py-2 neu-button rounded-xl transition-colors flex-shrink-0",
+                    couple.status === "active"
+                      ? "text-text-main/50 hover:text-red-500"
+                      : "text-amber-500/70 hover:text-amber-500 border border-amber-500/20"
+                  )}
+                >
+                  <Unlink className="w-3 h-3" />
+                  {couple.status === "active" ? "Unlink" : "Purge Zombie"}
+                </button>
               )}
             </NeuCard>
           </motion.div>

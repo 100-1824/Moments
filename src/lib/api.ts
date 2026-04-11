@@ -12,6 +12,9 @@ const BASE = "/api";
 
 // ─── Storage helpers ────────────────────────────────────────────────────────
 
+// noinspection JSUnusedGlobalSymbols
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+// SNYK-JS-IGNORE-NEXT-LINE: HardcodedNonCryptoSecret - localStorage key names, not secrets
 export const TOKEN_KEY = "moments_token";
 export const QUEUE_KEY = "moments_offline_queue";
 
