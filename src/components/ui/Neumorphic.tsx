@@ -10,13 +10,17 @@ interface NeuProps extends React.HTMLAttributes<HTMLDivElement> {
 export const NeuCard = React.forwardRef<HTMLDivElement, NeuProps>(
   ({ className, variant = "extruded", size = "md", ...props }, ref) => {
     return (
-      <div
+      <motion.div
         ref={ref}
+        initial="hidden"
+        whileInView="show"
+        viewport={{ once: true }}
+        variants={staggerItem}
         className={cn(
           variant === "extruded"
             ? size === "sm" ? "neu-extruded-sm" : "neu-extruded"
             : size === "sm" ? "neu-depressed-sm" : "neu-depressed",
-          "rounded-[32px] p-6",
+          "rounded-[32px] p-6 transition-all duration-300",
           className
         )}
         {...props}
@@ -26,7 +30,7 @@ export const NeuCard = React.forwardRef<HTMLDivElement, NeuProps>(
 );
 
 interface NeuButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  size?: "sm" | "md" | "lg";
+  size?: "sm" | "md" | "lg" | "xl";
   active?: boolean;
 }
 
@@ -39,10 +43,18 @@ export const NeuButton = React.forwardRef<HTMLButtonElement, NeuButtonProps>(
       <button
         ref={ref}
         className={cn(
-          "neu-button rounded-full flex items-center justify-center transition-all duration-200 px-4",
-          !hasWidth && (size === "sm" ? "w-10" : size === "md" ? "w-16" : "w-20"),
-          !hasHeight && (size === "sm" ? "h-10" : size === "md" ? "h-16" : "h-20"),
-          active && "neu-depressed",
+          "neu-button rounded-full flex items-center justify-center transition-all duration-300 font-bold",
+          !hasWidth && (
+            size === "sm" ? "w-10 h-10 px-0" : 
+            size === "md" ? "w-16 h-16" : 
+            size === "xl" ? "w-24 h-24" : "w-20 h-20"
+          ),
+          !hasHeight && (
+            size === "sm" ? "h-10" : 
+            size === "md" ? "h-16" : 
+            size === "xl" ? "h-24" : "h-20"
+          ),
+          active && "neu-depressed text-accent-terracotta tact-glow",
           className
         )}
         {...props}
@@ -57,7 +69,7 @@ export const NeuInput = React.forwardRef<HTMLInputElement, React.InputHTMLAttrib
       <input
         ref={ref}
         className={cn(
-          "neu-depressed-sm w-full rounded-2xl px-4 py-3 bg-transparent outline-none text-text-main placeholder:text-text-main/40",
+          "neu-depressed-sm w-full rounded-2xl px-5 py-4 bg-transparent outline-none text-text-main placeholder:text-text-muted transition-all duration-300 focus:tact-border",
           className
         )}
         {...props}
@@ -72,7 +84,7 @@ export const NeuTextArea = React.forwardRef<HTMLTextAreaElement, React.TextareaH
       <textarea
         ref={ref}
         className={cn(
-          "neu-depressed-sm w-full rounded-2xl px-4 py-3 bg-transparent outline-none text-text-main placeholder:text-text-main/40 resize-none",
+          "neu-depressed-sm w-full rounded-2xl px-5 py-4 bg-transparent outline-none text-text-main placeholder:text-text-muted transition-all duration-300 focus:tact-border resize-none",
           className
         )}
         {...props}
@@ -80,6 +92,52 @@ export const NeuTextArea = React.forwardRef<HTMLTextAreaElement, React.TextareaH
     );
   }
 );
+
+export const BentoCard = React.forwardRef<HTMLDivElement, NeuProps>(
+  ({ className, variant = "extruded", size = "md", ...props }, ref) => {
+    return (
+      <motion.div
+        ref={ref}
+        variants={staggerItem}
+        whileHover={{ y: -8, scale: 1.01, transition: { type: "spring", stiffness: 300, damping: 20 } }}
+        whileTap={{ scale: 0.98 }}
+        className={cn(
+          "neu-extruded rounded-[32px] p-8 flex flex-col gap-4 h-full border border-white/5 relative overflow-hidden group transition-shadow duration-500 hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.5)]",
+          className
+        )}
+        {...props}
+      />
+    );
+  }
+);
+
+// ─── Animation Variants ──────────────────────────────────────────────────────
+
+export const staggerContainer = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+      delayChildren: 0.2,
+    },
+  },
+};
+
+export const staggerItem = {
+  hidden: { opacity: 0, y: 30, filter: "blur(10px)" },
+  show: { 
+    opacity: 1, 
+    y: 0, 
+    filter: "blur(0px)",
+    transition: {
+      type: "spring",
+      stiffness: 100,
+      damping: 15,
+      mass: 1
+    }
+  },
+};
 
 export const DailyProgress = ({ count, max = 3 }: { count: number; max?: number }) => {
   return (
@@ -89,12 +147,13 @@ export const DailyProgress = ({ count, max = 3 }: { count: number; max?: number 
           key={i}
           initial={false}
           animate={{
-            scale: i < count ? 1.1 : 1,
+            scale: i < count ? 1.2 : 1,
+            backgroundColor: i < count ? "var(--color-accent-terracotta)" : "rgba(255,255,255,0.05)",
           }}
           className={cn(
             "w-4 h-4 rounded-full transition-all duration-300",
             i < count 
-              ? "neu-extruded bg-accent-terracotta/20 shadow-[4px_4px_8px_rgba(217,119,87,0.3),-4px_-4px_8px_#FFFFFF]" 
+              ? "tact-glow shadow-[0_0_10px_rgba(217,119,87,0.5)]" 
               : "neu-depressed-sm"
           )}
         />

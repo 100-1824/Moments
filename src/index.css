@@ -1,14 +1,18 @@
 @import "tailwindcss";
 
 @theme {
-  --color-background: #F2EFE9;
-  --color-highlight: #FFFFFF;
-  --color-shadow: #D1CDC4;
+  --color-background: #09090B;
+  --color-surface: #18181B;
+  --color-surface-brighter: #27272A;
+  --color-highlight: rgba(255, 255, 255, 0.05);
+  --color-shadow: rgba(0, 0, 0, 0.4);
   --color-accent-terracotta: #D97757;
-  --color-accent-sage: #8A9A5B;
-  --color-text-main: #4A453E;
+  --color-accent-terracotta-muted: rgba(217, 119, 87, 0.2);
+  --color-text-main: #FAFAFA;
+  --color-text-muted: #A1A1AA;
   
-  --font-sans: "Nunito", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Geist Sans", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono", "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 }
 
 @layer base {
@@ -22,35 +26,44 @@
 }
 
 @utility neu-extruded {
-  background-color: var(--color-background);
+  background-color: var(--color-surface);
+  border: 1px solid rgba(255, 255, 255, 0.03);
   box-shadow: 
-    8px 8px 16px var(--color-shadow),
-    -8px -8px 16px var(--color-highlight);
+    0 10px 30px -10px var(--color-shadow),
+    0 4px 10px -5px var(--color-shadow);
 }
 
 @utility neu-extruded-sm {
-  background-color: var(--color-background);
+  background-color: var(--color-surface);
+  border: 1px solid rgba(255, 255, 255, 0.03);
   box-shadow: 
-    4px 4px 8px var(--color-shadow),
-    -4px -4px 8px var(--color-highlight);
+    0 4px 12px -2px var(--color-shadow);
 }
 
 @utility neu-depressed {
   background-color: var(--color-background);
   box-shadow: 
-    inset 8px 8px 16px var(--color-shadow),
-    inset -8px -8px 16px var(--color-highlight);
+    inset 0 2px 4px 0 var(--color-shadow);
+  border: 1px solid rgba(255, 255, 255, 0.02);
 }
 
 @utility neu-depressed-sm {
   background-color: var(--color-background);
   box-shadow: 
-    inset 4px 4px 8px var(--color-shadow),
-    inset -4px -4px 8px var(--color-highlight);
+    inset 0 1px 2px 0 var(--color-shadow);
+  border: 1px solid rgba(255, 255, 255, 0.01);
+}
+
+@utility tact-border {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+@utility tact-glow {
+  box-shadow: 0 0 20px 0 var(--color-accent-terracotta-muted);
 }
 
 @utility neu-button {
-  @apply neu-extruded transition-all duration-200 active:neu-depressed active:scale-[0.98];
+  @apply neu-extruded transition-all duration-200 active:neu-depressed active:scale-[0.97] hover:bg-surface-brighter;
 }
 
 @utility perspective-1000 {

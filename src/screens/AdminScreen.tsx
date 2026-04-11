@@ -4,13 +4,14 @@ import {
   Users, Heart, ShieldAlert, BarChart3, Settings2,
   Activity, Zap, Server, RefreshCw, Unlink, Lock,
   Wifi, WifiOff, Database, HardDrive, ChevronDown, ChevronUp,
-  Search, X, AlertTriangle, CheckCircle, Clock, ArrowLeft,
+  Search, X, AlertTriangle, CheckCircle, Clock, ArrowLeft, LogOut,
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, LineChart, Line, Cell,
 } from "recharts";
-import { getToken } from "@/src/lib/api";
+import * as api from "@/src/lib/api";
+import { useAuth } from "@/src/contexts/AuthContext";
 import { motion, AnimatePresence } from "motion/react";
 import { cn } from "@/src/lib/utils";
 
@@ -64,63 +65,76 @@ interface Paginated<T> {
   total: number;
 }
 
-// ─── Admin API helpers ───────────────────────────────────────────────────────
-
-async function adminFetch<T>(path: string, opts: RequestInit = {}): Promise<T> {
-  const token = getToken();
-  const res = await fetch(`/api/admin${path}`, {
-    ...opts,
-    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json", ...opts.headers },
-  });
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    throw new Error(body.message || `HTTP ${res.status}`);
-  }
-  return res.json();
-}
-
 // ─── Sub-components ──────────────────────────────────────────────────────────
 
 const TabButton = ({ active, onClick, icon, label }: { active: boolean; onClick: () => void; icon: React.ReactNode; label: string }) => (
   <button
     onClick={onClick}
     className={cn(
-      "flex items-center gap-2 px-4 py-2.5 rounded-2xl text-sm font-semibold transition-all duration-200 whitespace-nowrap",
+      "flex items-center gap-3 px-6 py-4 rounded-[20px] text-sm font-black transition-all duration-300 whitespace-nowrap uppercase tracking-widest",
       active
-        ? "neu-depressed text-accent-terracotta"
-        : "hover:bg-text-main/5 text-text-main/50"
+        ? "neu-depressed text-accent-terracotta tact-glow"
+        : "text-text-muted hover:text-text-main hover:bg-white/5"
     )}
   >
     {icon}
-    <span className="hidden sm:inline">{label}</span>
+    <span className="hidden lg:inline">{label}</span>
   </button>
 );
 
 const StatusBadge = ({ status }: { status: string }) => (
   <span className={cn(
-    "text-xs font-bold px-2.5 py-1 rounded-full",
-    status === "ok" ? "bg-green-500/15 text-green-700" :
-    status === "error" ? "bg-red-500/15 text-red-600" :
-    "bg-amber-500/15 text-amber-700"
+    "text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-tighter",
+    status === "ok" ? "bg-accent-sage/10 text-accent-sage" :
+    status === "error" ? "bg-accent-terracotta/10 text-accent-terracotta" :
+    "bg-white/5 text-text-muted border border-white/5"
   )}>
-    {status.toUpperCase()}
+    {status}
   </span>
 );
 
 const LoadingSpinner = () => (
-  <div className="flex items-center justify-center py-12">
-    <div className="w-8 h-8 rounded-full border-2 border-accent-terracotta border-t-transparent animate-spin" />
+  <div className="flex items-center justify-center py-24">
+    <div className="w-12 h-12 rounded-full border-4 border-accent-terracotta/20 border-t-accent-terracotta animate-spin shadow-[0_0_20px_rgba(217,119,87,0.2)]" />
   </div>
 );
 
 // ─── Tooltip style ───────────────────────────────────────────────────────────
 const NEU_TOOLTIP = {
   borderRadius: "16px",
-  border: "none",
-  backgroundColor: "rgba(235, 240, 243, 0.97)",
-  boxShadow: "4px 4px 8px rgba(166,171,189,0.25), -4px -4px 8px #FFFFFF",
+  border: "1px solid rgba(255,255,255,0.05)",
+  backgroundColor: "#18181B",
+  boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.5)",
   fontSize: "12px",
+  color: "#FAFAFA"
 };
+// ─── Utility ───────────────────────────────────────────────────────────────
+async function adminFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const token = localStorage.getItem("moments_token");
+  const headers = {
+    ...options.headers,
+    "Authorization": `Bearer ${token}`,
+    "Accept": "application/json",
+    "Content-Type": "application/json",
+  };
+  
+  const baseUrl = import.meta.env.VITE_API_BASE_URL || "/api";
+  const res = await fetch(`${baseUrl}/admin${path}`, {
+    ...options,
+    headers,
+  });
+  
+  if (!res.ok) {
+    if (res.status === 401) {
+      localStorage.removeItem("moments_token");
+      window.location.reload();
+    }
+    throw new Error(`Admin API Error: ${res.status}`);
+  }
+  
+  return res.json();
+}
+
 
 // ─── Module 1: User Registry ─────────────────────────────────────────────────
 
@@ -715,7 +729,7 @@ function InfraHealthTab() {
               )}>
                 <div className={cn(
                   "w-9 h-9 rounded-full flex items-center justify-center",
-                  isOk ? "bg-green-500/15 text-green-700" : "bg-red-500/15 text-red-500"
+isOk ? "bg-green-500/15 text-green-700" : "bg-red-500/15 text-red-500"
                 )}>
                   {isOk
                     ? <CheckCircle className="w-4 h-4" />
@@ -750,140 +764,249 @@ function InfraHealthTab() {
 
 // ─── Main AdminScreen ─────────────────────────────────────────────────────────
 
-type AdminTab = "overview" | "users" | "couples" | "media" | "engagement" | "infra";
-
-interface AdminAnalytics {
-  users_total: number;
-  couples_total: number;
-  moments_total: number;
-  moments_by_type: { image: number; audio: number };
-  moments_encrypted: number;
+// ─── Module 6: Dashboard Overview (Nexus) ──────────────────────────────────
+interface MetricCardProps {
+  label: string;
+  value: string | number;
+  icon: React.ElementType;
+  trend?: string;
+  color?: string;
+  className?: string;
 }
 
-export function AdminScreen({ onBack }: { onBack: () => void }) {
-  const [activeTab, setActiveTab] = useState<AdminTab>("overview");
-  const [analytics, setAnalytics] = useState<AdminAnalytics | null>(null);
-  const [error, setError] = useState<string | null>(null);
+const MetricCard = ({ label, value, icon: Icon, trend, color = "accent-terracotta", className }: MetricCardProps) => (
+  <NeuCard className={cn("flex flex-col h-full group", className)}>
+    <div className="flex items-center justify-between mb-4">
+      <div className={cn("p-2.5 rounded-xl bg-surface-main border border-white/5 shadow-tactile-sm transition-transform group-hover:scale-110")}>
+        <Icon className={cn("w-5 h-5", `text-${color}`)} />
+      </div>
+      {trend && (
+        <span className="text-[10px] font-black text-green-500 bg-green-500/10 px-2 py-0.5 rounded-full uppercase tracking-widest">
+          {trend}
+        </span>
+      )}
+    </div>
+    <div>
+      <h3 className="text-[10px] font-black text-text-muted uppercase tracking-[0.2em] mb-1">{label}</h3>
+      <p className="text-3xl font-black text-text-main tracking-tighter">{value}</p>
+    </div>
+  </NeuCard>
+);
 
-  useEffect(() => {
-    adminFetch<{ data: AdminAnalytics }>("/analytics")
-      .then(r => setAnalytics(r.data))
-      .catch(e => setError(e.message));
+function DashboardOverview({ analytics }: { analytics: api.AdminAnalytics | null }) {
+  if (!analytics) return <LoadingSpinner />;
+
+  const typeData = [
+    { name: "Visual", value: analytics.moments_by_type.image, color: "#D97757" },
+    { name: "Auditory", value: analytics.moments_by_type.audio, color: "#8A9A5B" },
+  ];
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-12 grid-rows-none md:grid-rows-2 gap-6">
+      {/* Primary Stats */}
+      <div className="md:col-span-4 h-full">
+        <MetricCard label="Total Operatives" value={analytics.users_total} icon={Users} trend="+3.2%" />
+      </div>
+      <div className="md:col-span-4 h-full">
+        <MetricCard label="Active Couples" value={analytics.couples_total} icon={Heart} trend="+1.5%" color="accent-sage" />
+      </div>
+      <div className="md:col-span-4 h-full">
+        <MetricCard label="Total Fragments" value={analytics.moments_total} icon={Zap} trend="+8.1%" color="yellow-500" />
+      </div>
+
+      {/* Breakdown Chart (Bento Large) */}
+      <div className="md:col-span-8 h-full">
+        <NeuCard className="flex flex-col h-full bg-surface-main/20">
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center gap-2">
+              <BarChart3 className="w-4 h-4 text-text-main/40" />
+              <h3 className="text-xs font-black text-text-muted uppercase tracking-widest">Temporal Analysis</h3>
+            </div>
+            <div className="flex gap-4">
+              {typeData.map(d => (
+                <div key={d.name} className="flex items-center gap-1.5">
+                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: d.color }} />
+                  <span className="text-[10px] font-bold text-text-muted uppercase">{d.name}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="flex-1 min-h-[160px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={typeData} layout="vertical" margin={{ left: -20, right: 20 }}>
+                <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.03} horizontal={false} />
+                <XAxis type="number" hide />
+                <YAxis dataKey="name" type="category" fontSize={11} axisLine={false} tickLine={false} stroke="rgba(255,255,255,0.3)" />
+                <Tooltip contentStyle={NEU_TOOLTIP} cursor={{ fill: "rgba(255,255,255,0.02)" }} />
+                <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={24}>
+                  {typeData.map((entry, index) => (
+                    <Cell key={index} fill={entry.color} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </NeuCard>
+      </div>
+
+      {/* Security Module */}
+      <div className="md:col-span-4 h-full">
+        <NeuCard className="flex flex-col justify-between h-full bg-accent-terracotta/5 border border-accent-terracotta/10">
+          <div>
+            <div className="flex items-center gap-2 mb-4">
+              <Lock className="w-4 h-4 text-accent-terracotta" />
+              <h3 className="text-xs font-black text-accent-terracotta uppercase tracking-[0.2em]">Safety Protocol</h3>
+            </div>
+            <p className="text-sm font-semibold text-text-main/80 mb-6">
+              <span className="text-accent-terracotta font-black">{analytics.moments_encrypted}</span> moments are currently protected via end-to-end encryption.
+            </p>
+          </div>
+          <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
+            <motion.div 
+              initial={{ width: 0 }}
+              animate={{ width: `${(analytics.moments_encrypted / analytics.moments_total) * 100}%` }}
+              className="h-full bg-accent-terracotta"
+            />
+          </div>
+        </NeuCard>
+      </div>
+    </div>
+  );
+}
+
+type AdminTab = "overview" | "users" | "couples" | "media" | "engagement" | "infra";
+
+export function AdminScreen({ onBack }: { onBack: () => void }) {
+  const [activeTab, setActiveTab] = React.useState<AdminTab>("overview");
+  const [analytics, setAnalytics] = React.useState<AdminAnalytics | null>(null);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
+
+  const { logout } = useAuth();
+
+  React.useEffect(() => {
+    setLoading(true);
+    api.getAdminAnalytics()
+      .then(setAnalytics)
+      .catch(err => {
+        console.error("Analytics fetch failed:", err);
+        setError("Nexus authorization failed. Check backend credentials.");
+      })
+      .finally(() => setLoading(false));
   }, []);
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      onBack();
+    } catch (e) {
+      onBack();
+    }
+  };
 
   if (error) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center p-6 min-h-screen">
-        <ShieldAlert className="w-16 h-16 text-accent-terracotta mb-4" />
-        <h2 className="text-xl font-bold text-text-main mb-2">Access Denied</h2>
-        <p className="text-text-main/60 text-center text-sm">{error}</p>
-        <NeuButton onClick={onBack} className="mt-6">Return to App</NeuButton>
+      <div className="min-h-screen bg-bg-main flex flex-col items-center justify-center p-6 bg-deep-dots">
+        <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center mb-6 border border-red-500/20 text-red-500">
+          <ShieldAlert className="w-8 h-8" />
+        </div>
+        <h2 className="text-2xl font-black text-text-main mb-3 uppercase tracking-tighter italic text-center">Protocol Denied</h2>
+        <p className="text-text-muted text-center text-sm font-medium mb-8 max-w-xs leading-relaxed">{error}</p>
+        <NeuButton onClick={onBack} size="lg" className="text-accent-terracotta px-8">Return to Portal</NeuButton>
       </div>
     );
   }
 
-  const overviewChartData = analytics ? [
-    { name: "Image", total: analytics.moments_by_type.image },
-    { name: "Audio", total: analytics.moments_by_type.audio },
-    { name: "Encrypted", total: analytics.moments_encrypted },
-  ] : [];
-
-  const tabs: { id: AdminTab; icon: React.ReactNode; label: string }[] = [
-    { id: "overview",   icon: <BarChart3 className="w-4 h-4" />,  label: "Overview"    },
-    { id: "users",      icon: <Users className="w-4 h-4" />,       label: "Users"       },
-    { id: "couples",    icon: <Heart className="w-4 h-4" />,       label: "Connections" },
-    { id: "media",      icon: <Activity className="w-4 h-4" />,    label: "Media"       },
-    { id: "engagement", icon: <Zap className="w-4 h-4" />,         label: "Engagement"  },
-    { id: "infra",      icon: <Server className="w-4 h-4" />,      label: "Infra"       },
+  const tabs: { id: AdminTab; icon: React.ElementType; label: string }[] = [
+    { id: "overview",   icon: BarChart3, label: "Nexus"    },
+    { id: "users",      icon: Users,      label: "Registry" },
+    { id: "couples",    icon: Heart,      label: "Couplings" },
+    { id: "media",      icon: Activity,   label: "Storage"  },
+    { id: "engagement", icon: Zap,        label: "Flux"     },
+    { id: "infra",      icon: Server,     label: "Node"      },
   ];
 
   return (
-    <div className="flex-1 flex flex-col min-h-screen bg-bg-main overflow-y-auto">
-      {/* Header */}
-      <div className="sticky top-0 z-10 bg-bg-main/90 backdrop-blur-md border-b border-text-main/5">
-        <div className="max-w-6xl mx-auto px-4 pt-5 pb-3">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <button 
-                onClick={onBack}
-                className="p-2 -ml-2 hover:bg-text-main/5 rounded-xl transition-colors text-text-main/40 hover:text-text-main"
-              >
-                <ArrowLeft className="w-5 h-5" />
-              </button>
-              <Settings2 className="w-7 h-7 text-accent-terracotta" />
-              <h1 className="text-2xl font-black text-text-main tracking-tight">Admin Console</h1>
-            </div>
-            {analytics && (
-              <div className="hidden sm:flex items-center gap-4 text-xs text-text-main/40">
-                <span><span className="font-bold text-text-main">{analytics.users_total}</span> users</span>
-                <span><span className="font-bold text-text-main">{analytics.couples_total}</span> couples</span>
-                <span><span className="font-bold text-accent-terracotta">{analytics.moments_total}</span> moments</span>
-              </div>
-            )}
-          </div>
-          {/* Tab bar */}
-          <div className="flex gap-1 overflow-x-auto pb-1 scrollbar-hide">
-            {tabs.map(t => (
-              <TabButton
-                key={t.id}
-                active={activeTab === t.id}
-                onClick={() => setActiveTab(t.id)}
-                icon={t.icon}
-                label={t.label}
-              />
-            ))}
-          </div>
-        </div>
+    <div className="min-h-screen bg-bg-main text-text-main font-sans selection:bg-accent-terracotta/30 overflow-x-hidden">
+      {/* Background Ambience */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-accent-terracotta/5 blur-[120px] rounded-full translate-x-1/2 -translate-y-1/2" />
+        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-accent-sage/5 blur-[100px] rounded-full -translate-x-1/2 translate-y-1/2" />
+        <div className="absolute inset-0 bg-deep-dots opacity-20" />
       </div>
 
-      {/* Content */}
-      <div className="max-w-6xl mx-auto w-full px-4 py-6 pb-24">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+        {/* Header */}
+        <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="px-2 py-0.5 rounded text-[10px] font-black bg-accent-terracotta text-white uppercase tracking-widest">Master Admin</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+            </div>
+            <h1 className="text-4xl md:text-5xl font-black text-text-main tracking-tighter uppercase italic leading-none">
+              Nexus <span className="text-accent-terracotta">Terminal</span>
+            </h1>
+          </div>
+
+          <NeuButton 
+            onClick={handleLogout}
+            className="group flex items-center gap-2 text-text-muted hover:text-accent-terracotta transition-colors"
+          >
+            <LogOut className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+            <span className="text-xs font-black uppercase tracking-widest">Terminate Session</span>
+          </NeuButton>
+        </header>
+
+        {/* Tactical Nav */}
+        <div className="flex flex-wrap gap-2 mb-8 p-1.5 bg-surface-main/30 backdrop-blur-md rounded-2xl border border-white/[0.03] shadow-inner overflow-x-auto no-scrollbar">
+          {tabs.map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={cn(
+                  "flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-300 whitespace-nowrap",
+                  isActive 
+                    ? "bg-surface-main text-accent-terracotta shadow-tactile-sm border border-white/[0.05]"
+                    : "text-text-muted hover:text-text-main hover:bg-white/[0.02]"
+                )}
+              >
+                <Icon className={cn("w-4 h-4 transition-transform", isActive && "scale-110")} />
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Content Stage */}
         <AnimatePresence mode="wait">
           <motion.div
             key={activeTab}
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -4 }}
-            transition={{ duration: 0.18 }}
+            initial={{ opacity: 0, scale: 0.98, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.98, y: -10 }}
+            transition={{ type: "spring", damping: 25, stiffness: 200 }}
+            className="min-h-[500px]"
           >
-            {activeTab === "overview" && analytics && (
-              <div className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {[
-                    { label: "Total Users",   val: analytics.users_total,    color: "text-text-main",      Icon: Users    },
-                    { label: "Couples Linked", val: analytics.couples_total, color: "text-text-main",      Icon: Heart    },
-                    { label: "Total Moments", val: analytics.moments_total,  color: "text-accent-terracotta", Icon: Activity },
-                  ].map(({ label, val, color, Icon }) => (
-                    <NeuCard key={label} className="flex flex-col gap-2 relative overflow-hidden group">
-                      <div className="absolute top-0 right-0 p-3 opacity-5 group-hover:scale-110 transition-transform duration-500 rounded-bl-full">
-                        <Icon className="w-14 h-14" />
-                      </div>
-                      <p className="text-xs text-text-main/50 uppercase tracking-widest">{label}</p>
-                      <p className={cn("text-4xl font-black", color)}>{val}</p>
-                    </NeuCard>
-                  ))}
+            {loading ? (
+              <div className="w-full h-[400px] flex items-center justify-center">
+                <div className="flex flex-col items-center gap-4">
+                  <div className="w-12 h-12 rounded-full border-t-2 border-accent-terracotta animate-spin" />
+                  <span className="text-[10px] font-black text-text-muted uppercase tracking-[0.3em] animate-pulse">Establishing Connection...</span>
                 </div>
-                <NeuCard className="flex flex-col gap-4 min-h-[300px]">
-                  <h3 className="text-xs font-bold text-text-main/50 uppercase tracking-widest">Media Breakdown</h3>
-                  <div className="flex-1" style={{ minHeight: 240 }}>
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={overviewChartData}>
-                        <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.08} vertical={false} />
-                        <XAxis dataKey="name" fontSize={12} tickLine={false} axisLine={false} stroke="rgba(0,0,0,0.35)" />
-                        <YAxis fontSize={12} tickLine={false} axisLine={false} stroke="rgba(0,0,0,0.35)" />
-                        <Tooltip contentStyle={NEU_TOOLTIP} cursor={{ fill: "rgba(0,0,0,0.02)" }} />
-                        <Bar dataKey="total" fill="#D97757" radius={[4, 4, 0, 0]} barSize={48} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                </NeuCard>
               </div>
+            ) : (
+              <>
+                {activeTab === "overview"   && <DashboardOverview analytics={analytics} />}
+                {activeTab === "users"      && <UserRegistryTab />}
+                {activeTab === "couples"    && <ConnectionOversightTab />}
+                {activeTab === "media"      && <MediaAnalyticsTab />}
+                {activeTab === "engagement" && <EngagementTab />}
+                {activeTab === "infra"      && <InfraHealthTab />}
+              </>
             )}
-            {activeTab === "users"      && <UserRegistryTab />}
-            {activeTab === "couples"    && <ConnectionOversightTab />}
-            {activeTab === "media"      && <MediaAnalyticsTab />}
-            {activeTab === "engagement" && <EngagementTab />}
-            {activeTab === "infra"      && <InfraHealthTab />}
           </motion.div>
         </AnimatePresence>
       </div>

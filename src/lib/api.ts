@@ -347,4 +347,19 @@ export function removeFromOfflineQueue(clientIds: string[]): void {
   localStorage.setItem(QUEUE_KEY, JSON.stringify(q));
 }
 
+// ─── Admin ───────────────────────────────────────────────────────────────────
+
+export interface AdminAnalytics {
+  users_total: number;
+  couples_total: number;
+  moments_total: number;
+  moments_by_type: { image: number; audio: number };
+  moments_encrypted: number;
+}
+
+export async function getAdminAnalytics(): Promise<AdminAnalytics> {
+  const res = await request<{ status: string; data: AdminAnalytics }>("/admin/analytics");
+  return res.data;
+}
+
 export { ApiError };

@@ -90,32 +90,40 @@ export default function App() {
   const [glowColor, setGlowColor] = React.useState("#D97757");
   const [moodColors] = React.useState(["#D97757", "#8A9A5B", "#5797D9"]);
 
-    // Navigate to the correct initial screen once auth is resolved.
-    React.useEffect(() => {
-      if (auth.isLoading) return;
-  
-      const path = window.location.pathname;
-  
-      // Prioritize Admin paths
-      if (path.startsWith('/admin')) {
-        if (auth.user?.is_admin) {
-          setCurrentScreen("admin_dashboard");
-        } else {
-          setCurrentScreen("admin_login");
-        }
-        return;
-      }
+  const [hasInitialized, setHasInitialized] = React.useState(false);
 
-      if (!auth.user) {
-        setCurrentScreen("welcome");
-      } else if (auth.user.is_admin) {
+  // Navigate to the correct initial screen once auth is resolved.
+  React.useEffect(() => {
+    if (auth.isLoading || hasInitialized) return;
+
+    const path = window.location.pathname;
+
+    // Prioritize Admin paths
+    if (path.startsWith("/admin")) {
+      if (auth.user?.is_admin) {
         setCurrentScreen("admin_dashboard");
-      } else if (!auth.user.couple_id) {
-        setCurrentScreen("connect");
       } else {
-        setCurrentScreen("home");
+        setCurrentScreen("admin_login");
       }
-    }, [auth.isLoading, auth.user]);
+    } else if (!auth.user) {
+      setCurrentScreen("welcome");
+    } else if (auth.user.is_admin) {
+      setCurrentScreen("admin_dashboard");
+    } else if (!auth.user.couple_id && !auth.partner) {
+      setCurrentScreen("connect");
+    } else {
+      setCurrentScreen("home");
+    }
+
+    setHasInitialized(true);
+  }, [auth.isLoading, auth.user, hasInitialized]);
+
+  // Handle forcing logout/welcome if user becomes null
+  React.useEffect(() => {
+    if (!auth.isLoading && !auth.user && currentScreen !== "welcome" && currentScreen !== "auth" && !window.location.pathname.startsWith('/admin')) {
+      setCurrentScreen("welcome");
+    }
+  }, [auth.isLoading, auth.user, currentScreen]);
 
   React.useEffect(() => {
     const handleOnline = () => setIsOffline(false);
@@ -154,7 +162,7 @@ export default function App() {
       <AmbientGlowWrapper color={glowColor}>
         <div
           className={cn(
-            "min-h-screen flex flex-col max-w-md mx-auto relative overflow-hidden transition-opacity duration-500",
+            "min-h-screen flex flex-col max-w-screen-xl mx-auto relative overflow-hidden transition-all duration-500 ease-out",
             isOffline && "opacity-60 grayscale-[0.5] pointer-events-none",
           )}
         >
@@ -303,7 +311,7 @@ export default function App() {
               <motion.div
                 initial={{ y: 100 }}
                 animate={{ y: 0 }}
-                className="fixed bottom-0 left-0 right-0 max-w-md mx-auto p-6 bg-background/80 backdrop-blur-md"
+                className="fixed bottom-0 left-0 right-0 max-w-md mx-auto p-6 bg-background/80 backdrop-blur-md z-[140]"
               >
                 <div className="neu-extruded rounded-full flex justify-around items-center p-2">
                   <NavButton
