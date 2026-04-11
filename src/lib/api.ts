@@ -366,3 +366,36 @@ export async function getAdminAnalytics(): Promise<AdminAnalytics> {
 }
 
 export { ApiError };
+
+// ─── Notes (Foggy Mirror Notepad) ────────────────────────────────────────────
+
+export interface ApiNote {
+  id: string;
+  /** null when receiver has not yet revealed */
+  content: string | null;
+  is_author: boolean;
+  is_revealed: boolean;
+  revealed_at: string | null;
+  created_at: string;
+}
+
+export async function getLatestNote(): Promise<ApiNote | null> {
+  const res = await request<{ status: string; data: { note: ApiNote | null } }>("/notes/latest");
+  return res.data.note;
+}
+
+export async function writeNote(content: string): Promise<ApiNote> {
+  const res = await request<{ status: string; data: { note: ApiNote } }>("/notes", {
+    method: "POST",
+    body: JSON.stringify({ content }),
+    headers: { "Content-Type": "application/json" },
+  });
+  return res.data.note;
+}
+
+export async function revealNote(noteId: string): Promise<ApiNote> {
+  const res = await request<{ status: string; data: { note: ApiNote } }>(`/notes/${noteId}/reveal`, {
+    method: "POST",
+  });
+  return res.data.note;
+}

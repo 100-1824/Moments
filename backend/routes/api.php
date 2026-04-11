@@ -8,6 +8,7 @@ use App\Http\Controllers\ExportController;
 use App\Http\Controllers\InteractionController;
 use App\Http\Controllers\MigrationController;
 use App\Http\Controllers\MomentController;
+use App\Http\Controllers\NoteController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -51,6 +52,11 @@ Route::middleware('auth:sanctum')->group(function (): void {
 
     // Tactile interactions
     Route::post('/pings', [InteractionController::class, 'ping']);
+
+    // Foggy Mirror notepad
+    Route::get('/notes/latest', [NoteController::class, 'latest']);
+    Route::post('/notes', [NoteController::class, 'store']);
+    Route::post('/notes/{note}/reveal', [NoteController::class, 'reveal']);
 
     // Data export
     Route::get('/export/archive', [ExportController::class, 'archive']);

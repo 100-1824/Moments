@@ -5,7 +5,7 @@
 
 import * as React from "react";
 import { motion, AnimatePresence, useMotionValue, useTransform, useSpring } from "motion/react";
-import { Heart, Plus, RefreshCw, Zap, Music, Ghost, Camera, Sparkles } from "lucide-react";
+import { Heart, Plus, RefreshCw, Zap, Music, Ghost, Camera, Sparkles, Droplets } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 import { useAuth } from "@/src/contexts/AuthContext";
 import {
@@ -17,11 +17,8 @@ import {
   DailyPrompt,
 } from "@/src/components/Features";
 import { PresenceIndicator } from "@/src/components/AdvancedFeatures";
-import {
-  DigitalLocket,
-  NowPlayingPlayer,
-  FoggyMirror,
-} from "@/src/components/TactileFeatures";
+import { NowPlayingPlayer } from "@/src/components/TactileFeatures";
+
 
 // ─── Liquid Card: premium hover-reactive bento cell ──────────────────────────
 function LiquidCard({
@@ -130,10 +127,12 @@ export default function HomeScreen({
   count,
   onUpload,
   onOutbox,
+  onFoggyMirror,
 }: {
   count: number;
   onUpload: () => void;
   onOutbox: () => void;
+  onFoggyMirror: () => void;
 }) {
   const { partner } = useAuth();
   const [isShaking, setIsShaking] = React.useState(false);
@@ -179,8 +178,8 @@ export default function HomeScreen({
        */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-7 md:[grid-auto-rows:minmax(190px,auto)]">
 
-        {/* ── Card 1: Header & Status — full width mobile, 2/4 desktop ── */}
-        <LiquidCard mdColSpan={2} delay={0} className="min-h-[140px] md:min-h-0">
+        {/* ── Card 1: Header & Status — full width ── */}
+        <LiquidCard mdColSpan={4} delay={0} className="min-h-[140px] md:min-h-0">
           <div className="flex items-start justify-between">
             <div>
               <motion.h2
@@ -212,21 +211,10 @@ export default function HomeScreen({
                 : "No partner linked"}
             </span>
           </div>
-          <div className="flex items-center gap-2 text-text-main/20 text-[11px] font-semibold mt-2">
-            <Zap className="w-3 h-3 flex-shrink-0" />
-            <span>Connection Signal: Strong</span>
-          </div>
         </LiquidCard>
 
-        {/* ── Card 2: Digital Locket — 1/4 col desktop ── */}
-        <LiquidCard delay={0.07} noPadding className="min-h-[180px]">
-          <div className="absolute inset-0">
-            <DigitalLocket imageUrl="https://picsum.photos/seed/locket/800/800" />
-          </div>
-        </LiquidCard>
-
-        {/* ── Card 3: Partner Time / Ambient — 1/4 col desktop ── */}
-        <LiquidCard delay={0.13} className="flex flex-col items-center justify-center gap-3 min-h-[180px]" glowColor="rgba(138,154,91,0.18)">
+        {/* ── Card 2: Partner Time / Ambient — 2/4 col desktop ── */}
+        <LiquidCard mdColSpan={2} delay={0.07} className="flex flex-col items-center justify-center gap-3 min-h-[160px]" glowColor="rgba(138,154,91,0.18)">
           {partnerLocalTime ? (
             <AmbientContext partnerTime={partnerLocalTime} weatherCondition="sunny" />
           ) : (
@@ -235,6 +223,12 @@ export default function HomeScreen({
               <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-center">Awaiting Link</span>
             </div>
           )}
+        </LiquidCard>
+
+        {/* ── Card 3: Foggy Mirror Entry — 2/4 col desktop ── */}
+        <LiquidCard mdColSpan={2} delay={0.13} onClick={onFoggyMirror} glowColor="rgba(100,150,255,0.15)" className="min-h-[160px] flex flex-col justify-center items-center">
+          <Droplets className="w-8 h-8 text-blue-400/50 mb-3" />
+          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-text-main/50">Foggy Mirror</span>
         </LiquidCard>
 
         {/* ── Card 4: Daily Progress — 3/4 col desktop, full mobile ── */}
@@ -287,8 +281,8 @@ export default function HomeScreen({
           </motion.div>
         </LiquidCard>
 
-        {/* ── Card 6: Daily Prompt — 2/4 col desktop, full mobile ── */}
-        <LiquidCard mdColSpan={2} delay={0.31} glowColor="rgba(138,154,91,0.12)" className="min-h-[130px]">
+        {/* ── Card 6: Daily Prompt — 3/4 col desktop, full mobile ── */}
+        <LiquidCard mdColSpan={3} delay={0.31} glowColor="rgba(138,154,91,0.12)" className="min-h-[130px]">
           <div className="flex items-center gap-2 mb-4">
             <Sparkles className="w-4 h-4 text-accent-sage flex-shrink-0" />
             <span className="text-[10px] font-black uppercase tracking-[0.2em] text-accent-sage/70">Daily Prompt</span>
@@ -296,12 +290,7 @@ export default function HomeScreen({
           <DailyPrompt />
         </LiquidCard>
 
-        {/* ── Card 7: Foggy Mirror — 1/4 col desktop, full mobile ── */}
-        <LiquidCard delay={0.37} noPadding className="min-h-[180px]">
-          <div className="absolute inset-0">
-            <FoggyMirror />
-          </div>
-        </LiquidCard>
+
 
         {/* ── Card 8: Now Playing — 1/4 row-span-2 desktop, full mobile ── */}
         <LiquidCard mdRowSpan={2} delay={0.43} glowColor="rgba(217,119,87,0.12)" className="min-h-[160px]">

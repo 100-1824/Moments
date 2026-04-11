@@ -53,6 +53,7 @@ const FeedScreen = React.lazy(() => import("@/src/screens/FeedScreen"));
 const SettingsScreen = React.lazy(() => import("@/src/screens/SettingsScreen"));
 const AdminLoginScreen = React.lazy(() => import("@/src/screens/AdminLoginScreen").then(m => ({ default: m.AdminLoginScreen })));
 const AdminScreen = React.lazy(() => import("@/src/screens/AdminScreen").then(m => ({ default: m.AdminScreen })));
+const FoggyMirrorScreen = React.lazy(() => import("@/src/screens/FoggyMirrorScreen"));
 
 type Screen =
   | "loading"
@@ -68,7 +69,8 @@ type Screen =
   | "privacy"
   | "outbox"
   | "moodboard"
-  | "archive";
+  | "archive"
+  | "foggy_mirror";
 
 function ScreenLoader() {
   return (
@@ -245,7 +247,13 @@ export default function App() {
                   count={auth.dailyCount}
                   onUpload={() => navigate("upload")}
                   onOutbox={() => navigate("outbox")}
+                  onFoggyMirror={() => navigate("foggy_mirror")}
                 />
+              )}
+              {currentScreen === "foggy_mirror" && (
+                <React.Suspense fallback={<ScreenLoader />}>
+                  <FoggyMirrorScreen key="foggy_mirror" onBack={() => navigate("home")} />
+                </React.Suspense>
               )}
               {currentScreen === "upload" && (
                 <UploadScreen
