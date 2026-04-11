@@ -48,7 +48,7 @@ try {
     putenv('APP_SERVICES_CACHE=/tmp/services.php');
     putenv('APP_PACKAGES_CACHE=/tmp/packages.php');
     require __DIR__ . '/../vendor/autoload.php';
-    $app = require_once __DIR__ . '/../backend/bootstrap/app.php';
+    $app = require __DIR__ . '/../backend/bootstrap/app.php';
 
     $app->useStoragePath('/tmp/storage');
     $app->useBootstrapPath('/tmp/bootstrap');
@@ -58,11 +58,6 @@ try {
 
     // Temporary: Remote migration trigger for production sync
     if ($requestPath === '/api/admin/migrate-db' && ($_GET['secret'] ?? '') === 'moments-sync-2026') {
-        require __DIR__ . '/../vendor/autoload.php';
-        $app = require_once __DIR__ . '/../backend/bootstrap/app.php';
-        $app->useStoragePath('/tmp/storage');
-        $app->useBootstrapPath('/tmp/bootstrap');
-        
         $artisan = $app->make(Illuminate\Contracts\Console\Kernel::class);
         $output = new \Symfony\Component\Console\Output\BufferedOutput();
         $status = $artisan->call('migrate', ['--force' => true], $output);
