@@ -18,6 +18,7 @@ export default function AuthScreen({ onNext }: { onNext: () => void }) {
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [debugOtp, setDebugOtp] = React.useState<string | null>(null);
+  const [needsRegistration, setNeedsRegistration] = React.useState(false);
 
   const handleSendOtp = async () => {
     if (!email.trim() || !email.includes("@")) {
@@ -27,6 +28,7 @@ export default function AuthScreen({ onNext }: { onNext: () => void }) {
     setIsLoading(true);
     setError(null);
     setDebugOtp(null);
+    setNeedsRegistration(false);
     try {
       const res = await sendOtp(email.trim());
       // In local mode, the backend might return the OTP for convenience
@@ -52,9 +54,9 @@ export default function AuthScreen({ onNext }: { onNext: () => void }) {
       await verifyOtp(email.trim(), code, name.trim() || undefined);
       onNext();
     } catch (e: any) {
-      if (e.status === 404 && e.errors?.needs_registration) {
+      if (e.status === 404 || e.needs_registration) {
+        setNeedsRegistration(true);
         setError("Welcome! Please tell us your name to finish signing up.");
-        // We'll stay on the OTP step but show the name field if it wasn't there
       } else {
         setError(e.message || "Invalid code.");
       }
@@ -116,7 +118,7 @@ export default function AuthScreen({ onNext }: { onNext: () => void }) {
               </div>
 
               {/* Only show name input if we got a 404/needs_registration error */}
-              {(error?.includes("name") || name) && (
+              (needsRegistration || name) && (
                 <motion.div
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: "auto" }}
