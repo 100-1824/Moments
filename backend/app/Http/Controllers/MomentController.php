@@ -122,6 +122,64 @@ class MomentController extends Controller
     }
 
     /**
+     * Fetch all moments for the couple's feed (history).
+     */
+    public function index(Request $request): JsonResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+
+        $moments = Moment::query()
+            ->where('couple_id', $user->couple_id)
+            ->orderByDesc('created_at')
+            ->paginate(20);
+
+        return $this->success([
+            'moments' => collect($moments->items())->map(fn (Moment $m) => $this->presentMoment($m))->all(),
+            'meta' => [
+                'current_page' => $moments->currentPage(),
+                'last_page'    => $moments->lastPage(),
+                'total'        => $moments->total(),
+            ],
+        ]);
+    }
+
+    /**
+     * Remove a moment from the system.
+     */
+    public function destroy(Moment $moment): JsonResponse
+    {
+        /** @var \App\Models\User $user */
+        $user = auth()->user();
+
+        // Ensure user can only delete their own moments
+        if ($moment->user_id !== $user->id) {
+            return $this->error('Unauthorized to delete this moment.', 403);
+        }
+
+        $mediaUrl = $moment->media_url;
+
+        if ($mediaUrl) {
+            // Handle extracting key for storage deletion
+            if (str_starts_with($mediaUrl, 'http')) {
+                $path = parse_url($mediaUrl, PHP_URL_PATH);
+                $pos = strpos($path, 'couples/');
+                $mediaUrl = ($pos !== false) ? substr($path, $pos) : ltrim((string) $path, '/');
+            }
+
+            try {
+                Storage::disk('s3')->delete($mediaUrl);
+            } catch (\Throwable $e) {
+                // Log and continue if storage delete fails
+            }
+        }
+
+        $moment->delete();
+
+        return $this->success(null, 'Moment deleted.');
+    }
+
+    /**
      * Drain a queue of offline-captured moments. The whole batch runs in
      * a single DB transaction and respects the per-day limit; offending
      * entries are rejected individually so the client can update its

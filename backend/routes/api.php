@@ -46,6 +46,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::post('/auth/logout', [AuthController::class, 'logout']);
 
     // Daily moments
+    Route::get('/moments', [MomentController::class, 'index']);
     Route::post('/moments', [MomentController::class, 'store']);
     Route::delete('/moments/{moment}', [MomentController::class, 'destroy']);
     Route::get('/moments/today', [MomentController::class, 'today']);
