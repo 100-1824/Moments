@@ -15,8 +15,8 @@ interface AuthState {
   user: api.ApiUser | null;
   partner: api.ApiUser | null;
   token: string | null;
-  /** Count of today's uploads by the current user (0-3). */
-  dailyCount: number;
+  /** Slots filled today by the current user. */
+  dailySlots: string[];
 }
 
 interface AuthActions {
@@ -28,7 +28,7 @@ interface AuthActions {
   connect: (partnerCode: string) => Promise<void>;
   refreshMe: () => Promise<void>;
   logout: () => Promise<void>;
-  setDailyCount: (n: number) => void;
+  setDailySlots: (slots: string[]) => void;
   setPartner: (p: api.ApiUser | null) => void;
 }
 
@@ -40,7 +40,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     user: null,
     partner: null,
     token: null,
-    dailyCount: 0,
+    dailySlots: [],
   });
 
   // On mount: if a token exists, validate it and populate user/partner.
@@ -75,7 +75,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { user, token } = await api.verifyOtp({ email, code, name, timezone });
     api.setToken(token);
     // Optimistic state so the UI can proceed immediately
-    setState((s) => ({ ...s, user, token, partner: null, dailyCount: 0 }));
+    setState((s) => ({ ...s, user, token, partner: null, dailySlots: [] }));
     // Then force a full server sync to pick up any existing couple_id / partner
     try {
       const { user: freshUser, partner: freshPartner } = await api.me();
@@ -88,13 +88,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const verifyAdminOtp = async (email: string, code: string) => {
     const { user, token } = await api.verifyAdminOtp(email, code);
     api.setToken(token);
-    setState((s) => ({ ...s, user, token, partner: null, dailyCount: 0 }));
+    setState((s) => ({ ...s, user, token, partner: null, dailySlots: [] }));
   };
 
   const register = async (name: string, email: string, timezone: string) => {
     const { user, token } = await api.register(name, email, timezone);
     api.setToken(token);
-    setState((s) => ({ ...s, user, token, partner: null, dailyCount: 0 }));
+    setState((s) => ({ ...s, user, token, partner: null, dailySlots: [] }));
   };
 
   const connect = async (partnerCode: string) => {
@@ -111,23 +111,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const refreshMe = async () => {
     const { user, partner } = await api.me();
-    setState((s) => ({ ...s, user, partner }));
+    // Fetch today's moments to populate dailySlots
+    const { moments } = await api.fetchTodayMoments();
+    const myFilledSlots = moments
+      .filter((m) => m.user_id === user.id)
+      .map((m) => m.slot);
+
+    setState((s) => ({ ...s, user, partner, dailySlots: myFilledSlots }));
   };
 
   const logout = async () => {
     await api.logout();
-    setState({ isLoading: false, user: null, partner: null, token: null, dailyCount: 0 });
+    setState({ isLoading: false, user: null, partner: null, token: null, dailySlots: [] });
   };
 
-  const setDailyCount = (dailyCount: number) =>
-    setState((s) => ({ ...s, dailyCount }));
+  const setDailySlots = (dailySlots: string[]) =>
+    setState((s) => ({ ...s, dailySlots }));
 
   const setPartner = (partner: api.ApiUser | null) =>
     setState((s) => ({ ...s, partner }));
 
   return (
     <AuthContext.Provider
-      value={{ ...state, sendOtp, sendAdminOtp, verifyOtp, verifyAdminOtp, register, connect, refreshMe, logout, setDailyCount, setPartner }}
+      value={{ ...state, sendOtp, sendAdminOtp, verifyOtp, verifyAdminOtp, register, connect, refreshMe, logout, setDailySlots, setPartner }}
     >
       {children}
     </AuthContext.Provider>

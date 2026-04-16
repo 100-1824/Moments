@@ -52,6 +52,8 @@ export const HapticPingButton = ({ compact = false }: { compact?: boolean }) => 
         onMouseLeave={handleEnd}
         onTouchStart={handleStart}
         onTouchEnd={handleEnd}
+        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleStart(e as unknown as React.MouseEvent); } }}
+        onKeyUp={(e) => { if (e.key === "Enter" || e.key === " ") handleEnd(); }}
         aria-label="Hold to send a ping"
         className={cn(
           "w-11 h-11 rounded-full flex items-center justify-center transition-all duration-200 touch-none select-none",
@@ -61,6 +63,7 @@ export const HapticPingButton = ({ compact = false }: { compact?: boolean }) => 
         )}
       >
         <Heart
+          aria-hidden="true"
           className={cn(
             "w-5 h-5 transition-all duration-300",
             isSuccess ? "fill-accent-terracotta text-accent-terracotta scale-125" : "text-text-main/40",
@@ -91,17 +94,21 @@ export const HapticPingButton = ({ compact = false }: { compact?: boolean }) => 
           onMouseLeave={handleEnd}
           onTouchStart={handleStart}
           onTouchEnd={handleEnd}
+          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleStart(e as unknown as React.MouseEvent); } }}
+          onKeyUp={(e) => { if (e.key === "Enter" || e.key === " ") handleEnd(); }}
+          aria-label="Hold to send a ping"
           className={cn(
             "w-24 h-24 rounded-full transition-all duration-300 flex items-center justify-center touch-none select-none",
             isPressing ? "neu-depressed scale-95" : "neu-extruded",
             isSuccess && "text-accent-terracotta"
           )}
         >
-          <Heart 
+          <Heart
+            aria-hidden="true"
             className={cn(
               "w-10 h-10 transition-all duration-500",
               isSuccess ? "fill-accent-terracotta scale-125" : "text-text-main/40"
-            )} 
+            )}
           />
         </button>
       </div>
@@ -124,7 +131,7 @@ export const AmbientContext = ({ partnerTime, weatherCondition }: AmbientContext
   return (
     <div className="neu-extruded-sm rounded-full px-4 py-2 flex items-center gap-3 bg-background/50 backdrop-blur-sm">
       <div className="w-8 h-8 neu-depressed-sm rounded-full flex items-center justify-center">
-        <Icon className="w-4 h-4 text-accent-terracotta" />
+        <Icon aria-hidden="true" className="w-4 h-4 text-accent-terracotta" />
       </div>
       <div className="flex flex-col">
         <span className="text-[10px] font-bold uppercase tracking-tighter opacity-40 leading-none">Partner's Time</span>
@@ -205,8 +212,9 @@ export const DailyPrompt = () => {
 // 5. Monthly "Time Capsule" Entry Point
 export const TimeCapsule = ({ onClick }: { onClick: () => void }) => {
   return (
-    <button 
+    <button
       onClick={onClick}
+      aria-label="Time Capsule"
       className="group relative w-32 h-40 transition-transform active:scale-95"
     >
       {/* Stacked Cards Effect */}

@@ -273,7 +273,6 @@ class AdminController extends Controller
         ]);
     }
 
-    // ─── Legacy / Overview Endpoints ──────────────────────────────────────────
 
     /**
      * Dashboard overview aggregates (no lockForUpdate on any count).

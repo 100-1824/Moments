@@ -11,6 +11,9 @@ import {
   ArrowLeft,
   Loader2,
   AlertCircle,
+  Sun,
+  Cloud,
+  Moon,
 } from "lucide-react";
 import {
   NeuButton,
@@ -23,9 +26,11 @@ import * as api from "@/src/lib/api";
 export default function UploadScreen({
   onBack,
   onSuccess,
+  initialSlot,
 }: {
   onBack: () => void;
   onSuccess: (remaining: number) => void;
+  initialSlot?: "morning" | "evening" | "night";
 }) {
   const [caption, setCaption] = React.useState("");
   const [selectedFile, setSelectedFile] = React.useState<File | null>(null);
@@ -33,7 +38,15 @@ export default function UploadScreen({
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [showCamera, setShowCamera] = React.useState(false);
+  const [slot, setSlot] = React.useState<"morning" | "evening" | "night">(initialSlot || "morning");
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  // Initialize slot based on current time if initialSlot is not provided
+  React.useEffect(() => {
+    if (!initialSlot) {
+      setSlot(getCurrentSlot());
+    }
+  }, [initialSlot]);
 
   React.useEffect(() => {
     return () => {
@@ -55,6 +68,55 @@ export default function UploadScreen({
     setShowCamera(false);
   };
 
+  // Caveman compress: shrink image to max 1280px via Canvas before upload
+  const compressImage = async (file: File): Promise<File> => {
+    if (!file.type.startsWith("image/")) return file;
+    const MAX_DIM = 1280;
+    const QUALITY = 0.82;
+    return new Promise((resolve) => {
+      const img = new Image();
+      const objUrl = URL.createObjectURL(file);
+      img.onload = () => {
+        URL.revokeObjectURL(objUrl);
+        const { naturalWidth: w, naturalHeight: h } = img;
+        // Skip compression if already small enough
+        if (w <= MAX_DIM && h <= MAX_DIM) {
+          console.log("[compress] skip — already small:", w, "x", h);
+          resolve(file);
+          return;
+        }
+        const scale = Math.min(MAX_DIM / w, MAX_DIM / h);
+        const cw = Math.round(w * scale);
+        const ch = Math.round(h * scale);
+        const canvas = document.createElement("canvas");
+        canvas.width = cw;
+        canvas.height = ch;
+        const ctx = canvas.getContext("2d")!;
+        ctx.drawImage(img, 0, 0, cw, ch);
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) { resolve(file); return; }
+            const compressed = new File([blob], file.name, { type: "image/jpeg" });
+            console.log("[compress] original:", (file.size / 1024).toFixed(1), "KB →", (compressed.size / 1024).toFixed(1), "KB at", cw, "x", ch);
+            resolve(compressed);
+          },
+          "image/jpeg",
+          QUALITY,
+        );
+      };
+      img.onerror = () => { URL.revokeObjectURL(objUrl); resolve(file); };
+      img.src = objUrl;
+    });
+  };
+
+  // Derive slot from current local hour
+  const getCurrentSlot = (): "morning" | "evening" | "night" => {
+    const h = new Date().getHours();
+    if (h >= 5 && h < 12) return "morning";
+    if (h >= 12 && h < 18) return "evening";
+    return "night";
+  };
+
   const handleSend = async () => {
     if (!selectedFile) {
       setError("Please select a photo or audio file.");
@@ -63,31 +125,35 @@ export default function UploadScreen({
     setIsLoading(true);
     setError(null);
     try {
-      const type = selectedFile.type.startsWith("audio") ? "audio" : "image";
+      const fileToUpload = await compressImage(selectedFile);
+      const type = fileToUpload.type.startsWith("audio") ? "audio" : "image";
       const result = await api.uploadMoment(
-        selectedFile,
+        fileToUpload,
         type,
         caption.trim() || null,
         false,
+        slot,
       );
       onSuccess(result.remaining_today);
     } catch (e: unknown) {
       if (!navigator.onLine) {
-        // Queue offline
+        // Queue offline (use compressed file if available)
+        const offlineFile = await compressImage(selectedFile);
         const reader = new FileReader();
         reader.onload = () => {
           api.addToOfflineQueue({
-            type: selectedFile.type.startsWith("audio") ? "audio" : "image",
+            type: offlineFile.type.startsWith("audio") ? "audio" : "image",
             fileDataUrl: reader.result as string,
-            fileName: selectedFile.name,
-            mimeType: selectedFile.type,
+            fileName: offlineFile.name,
+            mimeType: offlineFile.type,
             caption_payload: caption.trim() || null,
             is_encrypted: false,
             captured_at: new Date().toISOString(),
+            slot,
           });
           onSuccess(3); // optimistic: assume queued
         };
-        reader.readAsDataURL(selectedFile);
+        reader.readAsDataURL(offlineFile);
       } else {
         setError(e instanceof Error ? e.message : "Upload failed.");
       }
@@ -121,9 +187,9 @@ export default function UploadScreen({
       <div className="flex-1 space-y-8 overflow-y-auto pb-8">
         <AnimatePresence>
           {showCamera && (
-            <CameraView 
-              onCapture={handleCapture} 
-              onClose={() => setShowCamera(false)} 
+            <CameraView
+              onCapture={handleCapture}
+              onClose={() => setShowCamera(false)}
             />
           )}
         </AnimatePresence>
@@ -193,6 +259,34 @@ export default function UploadScreen({
               value={caption}
               onChange={(e) => setCaption(e.target.value)}
             />
+          </div>
+        </div>
+
+        <div className="space-y-4 px-2">
+          <label className="text-[10px] font-bold opacity-30 uppercase tracking-widest block mb-1">
+            Posting Slot
+          </label>
+          <div className="flex gap-4">
+            {[
+              { id: "morning", icon: Sun, label: "Morning" },
+              { id: "evening", icon: Cloud, label: "Evening" },
+              { id: "night", icon: Moon, label: "Night" },
+            ].map((s) => (
+              <button
+                key={s.id}
+                onClick={() => setSlot(s.id as any)}
+                className={`flex-1 py-4 rounded-3xl flex flex-col items-center gap-2 transition-all duration-300 ${
+                  slot === s.id
+                    ? "neu-depressed text-accent-terracotta bg-background/50 scale-[0.98]"
+                    : "neu-extruded text-text-main/40 hover:text-text-main/60"
+                }`}
+              >
+                <s.icon className={`w-5 h-5 ${slot === s.id ? "tact-glow" : ""}`} />
+                <span className="text-[10px] font-bold uppercase tracking-wider">
+                  {s.label}
+                </span>
+              </button>
+            ))}
           </div>
         </div>
 

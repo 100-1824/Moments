@@ -1,14 +1,14 @@
 import * as React from "react";
 import { cn } from "@/src/lib/utils";
-import { motion } from "motion/react";
+import { motion, Variants, HTMLMotionProps } from "motion/react";
 
-interface NeuProps extends React.HTMLAttributes<HTMLDivElement> {
+interface NeuProps extends HTMLMotionProps<"div"> {
   variant?: "extruded" | "depressed";
   size?: "sm" | "md";
 }
 
 export const NeuCard = React.forwardRef<HTMLDivElement, NeuProps>(
-  ({ className, variant = "extruded", size = "md", ...props }, ref) => {
+  ({ className, variant = "extruded", size = "md", children, ...props }, ref) => {
     return (
       <motion.div
         ref={ref}
@@ -18,18 +18,21 @@ export const NeuCard = React.forwardRef<HTMLDivElement, NeuProps>(
         variants={staggerItem}
         className={cn(
           variant === "extruded"
-            ? size === "sm" ? "neu-extruded-sm" : "neu-extruded"
-            : size === "sm" ? "neu-depressed-sm" : "neu-depressed",
-          "rounded-[32px] p-6 transition-all duration-300",
+            ? "neu-extruded"
+            : "neu-depressed tact-glow",
+          size === "sm" ? "p-4" : "p-6",
+          "rounded-[32px] transition-all duration-300",
           className
         )}
         {...props}
-      />
+      >
+        {children}
+      </motion.div>
     );
   }
 );
 
-interface NeuButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+interface NeuButtonProps extends HTMLMotionProps<"button"> {
   size?: "sm" | "md" | "lg" | "xl";
   active?: boolean;
 }
@@ -40,8 +43,10 @@ export const NeuButton = React.forwardRef<HTMLButtonElement, NeuButtonProps>(
     const hasHeight = className?.includes("h-");
 
     return (
-      <button
+      <motion.button
         ref={ref}
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
         className={cn(
           "neu-button rounded-full flex items-center justify-center transition-all duration-300 font-bold",
           !hasWidth && (
@@ -113,7 +118,7 @@ export const BentoCard = React.forwardRef<HTMLDivElement, NeuProps>(
 
 // ─── Animation Variants ──────────────────────────────────────────────────────
 
-export const staggerContainer = {
+export const staggerContainer: Variants = {
   hidden: { opacity: 0 },
   show: {
     opacity: 1,
@@ -124,7 +129,7 @@ export const staggerContainer = {
   },
 };
 
-export const staggerItem = {
+export const staggerItem: Variants = {
   hidden: { opacity: 0, y: 30, filter: "blur(10px)" },
   show: { 
     opacity: 1, 

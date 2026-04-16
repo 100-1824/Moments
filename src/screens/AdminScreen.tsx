@@ -886,7 +886,7 @@ type AdminTab = "overview" | "users" | "couples" | "media" | "engagement" | "inf
 
 export function AdminScreen({ onBack }: { onBack: () => void }) {
   const [activeTab, setActiveTab] = React.useState<AdminTab>("overview");
-  const [analytics, setAnalytics] = React.useState<AdminAnalytics | null>(null);
+  const [analytics, setAnalytics] = React.useState<api.AdminAnalytics | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
 

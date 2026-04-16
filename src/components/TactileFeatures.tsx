@@ -28,6 +28,8 @@ export const DigitalLocket = ({ imageUrl }: { imageUrl: string }) => {
             alt="Core Memory"
             className="w-full h-full object-cover"
             referrerPolicy="no-referrer"
+            loading="lazy"
+            decoding="async"
           />
         </div>
       </motion.div>
@@ -93,6 +95,8 @@ export const HoldToReveal = ({ imageUrl, className }: { imageUrl: string; classN
           !isRevealed ? "blur-3xl scale-110 grayscale opacity-40" : "blur-0 scale-100 grayscale-0 opacity-100"
         )}
         referrerPolicy="no-referrer"
+        loading="lazy"
+        decoding="async"
         draggable={false}
       />
     </div>
@@ -135,6 +139,8 @@ export const PairHoldToReveal = ({
               !isRevealed1 ? "blur-3xl scale-125 grayscale opacity-50" : "blur-0 scale-100 grayscale-0 opacity-100"
             )}
             referrerPolicy="no-referrer"
+            loading="lazy"
+            decoding="async"
             draggable={false}
           />
           <AnimatePresence>
@@ -187,6 +193,8 @@ export const PairHoldToReveal = ({
               !isRevealed2 ? "blur-3xl scale-125 grayscale opacity-50" : "blur-0 scale-100 grayscale-0 opacity-100"
             )}
             referrerPolicy="no-referrer"
+            loading="lazy"
+            decoding="async"
             draggable={false}
           />
           <AnimatePresence>
