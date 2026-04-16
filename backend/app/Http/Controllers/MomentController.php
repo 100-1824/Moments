@@ -41,7 +41,7 @@ class MomentController extends Controller
 
         [$startUtc, $endUtc] = $this->dayWindowUtc($user);
 
-        $slot = $request->string('slot')->toString();
+        $slot = $request->input('slot') ? $request->string('slot')->toString() : null;
 
         $moment = DB::transaction(function () use ($request, $user, $startUtc, $endUtc, $slot): Moment {
             if ($slot) {
