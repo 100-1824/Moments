@@ -442,3 +442,86 @@ export async function updatePartnerNickname(nickname: string | null): Promise<Ap
   });
   return res.data;
 }
+
+// ─── Push notifications ──────────────────────────────────────────────────────
+
+/**
+ * Subscribe to web push notifications.
+ * Requests user permission, gets subscription from service worker, and saves to backend.
+ */
+export async function subscribeToPushNotifications(): Promise<boolean> {
+  try {
+    // Check browser support
+    if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+      console.warn("Push notifications not supported in this browser");
+      return false;
+    }
+
+    // Request notification permission
+    const permission = await Notification.requestPermission();
+    if (permission !== "granted") {
+      console.log("Notification permission denied");
+      return false;
+    }
+
+    // Get service worker registration
+    const registration = await navigator.serviceWorker.ready;
+
+    // Get VAPID public key from environment
+    const vapidPublicKey = import.meta.env.VITE_VAPID_PUBLIC_KEY;
+    if (!vapidPublicKey) {
+      console.error("VAPID_PUBLIC_KEY not configured in environment");
+      return false;
+    }
+
+    // Subscribe to push
+    const subscription = await registration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
+    });
+
+    // Send subscription to backend
+    await request("/push/subscribe", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        endpoint: subscription.endpoint,
+        publicKey: arrayBufferToBase64(subscription.getKey("p256dh")),
+        authToken: arrayBufferToBase64(subscription.getKey("auth")),
+      }),
+    });
+
+    console.log("Push subscription saved successfully");
+    return true;
+  } catch (error) {
+    console.error("Error subscribing to push notifications:", error);
+    return false;
+  }
+}
+
+/**
+ * Convert VAPID public key from base64 to Uint8Array
+ */
+function urlBase64ToUint8Array(base64String: string): Uint8Array {
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/\-/g, "+").replace(/_/g, "/");
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+}
+
+/**
+ * Convert ArrayBuffer to base64 string
+ */
+function arrayBufferToBase64(buffer: ArrayBuffer | null): string {
+  if (!buffer) return "";
+  const bytes = new Uint8Array(buffer);
+  let binary = "";
+  for (let i = 0; i < bytes.byteLength; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return window.btoa(binary);
+}

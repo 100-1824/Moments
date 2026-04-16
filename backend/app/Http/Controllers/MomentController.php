@@ -8,6 +8,7 @@ use App\Http\Requests\StoreMomentRequest;
 use App\Http\Requests\SyncMomentsRequest;
 use App\Models\Moment;
 use App\Models\User;
+use App\Notifications\MomentReceivedNotification;
 use App\Support\ApiResponse;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
@@ -85,6 +86,17 @@ class MomentController extends Controller
                 'slot'            => $slot,
             ]);
         });
+
+        // Send push notification to partner
+        if ($user->couple_id) {
+            $partner = User::where('couple_id', $user->couple_id)
+                ->where('id', '!=', $user->id)
+                ->first();
+
+            if ($partner) {
+                $partner->notify(new MomentReceivedNotification($user));
+            }
+        }
 
         $remaining = max(0, self::DAILY_LIMIT - $this->countToday($user, $startUtc, $endUtc));
 

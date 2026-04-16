@@ -9,6 +9,7 @@ use App\Http\Controllers\InteractionController;
 use App\Http\Controllers\MigrationController;
 use App\Http\Controllers\MomentController;
 use App\Http\Controllers\NoteController;
+use App\Http\Controllers\PushController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -61,6 +62,9 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::post('/notes', [NoteController::class, 'store']);
     Route::post('/notes/{note}/reveal', [NoteController::class, 'reveal']);
     Route::delete('/notes/{note}', [NoteController::class, 'destroy']);
+
+    // Web push notifications
+    Route::post('/push/subscribe', [PushController::class, 'store']);
 
     // Data export
     Route::get('/export/archive', [ExportController::class, 'archive']);

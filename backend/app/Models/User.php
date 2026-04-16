@@ -74,6 +74,11 @@ class User extends Authenticatable
         return $this->hasMany(Ping::class, 'receiver_id');
     }
 
+    public function pushSubscriptions(): HasMany
+    {
+        return $this->hasMany(PushSubscription::class);
+    }
+
     /**
      * Resolve the partner user from the parent couple, if any.
      */
