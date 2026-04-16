@@ -209,7 +209,9 @@ export default function HomeScreen({
     };
   }, [moments]);
 
-  const count = moments.length;
+  const count = React.useMemo(() => {
+    return [momentsBySlot.morning, momentsBySlot.evening, momentsBySlot.night].filter(Boolean).length;
+  }, [momentsBySlot]);
   const shouldReduceMotion = useReducedMotion();
   const [isShaking, setIsShaking] = React.useState(false);
   const [showTooltip, setShowTooltip] = React.useState(false);
