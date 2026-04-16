@@ -26,9 +26,11 @@ import * as api from "@/src/lib/api";
 export default function UploadScreen({
   onBack,
   onSuccess,
+  initialSlot,
 }: {
   onBack: () => void;
   onSuccess: (remaining: number) => void;
+  initialSlot?: "morning" | "evening" | "night";
 }) {
   const [caption, setCaption] = React.useState("");
   const [selectedFile, setSelectedFile] = React.useState<File | null>(null);
@@ -36,13 +38,15 @@ export default function UploadScreen({
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [showCamera, setShowCamera] = React.useState(false);
-  const [slot, setSlot] = React.useState<"morning" | "evening" | "night">("morning");
+  const [slot, setSlot] = React.useState<"morning" | "evening" | "night">(initialSlot || "morning");
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
-  // Initialize slot based on current time
+  // Initialize slot based on current time if initialSlot is not provided
   React.useEffect(() => {
-    setSlot(getCurrentSlot());
-  }, []);
+    if (!initialSlot) {
+      setSlot(getCurrentSlot());
+    }
+  }, [initialSlot]);
 
   React.useEffect(() => {
     return () => {

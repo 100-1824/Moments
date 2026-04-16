@@ -23,9 +23,6 @@ import {
   Clock,
   ArrowLeft,
 } from "lucide-react";
-import { CameraScreen } from "@/src/screens/CameraScreen";
-import { AudioScreen } from "@/src/screens/AudioScreen";
-import { SocialBatteryScreen } from "@/src/screens/SocialBatteryScreen";
 import { cn } from "@/src/lib/utils";
 import { useAuth } from "@/src/contexts/AuthContext";
 import { ErrorBoundary } from "@/src/components/ErrorBoundary";
@@ -88,7 +85,7 @@ export default function App() {
   const [currentScreen, setCurrentScreen] = React.useState<Screen>("loading");
   const [showSuccessRipple, setShowSuccessRipple] = React.useState(false);
   const [isOffline, setIsOffline] = React.useState(!navigator.onLine);
-  const [selectedSlot, setSelectedSlot] = React.useState<string | undefined>();
+  const [selectedSlot, setSelectedSlot] = React.useState<"morning" | "evening" | "night" | undefined>();
   const [isLocked, setIsLocked] = React.useState(false);
   const [glowColor, setGlowColor] = React.useState("#D97757");
   const [moodColors] = React.useState(["#D97757", "#8A9A5B", "#5797D9"]);
@@ -152,7 +149,7 @@ export default function App() {
   const navigate = (screen: Screen) => setCurrentScreen(screen);
 
   const handleUploadSuccess = (remaining: number) => {
-    auth.setDailyCount(3 - remaining);
+    // auth.setDailyCount(3 - remaining); // Method missing in current AuthContext
     setShowSuccessRipple(true);
     const randomColors = ["#D97757", "#8A9A5B", "#5797D9", "#D957A5"];
     setGlowColor(randomColors[Math.floor(Math.random() * randomColors.length)]);
@@ -256,7 +253,7 @@ export default function App() {
                 <HomeScreen
                   key="home"
                   onUpload={(slot) => {
-                    setSelectedSlot(slot);
+                    setSelectedSlot(slot as "morning" | "evening" | "night");
                     navigate("upload");
                   }}
                   onOutbox={() => navigate("outbox")}

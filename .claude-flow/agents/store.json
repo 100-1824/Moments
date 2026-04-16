@@ -1,0 +1,33 @@
+{
+  "agents": {
+    "audit-security": {
+      "agentId": "audit-security",
+      "agentType": "security-auditor",
+      "status": "idle",
+      "health": 1,
+      "taskCount": 0,
+      "config": {
+        "model": "sonnet"
+      },
+      "createdAt": "2026-04-16T08:15:50.110Z",
+      "domain": "audit",
+      "model": "sonnet",
+      "modelRoutedBy": "explicit"
+    },
+    "audit-quality": {
+      "agentId": "audit-quality",
+      "agentType": "tester",
+      "status": "idle",
+      "health": 1,
+      "taskCount": 0,
+      "config": {
+        "model": "haiku"
+      },
+      "createdAt": "2026-04-16T08:15:50.125Z",
+      "domain": "audit",
+      "model": "haiku",
+      "modelRoutedBy": "explicit"
+    }
+  },
+  "version": "3.0.0"
+}

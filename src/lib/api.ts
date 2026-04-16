@@ -263,7 +263,7 @@ export async function fetchTodayMoments(): Promise<{
       moments: ApiMoment[];
       window: { start_utc: string; end_utc: string; timezone: string };
     };
-  }>("/moments/today");
+  }>("/moments");
   return res.data;
 }
 
@@ -365,7 +365,6 @@ export interface AdminAnalytics {
   moments_total: number;
   moments_by_type: { image: number; audio: number };
   moments_encrypted: number;
-  total_pings: number;
 }
 
 export async function getAdminAnalytics(): Promise<AdminAnalytics> {
@@ -375,20 +374,6 @@ export async function getAdminAnalytics(): Promise<AdminAnalytics> {
 
 export async function adminDeleteMoment(id: string): Promise<void> {
   await request(`/admin/moments/${id}`, { method: "DELETE" });
-}
-
-export async function fetchMomentHistory(page: number = 1): Promise<{
-  moments: ApiMoment[];
-  pagination: { current_page: number; last_page: number; total: number };
-}> {
-  const res = await request<{
-    status: string;
-    data: {
-      moments: ApiMoment[];
-      pagination: { current_page: number; last_page: number; total: number };
-    };
-  }>(`/moments?page=${page}`);
-  return res.data;
 }
 
 export { ApiError };

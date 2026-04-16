@@ -155,7 +155,7 @@ class AdminController extends Controller
             'status' => 'success',
             'data' => [
                 'by_type' => $byType,
-                'total_moments' => $totalMoments,
+                'total' => $totalMoments,
                 'total_encrypted' => $totalEncrypted,
                 'recent_encrypted' => $recentEncrypted,
                 'daily_volume' => $dailyVolume,
@@ -275,33 +275,6 @@ class AdminController extends Controller
 
 
     /**
-     * Delete a moment by ID (Admin override).
-     */
-    public function deleteMoment(string $id): JsonResponse
-    {
-        $moment = Moment::findOrFail($id);
-        $mediaUrl = $moment->media_url;
-
-        if ($mediaUrl) {
-            if (str_starts_with($mediaUrl, 'http')) {
-                $path = parse_url($mediaUrl, PHP_URL_PATH);
-                $pos = strpos($path, 'couples/');
-                $mediaUrl = ($pos !== false) ? substr($path, $pos) : ltrim((string) $path, '/');
-            }
-
-            try {
-                Storage::disk('s3')->delete($mediaUrl);
-            } catch (\Throwable $e) {
-                // Log and continue
-            }
-        }
-
-        $moment->delete();
-
-        return response()->json(['status' => 'success', 'message' => 'Moment deleted by admin.']);
-    }
-
-    /**
      * Dashboard overview aggregates (no lockForUpdate on any count).
      */
     public function analytics(): JsonResponse
@@ -321,7 +294,6 @@ class AdminController extends Controller
                 'moments_total' => $momentsCount,
                 'moments_by_type' => ['image' => $imageMoments, 'audio' => $audioMoments],
                 'moments_encrypted' => $encryptedMoments,
-                'total_pings' => Interaction::where('type', 'ping')->count(),
             ],
         ]);
     }
