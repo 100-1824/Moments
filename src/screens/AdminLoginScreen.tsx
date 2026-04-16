@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
 import { 
   ChevronRight, 
   Loader2, 
@@ -23,6 +25,15 @@ export function AdminLoginScreen({ onNext, onBack }: { onNext: () => void, onBac
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [debugOtp, setDebugOtp] = useState<string | null>(null);
+  const formRef = React.useRef<HTMLDivElement>(null);
+
+  useGSAP(() => {
+    if (!formRef.current) return;
+    gsap.fromTo(formRef.current,
+      { opacity: 0, y: 20 },
+      { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }
+    );
+  }, { dependencies: [step] });
 
   const handleSendOtp = async () => {
     if (!email.trim() || !email.includes("@")) {
@@ -101,7 +112,7 @@ export function AdminLoginScreen({ onNext, onBack }: { onNext: () => void, onBac
         </div>
 
         <NeuCard className="p-10 space-y-10 tact-border">
-          <div className="space-y-8">
+          <div className="space-y-8" ref={formRef}>
             <AnimatePresence mode="wait">
               {step === "email" ? (
                 <motion.div

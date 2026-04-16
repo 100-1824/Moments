@@ -5,6 +5,8 @@
 
 import * as React from "react";
 import { motion, AnimatePresence } from "motion/react";
+import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
 import { ChevronRight, Loader2, AlertCircle } from "lucide-react";
 import { NeuButton, NeuInput } from "@/src/components/ui/Neumorphic";
 import { useAuth } from "@/src/contexts/AuthContext";
@@ -19,6 +21,15 @@ export default function AuthScreen({ onNext }: { onNext: () => void }) {
   const [error, setError] = React.useState<string | null>(null);
   const [debugOtp, setDebugOtp] = React.useState<string | null>(null);
   const [needsRegistration, setNeedsRegistration] = React.useState(false);
+  const formRef = React.useRef<HTMLDivElement>(null);
+
+  useGSAP(() => {
+    if (!formRef.current) return;
+    gsap.fromTo(formRef.current,
+      { opacity: 0, y: 15 },
+      { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }
+    );
+  }, { dependencies: [step] });
 
   const handleSendOtp = async () => {
     if (!email.trim() || !email.includes("@")) {
@@ -77,7 +88,7 @@ export default function AuthScreen({ onNext }: { onNext: () => void }) {
         {step === "email" ? "Welcome back" : "Check your inbox"}
       </h2>
 
-      <div className="space-y-6 mb-12">
+      <div className="space-y-6 mb-12" ref={formRef}>
         <AnimatePresence mode="wait">
           {step === "email" ? (
             <motion.div

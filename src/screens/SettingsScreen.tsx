@@ -5,6 +5,8 @@
 
 import * as React from "react";
 import { motion } from "motion/react";
+import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
 import {
   Users,
   ChevronRight,
@@ -82,6 +84,13 @@ export default function SettingsScreen({
   const [nicknameValue, setNicknameValue] = React.useState(user?.partner_nickname || "");
   const [isSavingNickname, setIsSavingNickname] = React.useState(false);
 
+  useGSAP(() => {
+    gsap.fromTo(".settings-section",
+      { opacity: 0, y: 15, x: -10 },
+      { opacity: 1, y: 0, x: 0, duration: 0.4, ease: "power2.out", stagger: 0.1 }
+    );
+  }, { dependencies: [isEditingNickname] });
+
   const getPartnerDisplayName = React.useCallback(() => {
     if (!partner) return "Partner";
     return user?.partner_nickname || partner.name;
@@ -112,7 +121,7 @@ export default function SettingsScreen({
       </div>
 
       <div className="space-y-8">
-        <section className="space-y-4">
+        <section className="settings-section space-y-4">
           <h3 className="text-xs font-bold uppercase tracking-widest opacity-40 px-2">
             Preferences
           </h3>
@@ -123,7 +132,7 @@ export default function SettingsScreen({
           </div>
         </section>
 
-        <section className="space-y-4">
+        <section className="settings-section space-y-4">
           <h3 className="text-xs font-bold uppercase tracking-widest opacity-40 px-2">
             Account
           </h3>

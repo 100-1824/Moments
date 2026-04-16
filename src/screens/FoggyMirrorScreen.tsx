@@ -1,5 +1,7 @@
 import * as React from "react";
 import { motion, AnimatePresence, useMotionValue, useTransform } from "motion/react";
+import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
 import { ArrowLeft, Send, RefreshCw, Pencil } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 import { getLatestNote, writeNote, revealNote, type ApiNote } from "@/src/lib/api";
@@ -252,6 +254,15 @@ export default function FoggyMirrorScreen({ onBack }: { onBack: () => void }) {
   const [isSaving, setIsSaving] = React.useState(false);
   const [isRevealing, setIsRevealing] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const containerRef = React.useRef<HTMLDivElement>(null);
+
+  useGSAP(() => {
+    if (!containerRef.current) return;
+    gsap.fromTo(containerRef.current,
+      { opacity: 0, scale: 0.95 },
+      { opacity: 1, scale: 1, duration: 0.5, ease: "back.out(1.2)" }
+    );
+  }, { dependencies: [] });
 
   const load = React.useCallback(async () => {
     try {
@@ -294,6 +305,7 @@ export default function FoggyMirrorScreen({ onBack }: { onBack: () => void }) {
 
   return (
     <motion.div
+      ref={containerRef}
       initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 24 }}

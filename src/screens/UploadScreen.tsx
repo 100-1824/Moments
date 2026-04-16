@@ -5,6 +5,8 @@
 
 import * as React from "react";
 import { motion, AnimatePresence } from "motion/react";
+import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
 import {
   Camera,
   Send,
@@ -40,13 +42,32 @@ export default function UploadScreen({
   const [showCamera, setShowCamera] = React.useState(false);
   const [slot, setSlot] = React.useState<"morning" | "evening" | "night">(initialSlot || "morning");
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const containerRef = React.useRef<HTMLDivElement>(null);
+  const slotButtonsRef = React.useRef<(HTMLButtonElement | null)[]>([]);
 
-  // Initialize slot based on current time if initialSlot is not provided
-  React.useEffect(() => {
-    if (!initialSlot) {
-      setSlot(getCurrentSlot());
-    }
-  }, [initialSlot]);
+  useGSAP(() => {
+    if (!containerRef.current) return;
+
+    const tl = gsap.timeline();
+
+    // Animate container entrance
+    tl.fromTo(containerRef.current,
+      { opacity: 0, y: 20 },
+      { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" },
+      0
+    );
+
+    // Animate slot buttons
+    slotButtonsRef.current.forEach((btn, i) => {
+      if (btn) {
+        tl.fromTo(btn,
+          { opacity: 0, scale: 0.8, y: 10 },
+          { opacity: 1, scale: 1, y: 0, duration: 0.4, ease: "back.out(1.2)" },
+          i * 0.1
+        );
+      }
+    });
+  }, { dependencies: [initialSlot] });
 
   React.useEffect(() => {
     return () => {
@@ -164,6 +185,7 @@ export default function UploadScreen({
 
   return (
     <motion.div
+      ref={containerRef}
       initial={{ y: "100%" }}
       animate={{ y: 0 }}
       exit={{ y: "100%" }}
@@ -271,12 +293,13 @@ export default function UploadScreen({
               { id: "morning", icon: Sun, label: "Morning" },
               { id: "evening", icon: Cloud, label: "Evening" },
               { id: "night", icon: Moon, label: "Night" },
-            ].map((s) => {
+            ].map((s, index) => {
               const currentSlot = getCurrentSlot();
               const isCurrentSlot = s.id === currentSlot;
               return (
                 <button
                   key={s.id}
+                  ref={(el) => { if (el) slotButtonsRef.current[index] = el; }}
                   onClick={() => isCurrentSlot && setSlot(s.id as any)}
                   disabled={!isCurrentSlot}
                   className={`flex-1 py-4 rounded-3xl flex flex-col items-center gap-2 transition-all duration-300 ${

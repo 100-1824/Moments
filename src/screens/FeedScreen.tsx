@@ -5,6 +5,8 @@
 
 import * as React from "react";
 import { motion } from "motion/react";
+import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
 import { Trash2, Music, Loader2, X } from "lucide-react";
 import { TimeCapsule } from "@/src/components/Features";
 import { useAuth } from "@/src/contexts/AuthContext";
@@ -22,6 +24,15 @@ export default function FeedScreen({
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
   const [deletingMomentId, setDeletingMomentId] = React.useState<string | null>(null);
   const [deleteError, setDeleteError] = React.useState<string | null>(null);
+  const containerRef = React.useRef<HTMLDivElement>(null);
+
+  useGSAP(() => {
+    if (isLoading) return;
+    gsap.fromTo(".moment-card",
+      { opacity: 0, y: 20, scale: 0.95 },
+      { opacity: 1, y: 0, scale: 1, duration: 0.4, ease: "back.out(1.2)", stagger: 0.08 }
+    );
+  }, { dependencies: [isLoading, moments] });
 
   React.useEffect(() => {
     const fetchAllMoments = async () => {
@@ -105,9 +116,7 @@ export default function FeedScreen({
           {moments.map((moment) => (
             <motion.div
               key={moment.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="group rounded-3xl overflow-hidden bg-zinc-900/90 border border-white/5 backdrop-blur-md hover:border-white/20 transition-all duration-300 hover:shadow-xl hover:shadow-black/20"
+              className="moment-card group rounded-3xl overflow-hidden bg-zinc-900/90 border border-white/5 backdrop-blur-md hover:border-white/20 transition-all duration-300 hover:shadow-xl hover:shadow-black/20"
             >
               {/* Image Container */}
               <div className="relative w-full aspect-square bg-black/50 overflow-hidden">
