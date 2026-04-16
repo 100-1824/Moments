@@ -193,12 +193,12 @@ export default function ConnectScreen({ onSuccess }: { onSuccess: () => void }) 
             <p className="text-text-main/60">You and your partner are now linked</p>
           </div>
 
-          <NeuButton
+          <button
             onClick={onSuccess}
-            className="text-accent-terracotta"
+            className="mt-6 px-8 py-3 rounded-full bg-accent-terracotta/10 border border-accent-terracotta/30 hover:border-accent-terracotta/60 hover:bg-accent-terracotta/20 transition-all duration-300 text-accent-terracotta font-bold uppercase tracking-wider"
           >
             Continue
-          </NeuButton>
+          </button>
         </div>
       )}
     </motion.div>
