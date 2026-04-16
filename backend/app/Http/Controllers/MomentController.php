@@ -41,7 +41,12 @@ class MomentController extends Controller
 
         [$startUtc, $endUtc] = $this->dayWindowUtc($user);
 
-        $slot = $request->input('slot') ? $request->string('slot')->toString() : null;
+        $slot = $request->input('slot');
+        if ($slot && is_string($slot) && ! empty(trim($slot))) {
+            $slot = trim($slot);
+        } else {
+            $slot = null;
+        }
 
         $moment = DB::transaction(function () use ($request, $user, $startUtc, $endUtc, $slot): Moment {
             if ($slot) {
@@ -77,7 +82,7 @@ class MomentController extends Controller
                 'caption_payload' => $request->input('caption_payload'),
                 'is_encrypted'    => $request->boolean('is_encrypted'),
                 'captured_at'     => $request->input('captured_at') ?: now(),
-                'slot'            => $slot ?: null,
+                'slot'            => $slot,
             ]);
         });
 

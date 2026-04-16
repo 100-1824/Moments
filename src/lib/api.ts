@@ -290,6 +290,13 @@ export async function syncOfflineQueue(
     form.append(`moments[${i}][type]`, item.type);
     form.append(`moments[${i}][client_id]`, item.client_id);
     form.append(`moments[${i}][is_encrypted]`, item.is_encrypted ? "true" : "false");
+    form.append(`moments[${i}][captured_at]`, item.captured_at);
+    if (item.slot) {
+      form.append(`moments[${i}][slot]`, item.slot);
+    }
+    if (item.caption_payload) {
+      form.append(`moments[${i}][caption_payload]`, item.caption_payload);
+    }
   });
 
   const res = await request<{
