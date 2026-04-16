@@ -29,6 +29,9 @@
   --app-color-accent-sage: #637a46;
   --app-color-text-main: #10131c;
   --app-color-text-muted: #4f566c;
+  --app-neu-border-extruded: color-mix(in srgb, var(--app-color-highlight) 92%, transparent);
+  --app-neu-border-depressed: color-mix(in srgb, var(--app-color-highlight) 85%, transparent);
+  --app-neu-border-tact: color-mix(in srgb, var(--app-color-highlight) 88%, transparent);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -43,6 +46,9 @@
     --app-color-accent-sage: #8a9a5b;
     --app-color-text-main: #FAFAFA;
     --app-color-text-muted: #A1A1AA;
+    --app-neu-border-extruded: color-mix(in srgb, var(--app-color-highlight) 92%, transparent);
+    --app-neu-border-depressed: color-mix(in srgb, var(--app-color-highlight) 85%, transparent);
+    --app-neu-border-tact: color-mix(in srgb, var(--app-color-highlight) 88%, transparent);
   }
 }
 
@@ -58,7 +64,7 @@
 
 @utility neu-extruded {
   background-color: var(--color-surface);
-  border: 1px solid color-mix(in srgb, var(--color-highlight) 92%, transparent);
+  border: 1px solid var(--app-neu-border-extruded);
   box-shadow: 
     0 10px 30px -10px var(--color-shadow),
     0 4px 10px -5px var(--color-shadow);
@@ -66,7 +72,7 @@
 
 @utility neu-extruded-sm {
   background-color: var(--color-surface);
-  border: 1px solid color-mix(in srgb, var(--color-highlight) 92%, transparent);
+  border: 1px solid var(--app-neu-border-extruded);
   box-shadow: 
     0 4px 12px -2px var(--color-shadow);
 }
@@ -75,18 +81,18 @@
   background-color: var(--color-background);
   box-shadow: 
     inset 0 2px 4px 0 var(--color-shadow);
-  border: 1px solid color-mix(in srgb, var(--color-highlight) 85%, transparent);
+  border: 1px solid var(--app-neu-border-depressed);
 }
 
 @utility neu-depressed-sm {
   background-color: var(--color-background);
   box-shadow: 
     inset 0 1px 2px 0 var(--color-shadow);
-  border: 1px solid color-mix(in srgb, var(--color-highlight) 85%, transparent);
+  border: 1px solid var(--app-neu-border-depressed);
 }
 
 @utility tact-border {
-  border: 1px solid color-mix(in srgb, var(--color-highlight) 88%, transparent);
+  border: 1px solid var(--app-neu-border-tact);
 }
 
 @utility tact-glow {

@@ -28,6 +28,17 @@ type HomeCardConfig = {
   content: React.ReactNode;
 };
 
+const DEFAULT_CARD_ORDER = [
+  "header",
+  "ambient",
+  "foggy",
+  "quota",
+  "upload",
+  "prompt",
+  "now-playing",
+  "quote",
+];
+
 // ─── Liquid Card: premium hover-reactive bento cell ──────────────────────────
 function LiquidCard({
   children,
@@ -385,17 +396,20 @@ export default function HomeScreen({
   ]), [count, handleUploadClick, isPartnerActive, isShaking, onFoggyMirror, onOutbox, partner?.name, partnerLocalTime]);
 
   const [isEditMode, setIsEditMode] = React.useState(false);
-  const [cardOrder, setCardOrder] = React.useState<string[]>(() => cards.map((card) => card.id));
+  const [cardOrder, setCardOrder] = React.useState<string[]>(() => [...DEFAULT_CARD_ORDER]);
+  const cardIds = React.useMemo(() => cards.map((card) => card.id), [cards]);
+  const cardIdsKey = React.useMemo(() => cardIds.join("|"), [cardIds]);
 
   React.useEffect(() => {
     setCardOrder((prev) => {
-      const nextIds = cards.map((card) => card.id);
-      const persisted = prev.filter((id) => nextIds.includes(id));
-      const missing = nextIds.filter((id) => !persisted.includes(id));
+      const idSet = new Set(cardIds);
+      const persisted = prev.filter((id) => idSet.has(id));
+      const persistedSet = new Set(persisted);
+      const missing = cardIds.filter((id) => !persistedSet.has(id));
       const nextOrder = [...persisted, ...missing];
       return nextOrder.length === prev.length && nextOrder.every((id, index) => id === prev[index]) ? prev : nextOrder;
     });
-  }, [cards]);
+  }, [cardIds, cardIdsKey]);
 
   const cardsById = React.useMemo(() => {
     return cards.reduce<Record<string, HomeCardConfig>>((acc, card) => {
