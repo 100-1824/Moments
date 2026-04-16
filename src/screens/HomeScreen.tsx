@@ -6,6 +6,8 @@
 import * as React from "react";
 import { motion, AnimatePresence, useMotionValue, useTransform, useSpring, useReducedMotion } from "motion/react";
 import { Heart, Plus, RefreshCw, Zap, Music, Ghost, Camera, Sparkles, Droplets, GripVertical, ArrowUp, ArrowDown } from "lucide-react";
+import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
 import { cn } from "@/src/lib/utils";
 import { useAuth } from "@/src/contexts/AuthContext";
 import * as api from "@/src/lib/api";
@@ -113,11 +115,11 @@ function LiquidCard({
         mdColSpan === 3 && "md:col-span-3",
         mdColSpan === 4 && "md:col-span-4",
         mdRowSpan === 2 && "md:row-span-2",
-        "bg-surface-main/40 backdrop-blur-xl",
-        "border border-white/[0.06]",
+        "bg-zinc-900/90 backdrop-blur-md",
+        "border border-white/5",
         "shadow-[0_4px_32px_rgba(0,0,0,0.25),inset_0_1px_0_rgba(255,255,255,0.05)]",
-        "transition-shadow duration-500",
-        onClick && "cursor-pointer hover:shadow-[0_8px_48px_rgba(0,0,0,0.35)]",
+        "transition-all duration-300 ease-out",
+        onClick && "cursor-pointer hover:-translate-y-1 hover:border-white/20 hover:shadow-xl hover:shadow-black/20",
         className
       )}
     >
@@ -308,13 +310,13 @@ export default function HomeScreen({
           <div className="flex items-start justify-between">
             <div>
               <motion.h2
-                className="text-4xl md:text-5xl font-black tracking-tighter leading-none"
+                className="text-4xl md:text-5xl font-black tracking-tight font-semibold leading-none"
                 animate={shouldReduceMotion ? {} : { opacity: [0.75, 1, 0.75] }}
                 transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
               >
                 MOMENTS
               </motion.h2>
-              <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-text-main/50 mt-1">
+              <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-400 font-medium mt-1">
                 {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
               </p>
             </div>
@@ -328,7 +330,7 @@ export default function HomeScreen({
           </div>
           <div className="flex items-center gap-2.5 mt-4">
             <PulsingDot active={isPartnerActive} />
-            <span className="text-xs font-semibold text-text-main/40 truncate">
+            <span className="text-xs font-semibold text-zinc-400 font-medium truncate">
               {isPartnerActive
                 ? `${partner?.name ?? "Partner"} is online now`
                 : partner?.name
@@ -362,19 +364,22 @@ export default function HomeScreen({
       className: "min-h-[220px]",
       noPadding: true,
       content: (
-        <div className="relative h-full min-h-[220px] overflow-hidden rounded-3xl">
+        <div className="relative h-full min-h-[220px] overflow-hidden">
           {partnerLatestMoment ? (
             <>
               <img
                 src={partnerLatestMoment.media_url}
                 alt={`${partner?.name ?? "Partner"} latest moment`}
-                className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
+                className="w-full h-full object-cover absolute inset-0 transition-transform duration-700 group-hover:scale-[1.03]"
                 loading="lazy"
                 decoding="async"
               />
-              <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-black/35 to-transparent" />
-              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.2),transparent_50%)]" />
-              <div className="absolute inset-x-0 bottom-0 p-5 md:p-6">
+              {/* Cinematic gradient overlay */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
+              {/* Glass inner ring */}
+              <div className="absolute inset-0 rounded-3xl ring-1 ring-inset ring-white/10 pointer-events-none" />
+              {/* Caption positioned absolutely at bottom-left */}
+              <div className="absolute inset-x-0 bottom-0 p-5 md:p-6 z-10">
                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/80">
                   {partner?.name ?? "Partner"} Latest
                 </p>
@@ -675,53 +680,7 @@ export default function HomeScreen({
        * Mobile: 1-column stack. md+: 4-column bento grid.
        * Row height is fixed so desktop cards have consistent heights.
        */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-7 md:[grid-auto-rows:minmax(190px,auto)]">
-        {orderedCards.map((card, index) => (
-          <div key={card.id} className="relative">
-            <LiquidCard
-              mdColSpan={card.mdColSpan}
-              mdRowSpan={card.mdRowSpan}
-              delay={card.delay}
-              className={card.className}
-              glowColor={card.glowColor}
-              onClick={card.onClick}
-              noPadding={card.noPadding}
-            >
-              {card.content}
-            </LiquidCard>
-            <AnimatePresence>
-              {isEditMode && (
-                <motion.div
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 8 }}
-                  transition={{ duration: 0.2 }}
-                  className="absolute top-3 right-3 z-20 flex items-center gap-1.5 rounded-xl border border-white/[0.1] bg-background/80 backdrop-blur-md p-1.5 shadow-[0_6px_20px_rgba(0,0,0,0.2)]"
-                >
-                  <button
-                    type="button"
-                    onClick={() => moveCard(index, -1)}
-                    disabled={index === 0}
-                    aria-label={`Move ${card.id} card up`}
-                    className="p-1 rounded-lg text-text-main/60 hover:text-accent-terracotta hover:bg-white/[0.06] transition-colors disabled:opacity-20 disabled:cursor-not-allowed"
-                  >
-                    <ArrowUp className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => moveCard(index, 1)}
-                    disabled={index === orderedCards.length - 1}
-                    aria-label={`Move ${card.id} card down`}
-                    className="p-1 rounded-lg text-text-main/60 hover:text-accent-terracotta hover:bg-white/[0.06] transition-colors disabled:opacity-20 disabled:cursor-not-allowed"
-                  >
-                    <ArrowDown className="w-3.5 h-3.5" />
-                  </button>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        ))}
-      </div>
+      <BentoGrid orderedCards={orderedCards} isEditMode={isEditMode} moveCard={moveCard} />
 
       {/* Daily quota reached tooltip */}
       <AnimatePresence>
@@ -737,6 +696,105 @@ export default function HomeScreen({
           </motion.div>
         )}
       </AnimatePresence>
+    </div>
+  );
+}
+
+// Bento Grid with GSAP Staggered Entrance Animation
+interface BentoGridProps {
+  orderedCards: HomeCardConfig[];
+  isEditMode: boolean;
+  moveCard: (index: number, direction: -1 | 1) => void;
+}
+
+function BentoGrid({ orderedCards, isEditMode, moveCard }: BentoGridProps) {
+  const gridRef = React.useRef<HTMLDivElement>(null);
+  
+  useGSAP(() => {
+    if (!gridRef.current) return;
+
+    const cards = gridRef.current.querySelectorAll('[data-gsap-card]');
+    
+    // Stagger entrance: hero first, then rest of grid
+    const timeline = gsap.timeline();
+    
+    // Hero card (partner-moment at index 2) fades and slides up
+    if (cards[2]) {
+      timeline.fromTo(
+        cards[2],
+        { y: 20, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.6, ease: "power3.out" },
+        0
+      );
+    }
+
+    // Remaining cards stagger in
+    cards.forEach((card, index) => {
+      if (index !== 2) {
+        timeline.fromTo(
+          card,
+          { y: 20, opacity: 0 },
+          { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" },
+          0.1 + index * 0.08
+        );
+      }
+    });
+
+    return () => {
+      timeline.kill();
+    };
+  }, { scope: gridRef });
+
+  return (
+    <div 
+      ref={gridRef}
+      className="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-5 md:[grid-auto-rows:minmax(190px,auto)]"
+    >
+      {orderedCards.map((card, index) => (
+        <div key={card.id} className="relative" data-gsap-card>
+          <LiquidCard
+            mdColSpan={card.mdColSpan}
+            mdRowSpan={card.mdRowSpan}
+            delay={card.delay}
+            className={card.className}
+            glowColor={card.glowColor}
+            onClick={card.onClick}
+            noPadding={card.noPadding}
+          >
+            {card.content}
+          </LiquidCard>
+          <AnimatePresence>
+            {isEditMode && (
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 8 }}
+                transition={{ duration: 0.2 }}
+                className="absolute top-3 right-3 z-20 flex items-center gap-1.5 rounded-xl border border-white/[0.1] bg-background/80 backdrop-blur-md p-1.5 shadow-[0_6px_20px_rgba(0,0,0,0.2)]"
+              >
+                <button
+                  type="button"
+                  onClick={() => moveCard(index, -1)}
+                  disabled={index === 0}
+                  aria-label={`Move ${card.id} card up`}
+                  className="p-1 rounded-lg text-text-main/60 hover:text-accent-terracotta hover:bg-white/[0.06] transition-colors disabled:opacity-20 disabled:cursor-not-allowed"
+                >
+                  <ArrowUp className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => moveCard(index, 1)}
+                  disabled={index === orderedCards.length - 1}
+                  aria-label={`Move ${card.id} card down`}
+                  className="p-1 rounded-lg text-text-main/60 hover:text-accent-terracotta hover:bg-white/[0.06] transition-colors disabled:opacity-20 disabled:cursor-not-allowed"
+                >
+                  <ArrowDown className="w-3.5 h-3.5" />
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      ))}
     </div>
   );
 }
