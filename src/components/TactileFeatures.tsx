@@ -36,16 +36,16 @@ export const DigitalLocket = ({ imageUrl }: { imageUrl: string }) => {
 };
 
 // 2. "Hold-to-Reveal" (Intimate Viewing)
-export const HoldToReveal = ({ imageUrl }: { imageUrl: string }) => {
+export const HoldToReveal = ({ imageUrl, className }: { imageUrl: string; className?: string }) => {
   const [isRevealed, setIsRevealed] = React.useState(false);
 
-  // Prevent context menus on images which break the hold experience
   const handleContextMenu = (e: React.MouseEvent) => {
     e.preventDefault();
   };
 
   return (
     <div
+      className={cn("relative overflow-hidden rounded-[32px] neu-extruded border-2 border-background cursor-pointer", className)}
       onMouseDown={() => setIsRevealed(true)}
       onMouseUp={() => setIsRevealed(false)}
       onMouseLeave={() => setIsRevealed(false)}
@@ -59,37 +59,28 @@ export const HoldToReveal = ({ imageUrl }: { imageUrl: string }) => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-background/80 backdrop-blur-xl z-10 flex flex-col items-center justify-center pointer-events-none"
+            className="absolute inset-0 bg-background/40 backdrop-blur-md z-10 flex flex-col items-center justify-center pointer-events-none"
           >
-            <div className="relative">
-              <div className="neu-extruded w-24 h-24 rounded-full flex items-center justify-center">
-                <div className="w-12 h-12 neu-depressed-sm rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-500">
-                  <div className="w-3 h-3 rounded-full bg-accent-terracotta tact-glow animate-pulse" />
+            <div className="relative scale-75">
+              <div className="neu-extruded w-20 h-20 rounded-full flex items-center justify-center bg-background/60">
+                <div className="w-10 h-10 neu-depressed-sm rounded-full flex items-center justify-center">
+                  <div className="w-2 h-2 rounded-full bg-accent-terracotta tact-glow animate-pulse" />
                 </div>
               </div>
               
-              {/* Progress Ring (Visual hint) */}
-              <svg className="absolute inset-0 w-24 h-24 -rotate-90 pointer-events-none opacity-20">
+              <svg className="absolute inset-0 w-20 h-20 -rotate-90 pointer-events-none overflow-visible">
                 <circle
-                  cx="48"
-                  cy="48"
-                  r="44"
+                  cx="40"
+                  cy="40"
+                  r="36"
                   fill="none"
                   stroke="currentColor"
                   strokeWidth="2"
-                  strokeDasharray="276"
-                  className="text-accent-terracotta"
+                  strokeDasharray="226"
+                  className="text-accent-terracotta/30"
                 />
               </svg>
             </div>
-            
-            <motion.p 
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 0.4, y: 0 }}
-              className="mt-6 text-[10px] font-black uppercase tracking-[0.3em] text-text-main"
-            >
-              Steady Hold to Reveal
-            </motion.p>
           </motion.div>
         )}
       </AnimatePresence>
@@ -99,24 +90,11 @@ export const HoldToReveal = ({ imageUrl }: { imageUrl: string }) => {
         alt="Intimate Moment"
         className={cn(
           "w-full h-full object-cover transition-all duration-700 ease-in-out",
-          !isRevealed ? "blur-3xl scale-125 grayscale opacity-50" : "blur-0 scale-100 grayscale-0 opacity-100"
+          !isRevealed ? "blur-3xl scale-110 grayscale opacity-40" : "blur-0 scale-100 grayscale-0 opacity-100"
         )}
         referrerPolicy="no-referrer"
         draggable={false}
-        onError={(e) => {
-          const target = e.target as HTMLImageElement;
-          target.style.display = 'none';
-          // Find the sibling error message and show it
-          const next = target.nextElementSibling as HTMLElement;
-          if (next) next.style.display = 'flex';
-        }}
       />
-      
-      {/* Error state if image fails */}
-      <div className="absolute inset-0 hidden flex-col items-center justify-center bg-background/10 text-text-main/20 p-8 text-center">
-        <AlertCircle className="w-8 h-8 mb-2 opacity-20" />
-        <span className="text-[10px] font-bold uppercase tracking-widest">Unable to load memory</span>
-      </div>
     </div>
   );
 };
