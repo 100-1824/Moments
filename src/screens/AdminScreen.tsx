@@ -812,14 +812,17 @@ function DashboardOverview({ analytics }: { analytics: api.AdminAnalytics | null
   return (
     <div className="grid grid-cols-1 md:grid-cols-12 grid-rows-none md:grid-rows-2 gap-6">
       {/* Primary Stats */}
-      <div className="md:col-span-4 h-full">
+      <div className="md:col-span-3 h-full">
         <MetricCard label="Total Operatives" value={analytics.users_total} icon={Users} trend="+3.2%" />
       </div>
-      <div className="md:col-span-4 h-full">
+      <div className="md:col-span-3 h-full">
         <MetricCard label="Active Couples" value={analytics.couples_total} icon={Heart} trend="+1.5%" color="accent-sage" />
       </div>
-      <div className="md:col-span-4 h-full">
+      <div className="md:col-span-3 h-full">
         <MetricCard label="Total Fragments" value={analytics.moments_total} icon={Zap} trend="+8.1%" color="yellow-500" />
+      </div>
+      <div className="md:col-span-3 h-full">
+        <MetricCard label="Haptic Pings" value={analytics.total_pings} icon={Zap} trend="+12.4%" color="accent-terracotta" />
       </div>
 
       {/* Breakdown Chart (Bento Large) */}
