@@ -109,13 +109,10 @@ export default function FeedScreen({
               {/* Remaining Moments */}
               {moments.slice(2).map((moment) => (
                 <div key={moment.id} className="space-y-4">
-                  <NeuCard className="p-2 overflow-hidden">
-                    <img
-                      src={moment.media_url}
-                      alt="Moment"
-                      className="w-full aspect-square object-cover rounded-[28px]"
-                    />
-                  </NeuCard>
+                  <HoldToReveal 
+                    imageUrl={moment.media_url} 
+                    className="aspect-square"
+                  />
                   <div className="px-2">
                     {moment.caption_payload && !moment.is_encrypted && (
                       <p className="font-medium leading-relaxed">
@@ -135,13 +132,10 @@ export default function FeedScreen({
                 {idx === 0 ? (
                   <HoldToReveal imageUrl={moment.media_url} />
                 ) : (
-                  <NeuCard className="p-2 overflow-hidden">
-                    <img
-                      src={moment.media_url}
-                      alt="Moment"
-                      className="w-full aspect-square object-cover rounded-[28px]"
-                    />
-                  </NeuCard>
+                  <HoldToReveal 
+                    imageUrl={moment.media_url} 
+                    className="aspect-square"
+                  />
                 )}
                 <div className="px-2">
                   {moment.caption_payload && !moment.is_encrypted && (
