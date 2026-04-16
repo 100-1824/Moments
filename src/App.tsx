@@ -258,6 +258,7 @@ export default function App() {
                   }}
                   onOutbox={() => navigate("outbox")}
                   onFoggyMirror={() => navigate("foggy_mirror")}
+                  onConnect={() => navigate("connect")}
                 />
               )}
               {currentScreen === "foggy_mirror" && (

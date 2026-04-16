@@ -159,15 +159,29 @@ export default function HomeScreen({
   onUpload,
   onOutbox,
   onFoggyMirror,
+  onConnect,
 }: {
   onUpload: (slot?: string) => void;
   onOutbox: () => void;
   onFoggyMirror: () => void;
+  onConnect?: () => void;
 }) {
-  const { user, partner } = useAuth();
+  const { user, partner, isLoading: authLoading } = useAuth();
   const [moments, setMoments] = React.useState<any[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [isDeleting, setIsDeleting] = React.useState<string | null>(null);
+
+  // Redirect if not authenticated
+  if (!authLoading && !user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <div className="text-center space-y-4">
+          <Heart className="w-12 h-12 text-accent-terracotta/50 mx-auto" />
+          <p className="text-text-main/60">Please log in to continue</p>
+        </div>
+      </div>
+    );
+  }
 
   const getPartnerDisplayName = React.useCallback(() => {
     if (!partner) return "Partner";
@@ -399,14 +413,36 @@ export default function HomeScreen({
               </div>
             </>
           ) : (
-            <div className="flex h-full items-center justify-center bg-gradient-to-br from-accent-terracotta/20 via-background/50 to-accent-sage/20 px-6 text-center">
-              <p className="text-xs font-semibold tracking-wide text-text-main/60">
-                {isPartnerMomentLoading
-                  ? "Loading latest moment..."
-                  : partner?.id
-                  ? "No partner moment shared yet today."
-                  : "Connect with your partner to see their latest moment."}
-              </p>
+            <div className="relative h-full min-h-[220px] overflow-hidden flex flex-col items-center justify-center p-6">
+              {/* Animated background grid */}
+              <div className="absolute inset-0 opacity-5">
+                <div className="absolute inset-0 bg-gradient-to-br from-accent-terracotta via-transparent to-accent-sage" />
+              </div>
+              
+              {/* Content */}
+              <div className="relative z-10 flex flex-col items-center justify-center gap-4 text-center h-full">
+                <div className="space-y-1">
+                  <div className="text-[10px] font-black uppercase tracking-[0.2em] text-accent-terracotta/80">
+                    Not Yet Connected
+                  </div>
+                  <h3 className="text-lg font-bold text-text-main">
+                    Connect with your partner
+                  </h3>
+                </div>
+                
+                <p className="text-xs text-text-main/60 max-w-xs leading-relaxed">
+                  Share your invite code to start seeing each other's moments
+                </p>
+                
+                <button
+                  onClick={onConnect}
+                  className="mt-2 px-4 py-2 rounded-full bg-accent-terracotta/10 border border-accent-terracotta/30 hover:border-accent-terracotta/60 hover:bg-accent-terracotta/20 transition-all duration-300 cursor-pointer"
+                >
+                  <span className="text-[10px] font-bold text-accent-terracotta tracking-widest uppercase">
+                    Go to Connect
+                  </span>
+                </button>
+              </div>
             </div>
           )}
         </div>
