@@ -5,20 +5,39 @@
 
 import * as React from "react";
 import { motion, AnimatePresence, useMotionValue, useTransform, useSpring } from "motion/react";
-import { Heart, Plus, RefreshCw, Zap, Music, Ghost, Camera, Sparkles, Droplets } from "lucide-react";
+import { Heart, RefreshCw, Music, Ghost, Camera, Sparkles, Droplets, GripVertical, ArrowUp, ArrowDown } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 import { useAuth } from "@/src/contexts/AuthContext";
 import {
-  NeuButton,
   DailyProgress,
 } from "@/src/components/ui/Neumorphic";
 import {
   AmbientContext,
   DailyPrompt,
 } from "@/src/components/Features";
-import { PresenceIndicator } from "@/src/components/AdvancedFeatures";
 import { NowPlayingPlayer } from "@/src/components/TactileFeatures";
 
+type HomeCardConfig = {
+  id: string;
+  mdColSpan?: number;
+  mdRowSpan?: number;
+  delay: number;
+  glowColor?: string;
+  className?: string;
+  onClick?: () => void;
+  content: React.ReactNode;
+};
+
+const DEFAULT_CARD_ORDER = [
+  "header",
+  "ambient",
+  "foggy",
+  "quota",
+  "upload",
+  "prompt",
+  "now-playing",
+  "quote",
+];
 
 // ─── Liquid Card: premium hover-reactive bento cell ──────────────────────────
 function LiquidCard({
@@ -170,16 +189,14 @@ export default function HomeScreen({
     return Date.now() - new Date(partner.last_seen_at).getTime() < 5 * 60_000;
   }, [partner?.last_seen_at]);
 
-  return (
-    <div className="flex-1 px-3 md:px-8 pt-6 pb-36 md:pb-24">
-      {/*
-       * Mobile: 1-column stack. md+: 4-column bento grid.
-       * Row height is fixed so desktop cards have consistent heights.
-       */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-7 md:[grid-auto-rows:minmax(190px,auto)]">
-
-        {/* ── Card 1: Header & Status — full width ── */}
-        <LiquidCard mdColSpan={4} delay={0} className="min-h-[140px] md:min-h-0">
+  const cards = React.useMemo<HomeCardConfig[]>(() => ([
+    {
+      id: "header",
+      mdColSpan: 4,
+      delay: 0,
+      className: "min-h-[140px] md:min-h-0",
+      content: (
+        <>
           <div className="flex items-start justify-between">
             <div>
               <motion.h2
@@ -211,28 +228,45 @@ export default function HomeScreen({
                 : "No partner linked"}
             </span>
           </div>
-        </LiquidCard>
-
-        {/* ── Card 2: Partner Time / Ambient — 2/4 col desktop ── */}
-        <LiquidCard mdColSpan={2} delay={0.07} className="flex flex-col items-center justify-center gap-3 min-h-[160px]" glowColor="rgba(138,154,91,0.18)">
-          {partnerLocalTime ? (
-            <AmbientContext partnerTime={partnerLocalTime} weatherCondition="sunny" />
-          ) : (
-            <div className="opacity-25 flex flex-col items-center gap-3">
-              <Ghost className="w-12 h-12" />
-              <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-center">Awaiting Link</span>
-            </div>
-          )}
-        </LiquidCard>
-
-        {/* ── Card 3: Foggy Mirror Entry — 2/4 col desktop ── */}
-        <LiquidCard mdColSpan={2} delay={0.13} onClick={onFoggyMirror} glowColor="rgba(100,150,255,0.15)" className="min-h-[160px] flex flex-col justify-center items-center">
+        </>
+      ),
+    },
+    {
+      id: "ambient",
+      mdColSpan: 2,
+      delay: 0.07,
+      className: "flex flex-col items-center justify-center gap-3 min-h-[160px]",
+      glowColor: "rgba(138,154,91,0.18)",
+      content: partnerLocalTime ? (
+        <AmbientContext partnerTime={partnerLocalTime} weatherCondition="sunny" />
+      ) : (
+        <div className="opacity-25 flex flex-col items-center gap-3">
+          <Ghost className="w-12 h-12" />
+          <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-center">Awaiting Link</span>
+        </div>
+      ),
+    },
+    {
+      id: "foggy",
+      mdColSpan: 2,
+      delay: 0.13,
+      onClick: onFoggyMirror,
+      glowColor: "rgba(100,150,255,0.15)",
+      className: "min-h-[160px] flex flex-col justify-center items-center",
+      content: (
+        <>
           <Droplets className="w-8 h-8 text-blue-400/50 mb-3" />
           <span className="text-[10px] font-black uppercase tracking-[0.2em] text-text-main/50">Foggy Mirror</span>
-        </LiquidCard>
-
-        {/* ── Card 4: Daily Progress — 3/4 col desktop, full mobile ── */}
-        <LiquidCard mdColSpan={3} delay={0.19} className="min-h-[120px]">
+        </>
+      ),
+    },
+    {
+      id: "quota",
+      mdColSpan: 3,
+      delay: 0.19,
+      className: "min-h-[120px]",
+      content: (
+        <>
           <span className="text-[10px] font-black uppercase tracking-[0.2em] text-text-main/30 mb-3 block">Today's Quota</span>
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div className="flex-1">
@@ -250,50 +284,67 @@ export default function HomeScreen({
               <span className="text-[10px] font-bold uppercase tracking-widest text-text-main/30">left</span>
             </div>
           </div>
-        </LiquidCard>
-
-        {/* ── Card 5: Upload CTA — 1/4 col desktop, full mobile ── */}
-        <LiquidCard delay={0.25} onClick={handleUploadClick} glowColor="rgba(217,119,87,0.2)" className="min-h-[140px]">
+        </>
+      ),
+    },
+    {
+      id: "upload",
+      delay: 0.25,
+      onClick: handleUploadClick,
+      glowColor: "rgba(217,119,87,0.2)",
+      className: "min-h-[140px]",
+      content: (
+        <motion.div
+          animate={isShaking ? { x: [-6, 6, -5, 5, -3, 3, 0] } : {}}
+          transition={{ duration: 0.5 }}
+          className="flex flex-row md:flex-col items-center gap-5 h-full md:justify-center"
+        >
           <motion.div
-            animate={isShaking ? { x: [-6, 6, -5, 5, -3, 3, 0] } : {}}
-            transition={{ duration: 0.5 }}
-            className="flex flex-row md:flex-col items-center gap-5 h-full md:justify-center"
+            whileHover={{ scale: 1.1 }}
+            transition={{ type: "spring", damping: 15, stiffness: 400 }}
+            className={cn(
+              "w-16 h-16 md:w-20 md:h-20 rounded-full flex-shrink-0 flex items-center justify-center",
+              "border border-white/[0.08] shadow-[0_4px_20px_rgba(0,0,0,0.25)]",
+              count < 3 ? "bg-accent-terracotta/10 text-accent-terracotta" : "bg-text-main/5 text-text-main/15"
+            )}
           >
-            <motion.div
-              whileHover={{ scale: 1.1 }}
-              transition={{ type: "spring", damping: 15, stiffness: 400 }}
-              className={cn(
-                "w-16 h-16 md:w-20 md:h-20 rounded-full flex-shrink-0 flex items-center justify-center",
-                "border border-white/[0.08] shadow-[0_4px_20px_rgba(0,0,0,0.25)]",
-                count < 3 ? "bg-accent-terracotta/10 text-accent-terracotta" : "bg-text-main/5 text-text-main/15"
-              )}
-            >
-              {count < 3 ? <Camera className="w-7 h-7 md:w-8 md:h-8" /> : <Heart className="w-7 h-7 md:w-8 md:h-8 fill-text-main/10" />}
-            </motion.div>
-            <div>
-              <span className="text-sm md:text-[10px] font-black uppercase tracking-[0.2em] text-text-main/50">
-                {count < 3 ? "New Moment" : "Complete"}
-              </span>
-              {count < 3 && (
-                <p className="text-xs text-text-main/25 mt-0.5 md:hidden">Tap to capture a memory</p>
-              )}
-            </div>
+            {count < 3 ? <Camera className="w-7 h-7 md:w-8 md:h-8" /> : <Heart className="w-7 h-7 md:w-8 md:h-8 fill-text-main/10" />}
           </motion.div>
-        </LiquidCard>
-
-        {/* ── Card 6: Daily Prompt — 3/4 col desktop, full mobile ── */}
-        <LiquidCard mdColSpan={3} delay={0.31} glowColor="rgba(138,154,91,0.12)" className="min-h-[130px]">
+          <div>
+            <span className="text-sm md:text-[10px] font-black uppercase tracking-[0.2em] text-text-main/50">
+              {count < 3 ? "New Moment" : "Complete"}
+            </span>
+            {count < 3 && (
+              <p className="text-xs text-text-main/25 mt-0.5 md:hidden">Tap to capture a memory</p>
+            )}
+          </div>
+        </motion.div>
+      ),
+    },
+    {
+      id: "prompt",
+      mdColSpan: 3,
+      delay: 0.31,
+      glowColor: "rgba(138,154,91,0.12)",
+      className: "min-h-[130px]",
+      content: (
+        <>
           <div className="flex items-center gap-2 mb-4">
             <Sparkles className="w-4 h-4 text-accent-sage flex-shrink-0" />
             <span className="text-[10px] font-black uppercase tracking-[0.2em] text-accent-sage/70">Daily Prompt</span>
           </div>
           <DailyPrompt />
-        </LiquidCard>
-
-
-
-        {/* ── Card 8: Now Playing — 1/4 row-span-2 desktop, full mobile ── */}
-        <LiquidCard mdRowSpan={2} delay={0.43} glowColor="rgba(217,119,87,0.12)" className="min-h-[160px]">
+        </>
+      ),
+    },
+    {
+      id: "now-playing",
+      mdRowSpan: 2,
+      delay: 0.43,
+      glowColor: "rgba(217,119,87,0.12)",
+      className: "min-h-[160px]",
+      content: (
+        <>
           <div className="flex justify-between items-start mb-4">
             <div>
               <span className="text-[10px] font-black uppercase tracking-[0.2em] text-text-main/30">Now Playing</span>
@@ -311,10 +362,17 @@ export default function HomeScreen({
             </div>
           </div>
           <NowPlayingPlayer title="Moonlight" artist="Kali Uchis" />
-        </LiquidCard>
-
-        {/* ── Card 9: Quote / CTA — 3/4 col desktop, full mobile ── */}
-        <LiquidCard mdColSpan={3} delay={0.49} glowColor="rgba(217,119,87,0.08)" className="flex items-center justify-center min-h-[160px]">
+        </>
+      ),
+    },
+    {
+      id: "quote",
+      mdColSpan: 3,
+      delay: 0.49,
+      glowColor: "rgba(217,119,87,0.08)",
+      className: "flex items-center justify-center min-h-[160px]",
+      content: (
+        <>
           <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-3xl">
             <div className="absolute bottom-0 inset-x-0 h-1/2 bg-gradient-to-t from-accent-terracotta/5 to-transparent" />
           </div>
@@ -332,8 +390,118 @@ export default function HomeScreen({
               View Timeline
             </button>
           </div>
-        </LiquidCard>
+        </>
+      ),
+    },
+  ]), [count, handleUploadClick, isPartnerActive, isShaking, onFoggyMirror, onOutbox, partner?.name, partnerLocalTime]);
 
+  const [isEditMode, setIsEditMode] = React.useState(false);
+  const [cardOrder, setCardOrder] = React.useState<string[]>(() => [...DEFAULT_CARD_ORDER]);
+  const cardIds = React.useMemo(() => cards.map((card) => card.id), [cards]);
+
+  React.useEffect(() => {
+    setCardOrder((prev) => {
+      const idSet = new Set(cardIds);
+      const persisted = prev.filter((id) => idSet.has(id));
+      const persistedSet = new Set(persisted);
+      const missing = cardIds.filter((id) => !persistedSet.has(id));
+      const nextOrder = [...persisted, ...missing];
+      return nextOrder.length === prev.length && nextOrder.every((id, index) => id === prev[index]) ? prev : nextOrder;
+    });
+  }, [cardIds]);
+
+  const cardsById = React.useMemo(() => {
+    return cards.reduce<Record<string, HomeCardConfig>>((acc, card) => {
+      acc[card.id] = card;
+      return acc;
+    }, {});
+  }, [cards]);
+
+  const orderedCards = React.useMemo(
+    () => cardOrder.map((id) => cardsById[id]).filter((card): card is HomeCardConfig => Boolean(card)),
+    [cardOrder, cardsById]
+  );
+
+  const moveCard = React.useCallback((index: number, direction: -1 | 1) => {
+    setCardOrder((prev) => {
+      const targetIndex = index + direction;
+      if (targetIndex < 0 || targetIndex >= prev.length) {
+        return prev;
+      }
+
+      const next = [...prev];
+      [next[index], next[targetIndex]] = [next[targetIndex], next[index]];
+      return next;
+    });
+  }, []);
+
+  return (
+    <div className="flex-1 px-3 md:px-8 pt-6 pb-36 md:pb-24">
+      <div className="flex justify-end mb-4 md:mb-6">
+        <motion.button
+          type="button"
+          whileTap={{ scale: 0.96 }}
+          onClick={() => setIsEditMode((prev) => !prev)}
+          className={cn(
+            "group inline-flex items-center gap-2 rounded-full px-4 py-2 text-[10px] font-black uppercase tracking-[0.18em]",
+            "border border-white/[0.08] bg-white/[0.03] backdrop-blur-md transition-all duration-300",
+            isEditMode && "text-accent-terracotta border-accent-terracotta/35 bg-accent-terracotta/12"
+          )}
+        >
+          <GripVertical className={cn("w-3.5 h-3.5 transition-colors", isEditMode ? "text-accent-terracotta" : "text-text-main/40")} />
+          {isEditMode ? "Done" : "Edit Layout"}
+        </motion.button>
+      </div>
+
+      {/*
+       * Mobile: 1-column stack. md+: 4-column bento grid.
+       * Row height is fixed so desktop cards have consistent heights.
+       */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-7 md:[grid-auto-rows:minmax(190px,auto)]">
+        {orderedCards.map((card, index) => (
+          <div key={card.id} className="relative">
+            <LiquidCard
+              mdColSpan={card.mdColSpan}
+              mdRowSpan={card.mdRowSpan}
+              delay={card.delay}
+              className={card.className}
+              glowColor={card.glowColor}
+              onClick={card.onClick}
+            >
+              {card.content}
+            </LiquidCard>
+            <AnimatePresence>
+              {isEditMode && (
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 8 }}
+                  transition={{ duration: 0.2 }}
+                  className="absolute top-3 right-3 z-20 flex items-center gap-1.5 rounded-xl border border-white/[0.1] bg-background/80 backdrop-blur-md p-1.5 shadow-[0_6px_20px_rgba(0,0,0,0.2)]"
+                >
+                  <button
+                    type="button"
+                    onClick={() => moveCard(index, -1)}
+                    disabled={index === 0}
+                    aria-label={`Move ${card.id} card up`}
+                    className="p-1 rounded-lg text-text-main/60 hover:text-accent-terracotta hover:bg-white/[0.06] transition-colors disabled:opacity-20 disabled:cursor-not-allowed"
+                  >
+                    <ArrowUp className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => moveCard(index, 1)}
+                    disabled={index === orderedCards.length - 1}
+                    aria-label={`Move ${card.id} card down`}
+                    className="p-1 rounded-lg text-text-main/60 hover:text-accent-terracotta hover:bg-white/[0.06] transition-colors disabled:opacity-20 disabled:cursor-not-allowed"
+                  >
+                    <ArrowDown className="w-3.5 h-3.5" />
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        ))}
       </div>
 
       {/* Daily quota reached tooltip */}
