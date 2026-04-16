@@ -110,7 +110,11 @@ export default function App() {
       setCurrentScreen("welcome");
     } else if (auth.user.is_admin) {
       setCurrentScreen("admin_dashboard");
-    } else if (!auth.user.couple_id && !auth.partner) {
+    } else if (auth.user.couple_id) {
+      // User is already linked, show home
+      setCurrentScreen("home");
+    } else if (!auth.partner) {
+      // User is not linked and has no partner, show connect
       setCurrentScreen("connect");
     } else {
       setCurrentScreen("home");
