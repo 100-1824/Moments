@@ -57,6 +57,36 @@ class AdminController extends Controller
         ]);
     }
 
+    /**
+     * Delete a user and handle couple cleanup.
+     * If user is in a couple, unlinks the couple and deletes all moments before deleting the user.
+     */
+    public function deleteUser(string $userId): JsonResponse
+    {
+        DB::transaction(function () use ($userId): void {
+            $user = User::findOrFail($userId);
+
+            // If user is in a couple, delete moments and unlink it
+            if ($user->couple_id) {
+                $couple = Couple::find($user->couple_id);
+                if ($couple) {
+                    // Delete all moments for this couple
+                    Moment::where('couple_id', $couple->id)->delete();
+
+                    // Clear couple reference on both users
+                    User::whereIn('id', [$couple->partner_a_id, $couple->partner_b_id])
+                        ->update(['couple_id' => null]);
+                    $couple->update(['status' => 'archived']);
+                }
+            }
+
+            // Delete the user
+            $user->delete();
+        });
+
+        return response()->json(['status' => 'success', 'message' => 'User deleted.']);
+    }
+
     // ─── Module 2: Connection Oversight ───────────────────────────────────────
 
     /**

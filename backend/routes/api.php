@@ -76,6 +76,7 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\IsAdmin::class])
         // Module 1: User Registry & Invite Management
         Route::get('/users', [AdminController::class, 'getUsers']);
         Route::post('/users/{userId}/regenerate-invite', [AdminController::class, 'regenerateInviteCode']);
+        Route::delete('/users/{userId}', [AdminController::class, 'deleteUser']);
 
         // Module 2: Connection Oversight
         Route::get('/couples', [AdminController::class, 'getCouples']);
