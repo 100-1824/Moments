@@ -189,8 +189,8 @@ export default function ConnectScreen({ onSuccess }: { onSuccess: () => void }) 
           </div>
 
           <div className="text-center space-y-4">
-            <h2 className="text-3xl font-bold">Connected!</h2>
-            <p className="text-text-main/60">You and your partner are now linked</p>
+            <h2 className="text-3xl font-bold">Connected with {user?.partner_nickname || "your partner"}!</h2>
+            <p className="text-text-main/60">You and {user?.partner_nickname || "your partner"} are now linked</p>
           </div>
 
           <button

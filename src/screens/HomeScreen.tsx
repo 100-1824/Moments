@@ -385,7 +385,7 @@ export default function HomeScreen({
       noPadding: true,
       content: (
         <div className="relative h-full min-h-[220px] overflow-hidden">
-          {partnerLatestMoment ? (
+          {partner && partnerLatestMoment ? (
             <>
               <img
                 src={partnerLatestMoment.media_url}
@@ -412,7 +412,29 @@ export default function HomeScreen({
                 </p>
               </div>
             </>
+          ) : partner ? (
+            // Partner exists but no moment yet
+            <div className="relative h-full min-h-[220px] overflow-hidden flex flex-col items-center justify-center p-6 bg-gradient-to-br from-accent-terracotta/5 via-transparent to-accent-sage/5">
+              <div className="absolute inset-0 opacity-5">
+                <div className="absolute inset-0 bg-gradient-to-br from-accent-terracotta via-transparent to-accent-sage" />
+              </div>
+              <div className="relative z-10 flex flex-col items-center justify-center gap-4 text-center h-full">
+                <div className="space-y-2">
+                  <p className="text-2xl">💭</p>
+                  <h3 className="text-lg font-bold text-text-main">
+                    {getPartnerDisplayName()}
+                  </h3>
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-accent-terracotta/60">
+                    Waiting for their first moment
+                  </p>
+                </div>
+                <p className="text-xs text-text-main/50 max-w-xs leading-relaxed">
+                  Check back soon for their shared moments
+                </p>
+              </div>
+            </div>
           ) : (
+            // No partner yet
             <div className="relative h-full min-h-[220px] overflow-hidden flex flex-col items-center justify-center p-6">
               {/* Animated background grid */}
               <div className="absolute inset-0 opacity-5">
