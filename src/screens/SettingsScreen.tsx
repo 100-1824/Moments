@@ -10,11 +10,15 @@ import {
   ChevronRight,
   Lock as LockIcon,
   Download,
+  Edit2,
+  Check,
+  X,
 } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 import { useAuth } from "@/src/contexts/AuthContext";
 import { NeuCard, NeuButton } from "@/src/components/ui/Neumorphic";
 import { SocialBatterySlider } from "@/src/components/AdvancedFeatures";
+import * as api from "@/src/lib/api";
 
 function SettingItem({
   label,
@@ -74,6 +78,21 @@ export default function SettingsScreen({
   onLogout: () => void;
 }) {
   const { user, partner } = useAuth();
+  const [isEditingNickname, setIsEditingNickname] = React.useState(false);
+  const [nicknameValue, setNicknameValue] = React.useState(user?.partner_nickname || "");
+  const [isSavingNickname, setIsSavingNickname] = React.useState(false);
+
+  const handleSaveNickname = async () => {
+    setIsSavingNickname(true);
+    try {
+      await api.updatePartnerNickname(nicknameValue || null);
+      setIsEditingNickname(false);
+    } catch (err) {
+      alert("Failed to update partner nickname");
+    } finally {
+      setIsSavingNickname(false);
+    }
+  };
 
   return (
     <motion.div
@@ -103,17 +122,67 @@ export default function SettingsScreen({
           </h3>
           <SocialBatterySlider />
           {partner && (
-            <NeuCard className="p-4 flex items-center gap-4">
-              <div className="w-12 h-12 neu-depressed rounded-full flex items-center justify-center">
-                <Users className="w-6 h-6 opacity-40" />
-              </div>
-              <div>
-                <p className="font-bold">Partner: {partner.name}</p>
-                <p className="text-xs opacity-40">
-                  {partner.invite_code} • {partner.timezone}
-                </p>
-              </div>
-            </NeuCard>
+            <div className="space-y-3">
+              <NeuCard className="p-4 flex items-center gap-4">
+                <div className="w-12 h-12 neu-depressed rounded-full flex items-center justify-center">
+                  <Users className="w-6 h-6 opacity-40" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-bold">
+                    {user?.partner_nickname || partner.name}
+                  </p>
+                  <p className="text-xs opacity-40">
+                    {partner.invite_code} • {partner.timezone}
+                  </p>
+                </div>
+              </NeuCard>
+              
+              {/* Partner Nickname Editor */}
+              {isEditingNickname ? (
+                <NeuCard className="p-4 space-y-3">
+                  <p className="text-xs font-bold opacity-40 uppercase tracking-widest">
+                    Partner's Nickname
+                  </p>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={nicknameValue}
+                      onChange={(e) => setNicknameValue(e.target.value)}
+                      placeholder={partner.name}
+                      className="flex-1 bg-black/20 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-accent-terracotta/50"
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleSaveNickname}
+                      disabled={isSavingNickname}
+                      className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-accent-terracotta/20 hover:bg-accent-terracotta/30 rounded-lg transition-colors disabled:opacity-50 text-sm font-semibold"
+                    >
+                      <Check className="w-4 h-4" />
+                      Save
+                    </button>
+                    <button
+                      onClick={() => {
+                        setIsEditingNickname(false);
+                        setNicknameValue(user?.partner_nickname || "");
+                      }}
+                      className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-black/20 hover:bg-black/30 rounded-lg transition-colors text-sm font-semibold"
+                    >
+                      <X className="w-4 h-4" />
+                      Cancel
+                    </button>
+                  </div>
+                </NeuCard>
+              ) : (
+                <button
+                  onClick={() => setIsEditingNickname(true)}
+                  className="w-full flex items-center justify-between px-4 py-3 bg-white/[0.04] border border-white/[0.06] rounded-xl hover:border-accent-terracotta/30 transition-all"
+                >
+                  <span className="text-sm font-semibold">Edit Partner Nickname</span>
+                  <Edit2 className="w-4 h-4 opacity-40" />
+                </button>
+              )}
+            </div>
           )}
           {user && (
             <NeuCard className="p-4">

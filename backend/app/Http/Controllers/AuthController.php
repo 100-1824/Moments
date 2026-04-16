@@ -395,6 +395,25 @@ class AuthController extends Controller
     }
 
     /**
+     * Update partner's display nickname.
+     */
+    public function updatePartnerNickname(Request $request): JsonResponse
+    {
+        $request->validate([
+            'partner_nickname' => 'nullable|string|max:255',
+        ]);
+
+        /** @var \App\Models\User $user */
+        $user = $request->user();
+
+        $user->update([
+            'partner_nickname' => $request->string('partner_nickname')->toString() ?: null,
+        ]);
+
+        return $this->success($this->presentUser($user));
+    }
+
+    /**
      * @return array<string, mixed>|null
      */
     private function presentUser(?User $user): ?array
@@ -404,17 +423,18 @@ class AuthController extends Controller
         }
 
         return [
-            'id'             => $user->id,
-            'name'           => $user->name,
-            'email'          => $user->email,
-            'phone'          => $user->phone,
-            'invite_code'    => $user->invite_code,
-            'couple_id'      => $user->couple_id,
-            'timezone'       => $user->timezone,
-            'is_admin'       => (bool) $user->is_admin,
-            'social_battery' => (int) $user->social_battery,
-            'last_seen_at'   => $user->last_seen_at?->toIso8601String(),
-            'created_at'     => $user->created_at?->toIso8601String(),
+            'id'                => $user->id,
+            'name'              => $user->name,
+            'email'             => $user->email,
+            'phone'             => $user->phone,
+            'invite_code'       => $user->invite_code,
+            'couple_id'         => $user->couple_id,
+            'timezone'          => $user->timezone,
+            'partner_nickname'  => $user->partner_nickname,
+            'is_admin'          => (bool) $user->is_admin,
+            'social_battery'    => (int) $user->social_battery,
+            'last_seen_at'      => $user->last_seen_at?->toIso8601String(),
+            'created_at'        => $user->created_at?->toIso8601String(),
         ];
     }
 }

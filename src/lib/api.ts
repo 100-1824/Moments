@@ -40,6 +40,7 @@ export interface ApiUser {
   invite_code: string;
   couple_id: string | null;
   timezone: string;
+  partner_nickname?: string | null;
   last_seen_at: string | null;
   created_at: string;
   is_admin: boolean;
@@ -416,4 +417,13 @@ export async function revealNote(noteId: string): Promise<ApiNote> {
     method: "POST",
   });
   return res.data.note;
+}
+
+export async function updatePartnerNickname(nickname: string | null): Promise<ApiUser> {
+  const res = await request<{ status: string; data: ApiUser }>('/auth/partner-nickname', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ partner_nickname: nickname }),
+  });
+  return res.data;
 }

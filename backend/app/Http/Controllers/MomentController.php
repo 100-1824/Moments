@@ -183,7 +183,7 @@ class MomentController extends Controller
 
         $moment->delete();
 
-        return $this->success(null, 'Moment deleted.');
+        return $this->success(['message' => 'Moment deleted.'], 200);
     }
 
     /**

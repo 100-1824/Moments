@@ -44,6 +44,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::post('/auth/connect', [AuthController::class, 'connect']);
     Route::get('/auth/me', [AuthController::class, 'me']);
     Route::post('/auth/logout', [AuthController::class, 'logout']);
+    Route::post('/auth/partner-nickname', [AuthController::class, 'updatePartnerNickname']);
 
     // Daily moments
     Route::get('/moments', [MomentController::class, 'index']);
