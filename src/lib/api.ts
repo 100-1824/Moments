@@ -237,7 +237,16 @@ export async function uploadMoment(
   form.append("media", file);
   form.append("type", type);
   form.append("is_encrypted", isEncrypted ? "true" : "false");
-  form.append("captured_at", new Date().toISOString());
+  
+  // Format captured_at to match PHP's date_format:Y-m-d\TH:i:s.u\Z
+  const now = new Date();
+  const isoString = now.toISOString();
+  const [datePart, timePart] = isoString.split('T');
+  const [time, ms] = timePart.split('.');
+  const microseconds = ms.slice(0, -1).padEnd(6, '0');
+  const formattedDate = `${datePart}T${time}.${microseconds}Z`;
+  
+  form.append("captured_at", formattedDate);
   form.append("slot", slot);
   if (captionPayload !== null) {
     form.append("caption_payload", captionPayload);
