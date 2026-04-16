@@ -51,7 +51,6 @@ const SettingsScreen = React.lazy(() => import("@/src/screens/SettingsScreen"));
 const AdminLoginScreen = React.lazy(() => import("@/src/screens/AdminLoginScreen").then(m => ({ default: m.AdminLoginScreen })));
 const AdminScreen = React.lazy(() => import("@/src/screens/AdminScreen").then(m => ({ default: m.AdminScreen })));
 const FoggyMirrorScreen = React.lazy(() => import("@/src/screens/FoggyMirrorScreen"));
-const OurMomentsScreen = React.lazy(() => import("@/src/screens/OurMomentsScreen"));
 
 type Screen =
   | "loading"
@@ -68,8 +67,7 @@ type Screen =
   | "outbox"
   | "moodboard"
   | "archive"
-  | "foggy_mirror"
-  | "our_moments";
+  | "foggy_mirror";
 
 function ScreenLoader() {
   return (
@@ -260,13 +258,7 @@ export default function App() {
                   }}
                   onOutbox={() => navigate("outbox")}
                   onFoggyMirror={() => navigate("foggy_mirror")}
-                  onOurMoments={() => navigate("our_moments")}
                 />
-              )}
-              {currentScreen === "our_moments" && (
-                <React.Suspense fallback={<ScreenLoader />}>
-                  <OurMomentsScreen key="our_moments" onBack={() => navigate("home")} />
-                </React.Suspense>
               )}
               {currentScreen === "foggy_mirror" && (
                 <React.Suspense fallback={<ScreenLoader />}>
