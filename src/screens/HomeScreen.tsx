@@ -169,6 +169,11 @@ export default function HomeScreen({
   const [moments, setMoments] = React.useState<any[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [isDeleting, setIsDeleting] = React.useState<string | null>(null);
+
+  const getPartnerDisplayName = React.useCallback(() => {
+    if (!partner) return "Partner";
+    return partner.partner_nickname || partner.name;
+  }, [partner]);
   
   const refreshMoments = React.useCallback(async () => {
     try {
@@ -334,9 +339,9 @@ export default function HomeScreen({
             <PulsingDot active={isPartnerActive} />
             <span className="text-xs font-semibold text-zinc-400 font-medium truncate">
               {isPartnerActive
-                ? `${partner?.name ?? "Partner"} is online now`
-                : partner?.name
-                ? `${partner.name} · Offline`
+                ? `${getPartnerDisplayName()} is online now`
+                : partner
+                ? `${getPartnerDisplayName()} · Offline`
                 : "No partner linked"}
             </span>
           </div>
@@ -383,7 +388,7 @@ export default function HomeScreen({
               {/* Caption positioned absolutely at bottom-left */}
               <div className="absolute inset-x-0 bottom-0 p-5 md:p-6 z-10">
                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/80">
-                  {partner?.name ?? "Partner"} Latest
+                  {getPartnerDisplayName()} Latest
                 </p>
                 <p className="mt-2 text-sm md:text-base font-semibold leading-relaxed text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.55)] line-clamp-3">
                   {partnerLatestMoment.caption_payload && !partnerLatestMoment.is_encrypted

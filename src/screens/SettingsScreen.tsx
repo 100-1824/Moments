@@ -82,6 +82,11 @@ export default function SettingsScreen({
   const [nicknameValue, setNicknameValue] = React.useState(user?.partner_nickname || "");
   const [isSavingNickname, setIsSavingNickname] = React.useState(false);
 
+  const getPartnerDisplayName = React.useCallback(() => {
+    if (!partner) return "Partner";
+    return partner.partner_nickname || partner.name;
+  }, [partner]);
+
   const handleSaveNickname = async () => {
     setIsSavingNickname(true);
     try {
@@ -129,7 +134,7 @@ export default function SettingsScreen({
                 </div>
                 <div className="flex-1">
                   <p className="font-bold">
-                    {user?.partner_nickname || partner.name}
+                    {getPartnerDisplayName()}
                   </p>
                   <p className="text-xs opacity-40">
                     {partner.invite_code} • {partner.timezone}
