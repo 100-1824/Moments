@@ -5,7 +5,7 @@
 
 import * as React from "react";
 import { motion, AnimatePresence, useMotionValue, useTransform, useSpring, useReducedMotion } from "motion/react";
-import { Heart, Plus, RefreshCw, Zap, Music, Ghost, Camera, Sparkles, Droplets, GripVertical, ArrowUp, ArrowDown } from "lucide-react";
+import { Heart, Plus, RefreshCw, Zap, Ghost, Camera, Sparkles, Droplets, GripVertical, ArrowUp, ArrowDown } from "lucide-react";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import { cn } from "@/src/lib/utils";
@@ -26,7 +26,6 @@ import {
   AmbientContext,
   DailyPrompt,
 } from "@/src/components/Features";
-import { NowPlayingPlayer } from "@/src/components/TactileFeatures";
 
 type HomeCardConfig = {
   id: string;
@@ -493,23 +492,17 @@ export default function HomeScreen({
                       </div>
                     </motion.div>
                   ) : (
-                    <button
-                      onClick={() => onUpload()}
-                      className="w-full h-full rounded-[32px] border-2 border-dashed border-text-main/10 hover:border-accent-terracotta/30 hover:bg-accent-terracotta/[0.02] transition-all flex flex-col items-center justify-center gap-4 group/add"
-                    >
-                      <div className="w-12 h-12 rounded-full neu-extruded flex items-center justify-center text-text-main/20 group-hover/add:text-accent-terracotta group-hover/add:scale-110 transition-all duration-500">
-                        <Plus className="w-6 h-6" />
-                      </div>
+                    <div className="w-full h-full rounded-[32px] border-2 border-dashed border-text-main/10 flex flex-col items-center justify-center gap-4 opacity-30">
                       <div className="text-center">
-                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-text-main/20 group-hover/add:text-text-main/40 transition-colors block">
+                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-text-main/20 block">
                           {slotInfo.label}
                         </span>
-                        <span className="text-[9px] font-bold text-text-main/10 group-hover/add:text-accent-terracotta/40 transition-colors uppercase tracking-widest">
-                            Empty Slot
-                          </span>
-                        </div>
-                      </button>
-                    )}
+                        <span className="text-[9px] font-bold text-text-main/10 uppercase tracking-widest">
+                          Waiting for partner
+                        </span>
+                      </div>
+                    </div>
+                  )}
                   </div>
                 );
               })}
@@ -564,34 +557,6 @@ export default function HomeScreen({
             <span className="text-[10px] font-black uppercase tracking-[0.2em] text-accent-sage/70">Daily Prompt</span>
           </div>
           <DailyPrompt />
-        </>
-      ),
-    },
-    {
-      id: "now-playing",
-      mdRowSpan: 2,
-      delay: 0.43,
-      glowColor: "rgba(217,119,87,0.12)",
-      className: "min-h-[160px]",
-      content: (
-        <>
-          <div className="flex justify-between items-start mb-4">
-            <div>
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-text-main/50">Now Playing</span>
-              <Music className="w-5 h-5 text-accent-terracotta mt-1.5" />
-            </div>
-            <div className="flex gap-1 items-end h-5">
-              {[1, 2, 3].map((i) => (
-                <motion.div
-                  key={i}
-                  className="w-1 bg-accent-terracotta/50 rounded-full"
-                  animate={{ height: ["6px", "18px", "10px", "16px", "6px"] }}
-                  transition={{ repeat: Infinity, duration: 1.4, delay: i * 0.2, ease: "easeInOut" }}
-                />
-              ))}
-            </div>
-          </div>
-          <NowPlayingPlayer title="Moonlight" artist="Kali Uchis" />
         </>
       ),
     },
