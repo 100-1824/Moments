@@ -9,6 +9,7 @@ import { Heart, Loader2, AlertCircle } from "lucide-react";
 import { NeuCard } from "@/src/components/ui/Neumorphic";
 import { TimeCapsule } from "@/src/components/Features";
 import { HoldToReveal } from "@/src/components/TactileFeatures";
+import { useAuth } from "@/src/contexts/AuthContext";
 import * as api from "@/src/lib/api";
 
 export default function FeedScreen({
@@ -16,17 +17,38 @@ export default function FeedScreen({
 }: {
   onMoodBoard: () => void;
 }) {
+  const { user } = useAuth();
   const [moments, setMoments] = React.useState<api.ApiMoment[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
+    if (!user?.id) {
+      setMoments([]);
+      setIsLoading(false);
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
     api
       .fetchTodayMoments()
-      .then((data) => setMoments(data.moments))
+      .then((data) => {
+        const myUploadedPictures: api.ApiMoment[] = [];
+        for (const moment of data.moments) {
+          const isMine = moment.user_id === user.id;
+          const isImage = moment.type === "image";
+          if (isMine && isImage) {
+            myUploadedPictures.push(moment);
+          }
+        }
+
+        setMoments(myUploadedPictures);
+      })
       .catch((e) => setError(e instanceof Error ? e.message : "Could not load feed."))
       .finally(() => setIsLoading(false));
-  }, []);
+  }, [user?.id]);
 
   return (
     <motion.div
@@ -35,7 +57,7 @@ export default function FeedScreen({
       className="flex-1 flex flex-col p-8 pt-16 pb-32"
     >
       <div className="flex justify-between items-center mb-8">
-        <h2 className="text-3xl font-bold">Partner Feed</h2>
+        <h2 className="text-3xl font-bold">My Moments</h2>
         <TimeCapsule onClick={onMoodBoard} />
       </div>
 
@@ -58,7 +80,7 @@ export default function FeedScreen({
             <Heart className="w-8 h-8 text-text-main/20" />
           </div>
           <p className="text-sm opacity-40">
-            No moments shared today yet. Check back soon.
+            No moments uploaded by you today yet.
           </p>
         </div>
       )}

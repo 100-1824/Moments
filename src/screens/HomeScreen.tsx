@@ -8,6 +8,7 @@ import { motion, AnimatePresence, useMotionValue, useTransform, useSpring } from
 import { Heart, RefreshCw, Music, Ghost, Camera, Sparkles, Droplets, GripVertical, ArrowUp, ArrowDown } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 import { useAuth } from "@/src/contexts/AuthContext";
+import * as api from "@/src/lib/api";
 import {
   DailyProgress,
 } from "@/src/components/ui/Neumorphic";
@@ -25,12 +26,14 @@ type HomeCardConfig = {
   glowColor?: string;
   className?: string;
   onClick?: () => void;
+  noPadding?: boolean;
   content: React.ReactNode;
 };
 
 const DEFAULT_CARD_ORDER = [
   "header",
   "ambient",
+  "partner-moment",
   "foggy",
   "quota",
   "upload",
@@ -153,9 +156,62 @@ export default function HomeScreen({
   onOutbox: () => void;
   onFoggyMirror: () => void;
 }) {
-  const { partner } = useAuth();
+  const { user, partner } = useAuth();
   const [isShaking, setIsShaking] = React.useState(false);
   const [showTooltip, setShowTooltip] = React.useState(false);
+  const [partnerLatestMoment, setPartnerLatestMoment] = React.useState<api.ApiMoment | null>(null);
+  const [isPartnerMomentLoading, setIsPartnerMomentLoading] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!partner?.id) {
+      setPartnerLatestMoment(null);
+      setIsPartnerMomentLoading(false);
+      return;
+    }
+
+    let isMounted = true;
+    setIsPartnerMomentLoading(true);
+
+    api
+      .fetchTodayMoments()
+      .then((response) => {
+        if (!isMounted) return;
+
+        const momentsFromPartner: api.ApiMoment[] = [];
+        for (const moment of response.moments) {
+          if (moment.user_id === partner.id && moment.type === "image") {
+            momentsFromPartner.push(moment);
+          }
+        }
+
+        if (momentsFromPartner.length === 0) {
+          setPartnerLatestMoment(null);
+          return;
+        }
+
+        momentsFromPartner.sort((a, b) => {
+          const aTime = new Date(a.created_at).getTime();
+          const bTime = new Date(b.created_at).getTime();
+          return bTime - aTime;
+        });
+
+        setPartnerLatestMoment(momentsFromPartner[0]);
+      })
+      .catch(() => {
+        if (isMounted) {
+          setPartnerLatestMoment(null);
+        }
+      })
+      .finally(() => {
+        if (isMounted) {
+          setIsPartnerMomentLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [partner?.id, user?.id]);
 
   const partnerLocalTime = React.useMemo(() => {
     if (!partner?.timezone) return null;
@@ -243,6 +299,51 @@ export default function HomeScreen({
         <div className="opacity-25 flex flex-col items-center gap-3">
           <Ghost className="w-12 h-12" />
           <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-center">Awaiting Link</span>
+        </div>
+      ),
+    },
+    {
+      id: "partner-moment",
+      mdColSpan: 2,
+      delay: 0.1,
+      glowColor: "rgba(217,119,87,0.2)",
+      className: "min-h-[220px]",
+      noPadding: true,
+      content: (
+        <div className="relative h-full min-h-[220px] overflow-hidden rounded-3xl">
+          {partnerLatestMoment ? (
+            <>
+              <img
+                src={partnerLatestMoment.media_url}
+                alt={`${partner?.name ?? "Partner"} latest moment`}
+                className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
+              />
+              <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-black/35 to-transparent" />
+              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.2),transparent_50%)]" />
+              <div className="absolute inset-x-0 bottom-0 p-5 md:p-6">
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/80">
+                  {partner?.name ?? "Partner"} Latest
+                </p>
+                <p className="mt-2 text-sm md:text-base font-semibold leading-relaxed text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.55)] line-clamp-3">
+                  {partnerLatestMoment.caption_payload && !partnerLatestMoment.is_encrypted
+                    ? partnerLatestMoment.caption_payload
+                    : partnerLatestMoment.is_encrypted
+                    ? "🔒 Encrypted moment"
+                    : "Shared just now."}
+                </p>
+              </div>
+            </>
+          ) : (
+            <div className="flex h-full items-center justify-center bg-gradient-to-br from-accent-terracotta/20 via-background/50 to-accent-sage/20 px-6 text-center">
+              <p className="text-xs font-semibold tracking-wide text-text-main/60">
+                {isPartnerMomentLoading
+                  ? "Loading latest moment..."
+                  : partner?.id
+                  ? "No partner moment shared yet today."
+                  : "Connect with your partner to see their latest moment."}
+              </p>
+            </div>
+          )}
         </div>
       ),
     },
@@ -393,7 +494,7 @@ export default function HomeScreen({
         </>
       ),
     },
-  ]), [count, handleUploadClick, isPartnerActive, isShaking, onFoggyMirror, onOutbox, partner?.name, partnerLocalTime]);
+  ]), [count, handleUploadClick, isPartnerActive, isPartnerMomentLoading, isShaking, onFoggyMirror, onOutbox, partner?.id, partner?.name, partnerLatestMoment, partnerLocalTime]);
 
   const [isEditMode, setIsEditMode] = React.useState(false);
   const [cardOrder, setCardOrder] = React.useState<string[]>(() => [...DEFAULT_CARD_ORDER]);
@@ -467,6 +568,7 @@ export default function HomeScreen({
               className={card.className}
               glowColor={card.glowColor}
               onClick={card.onClick}
+              noPadding={card.noPadding}
             >
               {card.content}
             </LiquidCard>
