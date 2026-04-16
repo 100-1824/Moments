@@ -89,6 +89,8 @@ class MomentController extends Controller
         ], 201);
     }
 
+    /**
+     * Fetch partner moments for a specific day in the authenticated
      * user's local day. Defaults to today; pass `?date=YYYY-MM-DD` to
      * fetch a specific local day.
      */
