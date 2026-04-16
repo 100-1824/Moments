@@ -121,6 +121,100 @@ export const HoldToReveal = ({ imageUrl }: { imageUrl: string }) => {
   );
 };
 
+// 2.1 "Pair-Hold-to-Reveal" (Shared Intimate Viewing)
+export const PairHoldToReveal = ({
+  image1Url,
+  image2Url,
+}: {
+  image1Url: string;
+  image2Url: string;
+}) => {
+  const [isRevealed, setIsRevealed] = React.useState(false);
+
+  const handleContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+  };
+
+  return (
+    <div
+      className="relative overflow-hidden rounded-[40px] neu-extruded border-4 border-background"
+      onMouseDown={() => setIsRevealed(true)}
+      onMouseUp={() => setIsRevealed(false)}
+      onMouseLeave={() => setIsRevealed(false)}
+      onTouchStart={() => setIsRevealed(true)}
+      onTouchEnd={() => setIsRevealed(false)}
+      onContextMenu={handleContextMenu}
+    >
+      <div className="flex gap-1 h-[400px]">
+        <div className="flex-1 overflow-hidden relative">
+          <img
+            src={image1Url}
+            alt="Left Moment"
+            className={cn(
+              "w-full h-full object-cover transition-all duration-700 ease-in-out",
+              !isRevealed ? "blur-3xl scale-125 grayscale opacity-50" : "blur-0 scale-100 grayscale-0 opacity-100"
+            )}
+            referrerPolicy="no-referrer"
+            draggable={false}
+          />
+        </div>
+        <div className="flex-1 overflow-hidden relative border-l border-background/10">
+          <img
+            src={image2Url}
+            alt="Right Moment"
+            className={cn(
+              "w-full h-full object-cover transition-all duration-700 ease-in-out",
+              !isRevealed ? "blur-3xl scale-125 grayscale opacity-50" : "blur-0 scale-100 grayscale-0 opacity-100"
+            )}
+            referrerPolicy="no-referrer"
+            draggable={false}
+          />
+        </div>
+      </div>
+
+      <AnimatePresence>
+        {!isRevealed && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 bg-background/50 backdrop-blur-sm z-10 flex flex-col items-center justify-center pointer-events-none"
+          >
+            <div className="relative">
+              <div className="neu-extruded w-24 h-24 rounded-full flex items-center justify-center bg-background/80 shadow-2xl">
+                <div className="w-12 h-12 neu-depressed-sm rounded-full flex items-center justify-center">
+                  <div className="w-3 h-3 rounded-full bg-accent-terracotta tact-glow animate-pulse" />
+                </div>
+              </div>
+              
+              <svg className="absolute inset-0 w-24 h-24 -rotate-90 pointer-events-none overflow-visible">
+                <circle
+                  cx="48"
+                  cy="48"
+                  r="44"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeDasharray="276"
+                  className="text-accent-terracotta/40"
+                />
+              </svg>
+            </div>
+            
+            <motion.p 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 0.8, y: 0 }}
+              className="mt-6 text-[10px] font-black uppercase tracking-[0.3em] text-text-main text-center px-4"
+            >
+              Steady Hold to Reveal Both
+            </motion.p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
 // 3. The Neumorphic "Now Playing" Record Player
 export const NowPlayingPlayer = ({ title, artist }: { title: string; artist: string }) => {
   const [isPlaying, setIsPlaying] = React.useState(false);
