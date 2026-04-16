@@ -8,7 +8,7 @@ import { motion } from "motion/react";
 import { Heart, Loader2, AlertCircle } from "lucide-react";
 import { NeuCard } from "@/src/components/ui/Neumorphic";
 import { TimeCapsule } from "@/src/components/Features";
-import { HoldToReveal } from "@/src/components/TactileFeatures";
+import { HoldToReveal, PairHoldToReveal } from "@/src/components/TactileFeatures";
 import * as api from "@/src/lib/api";
 
 export default function FeedScreen({
@@ -65,43 +65,87 @@ export default function FeedScreen({
 
       {!isLoading && moments.length > 0 && (
         <div className="space-y-10">
-          {moments.map((moment, idx) => (
-            <div key={moment.id} className="space-y-4">
-              {idx === 0 ? (
-                <HoldToReveal imageUrl={moment.media_url} />
-              ) : (
-                <NeuCard className="p-2 overflow-hidden">
-                  <img
-                    src={moment.media_url}
-                    alt="Moment"
-                    className="w-full aspect-square object-cover rounded-[28px]"
-                  />
-                </NeuCard>
-              )}
-              <div className="px-2">
-                {moment.caption_payload && !moment.is_encrypted && (
-                  <p className="font-medium leading-relaxed">
-                    {moment.caption_payload}
-                  </p>
-                )}
-                {moment.is_encrypted && (
-                  <p className="font-medium leading-relaxed opacity-40 italic">
-                    🔒 Encrypted message
-                  </p>
-                )}
-                <span className="text-xs font-bold opacity-30 uppercase tracking-widest">
-                  {moment.created_at
-                    ? new Intl.RelativeTimeFormat("en", { numeric: "auto" }).format(
-                        Math.round(
-                          (new Date(moment.created_at).getTime() - Date.now()) / 3600000,
-                        ),
-                        "hour",
-                      )
-                    : ""}
-                </span>
+          {moments.length >= 2 ? (
+            <>
+              {/* Featured Pair */}
+              <div className="space-y-4">
+                <PairHoldToReveal 
+                  image1Url={moments[0].media_url} 
+                  image2Url={moments[1].media_url} 
+                />
+                <div className="px-2 flex justify-between items-center">
+                  <span className="text-xs font-bold opacity-30 uppercase tracking-widest">
+                    Shared Moments
+                  </span>
+                  <div className="flex -space-x-2">
+                    <div className="w-6 h-6 rounded-full border-2 border-background bg-accent-terracotta" />
+                    <div className="w-6 h-6 rounded-full border-2 border-background bg-text-main/10" />
+                  </div>
+                </div>
               </div>
-            </div>
-          ))}
+              
+              {/* Remaining Moments */}
+              {moments.slice(2).map((moment) => (
+                <div key={moment.id} className="space-y-4">
+                  <NeuCard className="p-2 overflow-hidden">
+                    <img
+                      src={moment.media_url}
+                      alt="Moment"
+                      className="w-full aspect-square object-cover rounded-[28px]"
+                    />
+                  </NeuCard>
+                  <div className="px-2">
+                    {moment.caption_payload && !moment.is_encrypted && (
+                      <p className="font-medium leading-relaxed">
+                        {moment.caption_payload}
+                      </p>
+                    )}
+                    <span className="text-xs font-bold opacity-30 uppercase tracking-widest">
+                      {moment.created_at ? new Date(moment.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ""}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </>
+          ) : (
+            moments.map((moment, idx) => (
+              <div key={moment.id} className="space-y-4">
+                {idx === 0 ? (
+                  <HoldToReveal imageUrl={moment.media_url} />
+                ) : (
+                  <NeuCard className="p-2 overflow-hidden">
+                    <img
+                      src={moment.media_url}
+                      alt="Moment"
+                      className="w-full aspect-square object-cover rounded-[28px]"
+                    />
+                  </NeuCard>
+                )}
+                <div className="px-2">
+                  {moment.caption_payload && !moment.is_encrypted && (
+                    <p className="font-medium leading-relaxed">
+                      {moment.caption_payload}
+                    </p>
+                  )}
+                  {moment.is_encrypted && (
+                    <p className="font-medium leading-relaxed opacity-40 italic">
+                      🔒 Encrypted message
+                    </p>
+                  )}
+                  <span className="text-xs font-bold opacity-30 uppercase tracking-widest">
+                    {moment.created_at
+                      ? new Intl.RelativeTimeFormat("en", { numeric: "auto" }).format(
+                          Math.round(
+                            (new Date(moment.created_at).getTime() - Date.now()) / 3600000,
+                          ),
+                          "hour",
+                        )
+                      : ""}
+                  </span>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       )}
     </motion.div>
