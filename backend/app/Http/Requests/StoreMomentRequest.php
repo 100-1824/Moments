@@ -30,6 +30,7 @@ class StoreMomentRequest extends FormRequest
                 : ['nullable', 'string', 'max:2000'],
             'is_encrypted' => ['sometimes', 'boolean'],
             'captured_at' => ['sometimes', 'nullable', 'date', 'before_or_equal:now'],
+            'slot' => ['sometimes', 'nullable', 'in:morning,evening,night'],
         ];
     }
 

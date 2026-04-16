@@ -26,6 +26,7 @@ class SyncMomentsRequest extends FormRequest
             'moments.*.is_encrypted' => ['sometimes', 'boolean'],
             'moments.*.client_id' => ['required', 'string', 'max:64'],
             'moments.*.captured_at' => ['sometimes', 'nullable', 'date', 'before_or_equal:now'],
+            'moments.*.slot' => ['sometimes', 'nullable', 'in:morning,evening,night'],
         ];
     }
 }

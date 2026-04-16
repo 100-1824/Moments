@@ -17,6 +17,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string|null $caption_payload
  * @property bool $is_encrypted
  * @property \Illuminate\Support\Carbon|null $captured_at
+ * @property string|null $slot
  * @property \Illuminate\Support\Carbon $created_at
  */
 class Moment extends Model
@@ -31,6 +32,7 @@ class Moment extends Model
         'caption_payload',
         'is_encrypted',
         'captured_at',
+        'slot',
     ];
 
     protected function casts(): array

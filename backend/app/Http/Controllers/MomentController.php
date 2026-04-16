@@ -41,15 +41,28 @@ class MomentController extends Controller
 
         [$startUtc, $endUtc] = $this->dayWindowUtc($user);
 
-        $moment = DB::transaction(function () use ($request, $user, $startUtc, $endUtc): Moment {
-            $count = Moment::query()
-                ->where('user_id', $user->id)
-                ->whereBetween('created_at', [$startUtc, $endUtc])
-                
-                ->count();
+        $slot = $request->string('slot')->toString();
 
-            if ($count >= self::DAILY_LIMIT) {
-                throw new HttpException(429, 'You have already shared all 3 moments for today.');
+        $moment = DB::transaction(function () use ($request, $user, $startUtc, $endUtc, $slot): Moment {
+            if ($slot) {
+                $exists = Moment::query()
+                    ->where('user_id', $user->id)
+                    ->whereBetween('created_at', [$startUtc, $endUtc])
+                    ->where('slot', $slot)
+                    ->exists();
+
+                if ($exists) {
+                    throw new HttpException(409, "You have already shared a moment for the $slot slot today.");
+                }
+            } else {
+                $count = Moment::query()
+                    ->where('user_id', $user->id)
+                    ->whereBetween('created_at', [$startUtc, $endUtc])
+                    ->count();
+
+                if ($count >= self::DAILY_LIMIT) {
+                    throw new HttpException(429, 'You have already shared all 3 moments for today.');
+                }
             }
 
             /** @var UploadedFile $file */
@@ -64,6 +77,7 @@ class MomentController extends Controller
                 'caption_payload' => $request->input('caption_payload'),
                 'is_encrypted'    => $request->boolean('is_encrypted'),
                 'captured_at'     => $request->input('captured_at') ?: now(),
+                'slot'            => $slot ?: null,
             ]);
         });
 
@@ -128,15 +142,29 @@ class MomentController extends Controller
             $existingCount = Moment::query()
                 ->where('user_id', $user->id)
                 ->whereBetween('created_at', [$startUtc, $endUtc])
-                
                 ->count();
 
             foreach ($request->input('moments', []) as $index => $payload) {
                 /** @var UploadedFile|null $file */
                 $file = $request->file("moments.$index.media");
                 $clientId = $payload['client_id'] ?? null;
+                $slot = $payload['slot'] ?? null;
 
-                if ($existingCount >= self::DAILY_LIMIT) {
+                if ($slot) {
+                    $exists = Moment::query()
+                        ->where('user_id', $user->id)
+                        ->whereBetween('created_at', [$startUtc, $endUtc])
+                        ->where('slot', $slot)
+                        ->exists();
+
+                    if ($exists) {
+                        $rejected[] = [
+                            'client_id' => $clientId,
+                            'reason'    => "slot_{$slot}_already_filled",
+                        ];
+                        continue;
+                    }
+                } elseif ($existingCount >= self::DAILY_LIMIT) {
                     $rejected[] = [
                         'client_id' => $clientId,
                         'reason'    => 'daily_limit_reached',
@@ -165,6 +193,7 @@ class MomentController extends Controller
                         FILTER_VALIDATE_BOOLEAN
                     ),
                     'captured_at'     => $payload['captured_at'] ?? now(),
+                    'slot'            => $slot,
                 ]);
 
                 $existingCount++;
@@ -275,6 +304,7 @@ class MomentController extends Controller
             'caption_payload' => $moment->caption_payload,
             'is_encrypted'    => $moment->is_encrypted,
             'captured_at'     => $moment->captured_at?->toIso8601String(),
+            'slot'            => $moment->slot,
             'created_at'      => $moment->created_at?->toIso8601String(),
         ];
     }
