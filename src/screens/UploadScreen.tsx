@@ -17,6 +17,7 @@ import {
   NeuTextArea,
 } from "@/src/components/ui/Neumorphic";
 import { AudioCaption } from "@/src/components/Features";
+import { CameraView } from "@/src/components/CameraView";
 import * as api from "@/src/lib/api";
 
 export default function UploadScreen({
@@ -31,6 +32,7 @@ export default function UploadScreen({
   const [previewUrl, setPreviewUrl] = React.useState<string | null>(null);
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [showCamera, setShowCamera] = React.useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
@@ -44,6 +46,13 @@ export default function UploadScreen({
     if (!file) return;
     setSelectedFile(file);
     setPreviewUrl(URL.createObjectURL(file));
+  };
+
+  const handleCapture = (blob: Blob) => {
+    const file = new File([blob], `moment_${Date.now()}.jpg`, { type: "image/jpeg" });
+    setSelectedFile(file);
+    setPreviewUrl(URL.createObjectURL(file));
+    setShowCamera(false);
   };
 
   const handleSend = async () => {
@@ -110,23 +119,56 @@ export default function UploadScreen({
       </div>
 
       <div className="flex-1 space-y-8 overflow-y-auto pb-8">
-        <button
-          onClick={() => fileInputRef.current?.click()}
-          className="w-full aspect-square neu-depressed rounded-[40px] flex flex-col items-center justify-center text-text-main/20 border-4 border-background overflow-hidden"
-        >
-          {previewUrl ? (
-            <img
-              src={previewUrl}
-              alt="Preview"
-              className="w-full h-full object-cover rounded-[36px]"
+        <AnimatePresence>
+          {showCamera && (
+            <CameraView 
+              onCapture={handleCapture} 
+              onClose={() => setShowCamera(false)} 
             />
-          ) : (
-            <>
-              <Camera className="w-16 h-16 mb-4" />
-              <p className="font-bold">Tap to choose photo</p>
-            </>
           )}
-        </button>
+        </AnimatePresence>
+
+        <div className="flex flex-col gap-4">
+          <button
+            onClick={() => previewUrl ? setPreviewUrl(null) : setShowCamera(true)}
+            className="w-full aspect-square neu-depressed rounded-[40px] flex flex-col items-center justify-center text-text-main/20 border-4 border-background overflow-hidden group transition-all active:scale-[0.98]"
+          >
+            {previewUrl ? (
+              <img
+                src={previewUrl}
+                alt="Preview"
+                className="w-full h-full object-cover rounded-[36px]"
+              />
+            ) : (
+              <>
+                <div className="w-20 h-20 neu-extruded rounded-full flex items-center justify-center mb-6 group-hover:text-accent-terracotta transition-colors">
+                  <Camera className="w-10 h-10" />
+                </div>
+                <p className="font-bold text-text-main/40 uppercase tracking-widest text-xs">
+                  Tap to open camera
+                </p>
+              </>
+            )}
+          </button>
+
+          {!previewUrl && (
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="text-xs font-bold uppercase tracking-widest text-text-main/20 hover:text-text-main/40 transition-colors text-center py-2"
+            >
+              Or Choose from Gallery
+            </button>
+          )}
+
+          {previewUrl && (
+            <button
+              onClick={() => setShowCamera(true)}
+              className="text-xs font-bold uppercase tracking-widest text-accent-terracotta text-center py-2 tact-glow"
+            >
+              Retake Photo
+            </button>
+          )}
+        </div>
 
         <div className="space-y-4">
           <div className="flex justify-between items-center px-2">

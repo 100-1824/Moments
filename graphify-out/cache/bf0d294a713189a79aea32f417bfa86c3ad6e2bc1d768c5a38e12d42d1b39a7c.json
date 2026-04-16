@@ -1,0 +1,1 @@
+{"nodes": [{"id": "vendor_aws_aws_sdk_php_src_data_cloudtrail_2013_11_01_endpoint_rule_set_1_json_php", "label": "endpoint-rule-set-1.json.php", "file_type": "code", "source_file": "vendor/aws/aws-sdk-php/src/data/cloudtrail/2013-11-01/endpoint-rule-set-1.json.php", "source_location": "L1"}], "edges": []}

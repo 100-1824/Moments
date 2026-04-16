@@ -1,0 +1,1 @@
+{"nodes": [{"id": "backend_vendor_aws_aws_sdk_php_src_handler_guzzlev6_guzzlehandler_php", "label": "GuzzleHandler.php", "file_type": "code", "source_file": "backend/vendor/aws/aws-sdk-php/src/Handler/GuzzleV6/GuzzleHandler.php", "source_location": "L1"}], "edges": []}

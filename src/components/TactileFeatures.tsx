@@ -39,6 +39,11 @@ export const DigitalLocket = ({ imageUrl }: { imageUrl: string }) => {
 export const HoldToReveal = ({ imageUrl }: { imageUrl: string }) => {
   const [isRevealed, setIsRevealed] = React.useState(false);
 
+  // Prevent context menus on images which break the hold experience
+  const handleContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+  };
+
   return (
     <div
       onMouseDown={() => setIsRevealed(true)}
@@ -46,28 +51,52 @@ export const HoldToReveal = ({ imageUrl }: { imageUrl: string }) => {
       onMouseLeave={() => setIsRevealed(false)}
       onTouchStart={() => setIsRevealed(true)}
       onTouchEnd={() => setIsRevealed(false)}
-      className="relative w-full aspect-square rounded-[40px] overflow-hidden cursor-pointer group"
+      onContextMenu={handleContextMenu}
+      className={cn(
+        "relative w-full aspect-square rounded-[40px] overflow-hidden cursor-pointer group select-none touch-none",
+        "transition-transform duration-300",
+        isRevealed ? "scale-[0.98]" : "scale-100"
+      )}
+      style={{
+        WebkitTouchCallout: "none",
+        WebkitUserSelect: "none",
+      }}
     >
       <img
         src={imageUrl}
         alt="Intimate Moment"
         className={cn(
-          "w-full h-full object-cover transition-all duration-500",
-          !isRevealed && "blur-2xl scale-110"
+          "w-full h-full object-cover transition-all duration-300 ease-out",
+          !isRevealed && "blur-2xl scale-110 grayscale-[0.5]"
         )}
         referrerPolicy="no-referrer"
+        draggable={false}
       />
       
       {/* Neumorphic Overlay */}
       <div className={cn(
-        "absolute inset-0 transition-all duration-300 flex items-center justify-center",
-        isRevealed ? "bg-black/0 shadow-inner" : "bg-background/20 backdrop-blur-sm shadow-[inset_0_0_100px_rgba(255,255,255,0.5)]"
+        "absolute inset-0 transition-all duration-300 flex flex-col items-center justify-center pointer-events-none",
+        isRevealed 
+          ? "bg-black/0 shadow-inner" 
+          : "bg-background/40 backdrop-blur-md shadow-[inset_0_0_100px_rgba(0,0,0,0.5)]"
       )}>
-        {!isRevealed && (
-          <div className="neu-extruded w-16 h-16 rounded-full flex items-center justify-center opacity-40 group-hover:opacity-60 transition-opacity">
-            <div className="w-2 h-2 rounded-full bg-text-main/20" />
-          </div>
-        )}
+        <AnimatePresence>
+          {!isRevealed && (
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              className="flex flex-col items-center gap-4"
+            >
+              <div className="neu-extruded w-16 h-16 rounded-full flex items-center justify-center opacity-40 group-hover:opacity-60 transition-opacity">
+                <div className="w-2 h-2 rounded-full bg-accent-terracotta tact-glow" />
+              </div>
+              <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-text-main opacity-30">
+                Hold to view
+              </span>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );

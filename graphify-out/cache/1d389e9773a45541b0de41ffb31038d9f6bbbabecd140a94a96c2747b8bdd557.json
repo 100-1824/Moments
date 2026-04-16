@@ -1,0 +1,1 @@
+{"nodes": [{"id": "backend_vendor_aws_aws_sdk_php_src_data_streams_dynamodb_2012_08_10_api_2_json_php", "label": "api-2.json.php", "file_type": "code", "source_file": "backend/vendor/aws/aws-sdk-php/src/data/streams.dynamodb/2012-08-10/api-2.json.php", "source_location": "L1"}], "edges": []}

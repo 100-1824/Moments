@@ -1,0 +1,1 @@
+{"nodes": [{"id": "vendor_aws_aws_sdk_php_src_data_dynamodb_2012_08_10_endpoint_rule_set_1_json_php", "label": "endpoint-rule-set-1.json.php", "file_type": "code", "source_file": "vendor/aws/aws-sdk-php/src/data/dynamodb/2012-08-10/endpoint-rule-set-1.json.php", "source_location": "L1"}], "edges": []}
