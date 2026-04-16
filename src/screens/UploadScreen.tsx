@@ -271,22 +271,28 @@ export default function UploadScreen({
               { id: "morning", icon: Sun, label: "Morning" },
               { id: "evening", icon: Cloud, label: "Evening" },
               { id: "night", icon: Moon, label: "Night" },
-            ].map((s) => (
-              <button
-                key={s.id}
-                onClick={() => setSlot(s.id as any)}
-                className={`flex-1 py-4 rounded-3xl flex flex-col items-center gap-2 transition-all duration-300 ${
-                  slot === s.id
-                    ? "neu-depressed text-accent-terracotta bg-background/50 scale-[0.98]"
-                    : "neu-extruded text-text-main/40 hover:text-text-main/60"
-                }`}
-              >
-                <s.icon className={`w-5 h-5 ${slot === s.id ? "tact-glow" : ""}`} />
-                <span className="text-[10px] font-bold uppercase tracking-wider">
-                  {s.label}
-                </span>
-              </button>
-            ))}
+            ].map((s) => {
+              const currentSlot = getCurrentSlot();
+              const isCurrentSlot = s.id === currentSlot;
+              return (
+                <button
+                  key={s.id}
+                  onClick={() => isCurrentSlot && setSlot(s.id as any)}
+                  disabled={!isCurrentSlot}
+                  className={`flex-1 py-4 rounded-3xl flex flex-col items-center gap-2 transition-all duration-300 ${
+                    isCurrentSlot
+                      ? "neu-depressed text-accent-terracotta bg-background/50 scale-[0.98]"
+                      : "neu-extruded text-text-main/20 opacity-40 cursor-not-allowed"
+                  }`}
+                >
+                  <s.icon className={`w-5 h-5 ${isCurrentSlot ? "tact-glow" : ""}`} />
+                  <span className="text-[10px] font-bold uppercase tracking-wider">
+                    {s.label}
+                  </span>
+                  {!isCurrentSlot && <span className="text-[8px] opacity-50">Locked</span>}
+                </button>
+              );
+            })}
           </div>
         </div>
 
