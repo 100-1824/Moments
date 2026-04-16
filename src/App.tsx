@@ -127,6 +127,15 @@ export default function App() {
     }
   }, [auth.isLoading, auth.user, currentScreen]);
 
+
+  // Reactive transition: if user is on connect screen but has since been linked, go home.
+  React.useEffect(() => {
+    if (currentScreen === "connect" && auth.user?.couple_id) {
+      setCurrentScreen("home");
+    }
+  }, [currentScreen, auth.user?.couple_id]);
+
+
   React.useEffect(() => {
     const handleOnline = () => setIsOffline(false);
     const handleOffline = () => setIsOffline(true);

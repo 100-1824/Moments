@@ -12,9 +12,11 @@ import {
   NeuInput,
 } from "@/src/components/ui/Neumorphic";
 import { useAuth } from "@/src/contexts/AuthContext";
+import { ApiError } from "@/src/lib/api";
+
 
 export default function ConnectScreen({ onSuccess }: { onSuccess: () => void }) {
-  const { user, connect } = useAuth();
+  const { user, connect, refreshMe } = useAuth();
   const [partnerCode, setPartnerCode] = React.useState("");
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -30,11 +32,22 @@ export default function ConnectScreen({ onSuccess }: { onSuccess: () => void }) 
       await connect(partnerCode.trim().toUpperCase());
       onSuccess();
     } catch (e: unknown) {
+      if (e instanceof ApiError && e.status === 409) {
+        // Already linked: refresh state to get couple_id/partner and move home
+        try {
+          await refreshMe();
+          onSuccess();
+          return;
+        } catch (refreshErr) {
+          // If refresh fails, show original error
+        }
+      }
       setError(e instanceof Error ? e.message : "Could not connect.");
     } finally {
       setIsLoading(false);
     }
   };
+
 
   return (
     <motion.div
