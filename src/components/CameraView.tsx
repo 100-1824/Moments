@@ -42,6 +42,12 @@ export const CameraView = ({ onCapture, onClose }: CameraViewProps) => {
     return () => stopStream();
   }, [facingMode]);
 
+  React.useEffect(() => {
+    if (stream && videoRef.current) {
+      videoRef.current.srcObject = stream;
+    }
+  }, [stream]);
+
   const toggleCamera = () => {
     setFacingMode((prev) => (prev === "user" ? "environment" : "user"));
   };

@@ -1,6 +1,6 @@
 import * as React from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Play, Pause, SkipForward, SkipBack, Music } from "lucide-react";
+import { Play, Pause, SkipForward, SkipBack, Music, AlertCircle } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 
 // 1. The "Digital Locket" (Pinned Core Memory)
@@ -52,51 +52,70 @@ export const HoldToReveal = ({ imageUrl }: { imageUrl: string }) => {
       onTouchStart={() => setIsRevealed(true)}
       onTouchEnd={() => setIsRevealed(false)}
       onContextMenu={handleContextMenu}
-      className={cn(
-        "relative w-full aspect-square rounded-[40px] overflow-hidden cursor-pointer group select-none touch-none",
-        "transition-transform duration-300",
-        isRevealed ? "scale-[0.98]" : "scale-100"
-      )}
-      style={{
-        WebkitTouchCallout: "none",
-        WebkitUserSelect: "none",
-      }}
     >
+      <AnimatePresence>
+        {!isRevealed && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 bg-background/80 backdrop-blur-xl z-10 flex flex-col items-center justify-center pointer-events-none"
+          >
+            <div className="relative">
+              <div className="neu-extruded w-24 h-24 rounded-full flex items-center justify-center">
+                <div className="w-12 h-12 neu-depressed-sm rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-500">
+                  <div className="w-3 h-3 rounded-full bg-accent-terracotta tact-glow animate-pulse" />
+                </div>
+              </div>
+              
+              {/* Progress Ring (Visual hint) */}
+              <svg className="absolute inset-0 w-24 h-24 -rotate-90 pointer-events-none opacity-20">
+                <circle
+                  cx="48"
+                  cy="48"
+                  r="44"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeDasharray="276"
+                  className="text-accent-terracotta"
+                />
+              </svg>
+            </div>
+            
+            <motion.p 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 0.4, y: 0 }}
+              className="mt-6 text-[10px] font-black uppercase tracking-[0.3em] text-text-main"
+            >
+              Steady Hold to Reveal
+            </motion.p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <img
         src={imageUrl}
         alt="Intimate Moment"
         className={cn(
-          "w-full h-full object-cover transition-all duration-300 ease-out",
-          !isRevealed && "blur-2xl scale-110 grayscale-[0.5]"
+          "w-full h-full object-cover transition-all duration-700 ease-in-out",
+          !isRevealed ? "blur-3xl scale-125 grayscale opacity-50" : "blur-0 scale-100 grayscale-0 opacity-100"
         )}
         referrerPolicy="no-referrer"
         draggable={false}
+        onError={(e) => {
+          const target = e.target as HTMLImageElement;
+          target.style.display = 'none';
+          // Find the sibling error message and show it
+          const next = target.nextElementSibling as HTMLElement;
+          if (next) next.style.display = 'flex';
+        }}
       />
       
-      {/* Neumorphic Overlay */}
-      <div className={cn(
-        "absolute inset-0 transition-all duration-300 flex flex-col items-center justify-center pointer-events-none",
-        isRevealed 
-          ? "bg-black/0 shadow-inner" 
-          : "bg-background/40 backdrop-blur-md shadow-[inset_0_0_100px_rgba(0,0,0,0.5)]"
-      )}>
-        <AnimatePresence>
-          {!isRevealed && (
-            <motion.div 
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.8 }}
-              className="flex flex-col items-center gap-4"
-            >
-              <div className="neu-extruded w-16 h-16 rounded-full flex items-center justify-center opacity-40 group-hover:opacity-60 transition-opacity">
-                <div className="w-2 h-2 rounded-full bg-accent-terracotta tact-glow" />
-              </div>
-              <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-text-main opacity-30">
-                Hold to view
-              </span>
-            </motion.div>
-          )}
-        </AnimatePresence>
+      {/* Error state if image fails */}
+      <div className="absolute inset-0 hidden flex-col items-center justify-center bg-background/10 text-text-main/20 p-8 text-center">
+        <AlertCircle className="w-8 h-8 mb-2 opacity-20" />
+        <span className="text-[10px] font-bold uppercase tracking-widest">Unable to load memory</span>
       </div>
     </div>
   );

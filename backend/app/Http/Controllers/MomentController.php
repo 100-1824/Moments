@@ -237,7 +237,7 @@ class MomentController extends Controller
             }
         }
 
-        return $disk->url($key);
+        return $key;
     }
 
     /**
@@ -245,12 +245,33 @@ class MomentController extends Controller
      */
     private function presentMoment(Moment $moment): array
     {
+        $mediaUrl = $moment->media_url;
+
+        if ($mediaUrl) {
+            // Handle legacy full URLs by extracting the path starting with 'couples/'
+            if (str_starts_with($mediaUrl, 'http')) {
+                $path = parse_url($mediaUrl, PHP_URL_PATH);
+                $pos = strpos($path, 'couples/');
+                $mediaUrl = ($pos !== false) ? substr($path, $pos) : ltrim($path, '/');
+            }
+
+            try {
+                // Generate a signed URL for private access (valid for 1 hour)
+                $mediaUrl = Storage::disk('s3')->temporaryUrl($mediaUrl, now()->addHour());
+            } catch (\Throwable $e) {
+                // Fallback to direct URL if signed URLs are not supported by the driver
+                if (!str_starts_with($mediaUrl, 'http')) {
+                    $mediaUrl = Storage::disk('s3')->url($mediaUrl);
+                }
+            }
+        }
+
         return [
             'id'              => $moment->id,
             'user_id'         => $moment->user_id,
             'couple_id'       => $moment->couple_id,
             'type'            => $moment->type,
-            'media_url'       => $moment->media_url,
+            'media_url'       => $mediaUrl,
             'caption_payload' => $moment->caption_payload,
             'is_encrypted'    => $moment->is_encrypted,
             'captured_at'     => $moment->captured_at?->toIso8601String(),
