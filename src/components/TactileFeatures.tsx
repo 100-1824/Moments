@@ -129,88 +129,131 @@ export const PairHoldToReveal = ({
   image1Url: string;
   image2Url: string;
 }) => {
-  const [isRevealed, setIsRevealed] = React.useState(false);
+  const [isRevealed1, setIsRevealed1] = React.useState(false);
+  const [isRevealed2, setIsRevealed2] = React.useState(false);
 
   const handleContextMenu = (e: React.MouseEvent) => {
     e.preventDefault();
   };
 
   return (
-    <div
-      className="relative overflow-hidden rounded-[40px] neu-extruded border-4 border-background"
-      onMouseDown={() => setIsRevealed(true)}
-      onMouseUp={() => setIsRevealed(false)}
-      onMouseLeave={() => setIsRevealed(false)}
-      onTouchStart={() => setIsRevealed(true)}
-      onTouchEnd={() => setIsRevealed(false)}
-      onContextMenu={handleContextMenu}
-    >
-      <div className="flex gap-1 h-[400px]">
-        <div className="flex-1 overflow-hidden relative">
+    <div className="relative overflow-hidden rounded-[40px] neu-extruded border-4 border-background h-[400px]">
+      <div className="flex gap-1 h-full">
+        {/* Left Moment */}
+        <div 
+          className="flex-1 overflow-hidden relative"
+          onMouseDown={() => setIsRevealed1(true)}
+          onMouseUp={() => setIsRevealed1(false)}
+          onMouseLeave={() => setIsRevealed1(false)}
+          onTouchStart={() => setIsRevealed1(true)}
+          onTouchEnd={() => setIsRevealed1(false)}
+          onContextMenu={handleContextMenu}
+        >
           <img
             src={image1Url}
             alt="Left Moment"
             className={cn(
               "w-full h-full object-cover transition-all duration-700 ease-in-out",
-              !isRevealed ? "blur-3xl scale-125 grayscale opacity-50" : "blur-0 scale-100 grayscale-0 opacity-100"
+              !isRevealed1 ? "blur-3xl scale-125 grayscale opacity-50" : "blur-0 scale-100 grayscale-0 opacity-100"
             )}
             referrerPolicy="no-referrer"
             draggable={false}
           />
+          <AnimatePresence>
+            {!isRevealed1 && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="absolute inset-0 bg-background/50 backdrop-blur-sm z-10 flex flex-col items-center justify-center pointer-events-none"
+              >
+                <div className="relative scale-75">
+                  <div className="neu-extruded w-20 h-20 rounded-full flex items-center justify-center bg-background/80 shadow-2xl">
+                    <div className="w-10 h-10 neu-depressed-sm rounded-full flex items-center justify-center">
+                      <div className="w-2 h-2 rounded-full bg-accent-terracotta tact-glow animate-pulse" />
+                    </div>
+                  </div>
+                  <svg className="absolute inset-0 w-20 h-20 -rotate-90 pointer-events-none overflow-visible px-0 mb-0">
+                    <circle
+                      cx="40"
+                      cy="40"
+                      r="36"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeDasharray="226"
+                      className="text-accent-terracotta/40"
+                    />
+                  </svg>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
-        <div className="flex-1 overflow-hidden relative border-l border-background/10">
+
+        {/* Right Moment */}
+        <div 
+          className="flex-1 overflow-hidden relative border-l border-background/10"
+          onMouseDown={() => setIsRevealed2(true)}
+          onMouseUp={() => setIsRevealed2(false)}
+          onMouseLeave={() => setIsRevealed2(false)}
+          onTouchStart={() => setIsRevealed2(true)}
+          onTouchEnd={() => setIsRevealed2(false)}
+          onContextMenu={handleContextMenu}
+        >
           <img
             src={image2Url}
             alt="Right Moment"
             className={cn(
               "w-full h-full object-cover transition-all duration-700 ease-in-out",
-              !isRevealed ? "blur-3xl scale-125 grayscale opacity-50" : "blur-0 scale-100 grayscale-0 opacity-100"
+              !isRevealed2 ? "blur-3xl scale-125 grayscale opacity-50" : "blur-0 scale-100 grayscale-0 opacity-100"
             )}
             referrerPolicy="no-referrer"
             draggable={false}
           />
+          <AnimatePresence>
+            {!isRevealed2 && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="absolute inset-0 bg-background/50 backdrop-blur-sm z-10 flex flex-col items-center justify-center pointer-events-none"
+              >
+                <div className="relative scale-75">
+                  <div className="neu-extruded w-20 h-20 rounded-full flex items-center justify-center bg-background/80 shadow-2xl">
+                    <div className="w-10 h-10 neu-depressed-sm rounded-full flex items-center justify-center">
+                      <div className="w-2 h-2 rounded-full bg-accent-terracotta tact-glow animate-pulse" />
+                    </div>
+                  </div>
+                  <svg className="absolute inset-0 w-20 h-20 -rotate-90 pointer-events-none overflow-visible">
+                    <circle
+                      cx="40"
+                      cy="40"
+                      r="36"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeDasharray="226"
+                      className="text-accent-terracotta/40"
+                    />
+                  </svg>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
-
-      <AnimatePresence>
-        {!isRevealed && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-background/50 backdrop-blur-sm z-10 flex flex-col items-center justify-center pointer-events-none"
-          >
-            <div className="relative">
-              <div className="neu-extruded w-24 h-24 rounded-full flex items-center justify-center bg-background/80 shadow-2xl">
-                <div className="w-12 h-12 neu-depressed-sm rounded-full flex items-center justify-center">
-                  <div className="w-3 h-3 rounded-full bg-accent-terracotta tact-glow animate-pulse" />
-                </div>
-              </div>
-              
-              <svg className="absolute inset-0 w-24 h-24 -rotate-90 pointer-events-none overflow-visible">
-                <circle
-                  cx="48"
-                  cy="48"
-                  r="44"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeDasharray="276"
-                  className="text-accent-terracotta/40"
-                />
-              </svg>
-            </div>
-            
-            <motion.p 
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 0.8, y: 0 }}
-              className="mt-6 text-[10px] font-black uppercase tracking-[0.3em] text-text-main text-center px-4"
-            >
-              Steady Hold to Reveal Both
-            </motion.p>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      
+      {/* Global Label */}
+      <div className="absolute bottom-6 left-0 right-0 z-20 pointer-events-none flex justify-center">
+        <motion.p 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 0.6 }}
+          className="text-[9px] font-black uppercase tracking-[0.4em] text-text-main/50 bg-background/20 backdrop-blur-md px-4 py-2 rounded-full border border-white/5"
+        >
+          Hold individual to reveal
+        </motion.p>
+      </div>
     </div>
   );
 };
