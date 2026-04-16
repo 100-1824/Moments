@@ -9,3 +9,4 @@ coverage/
 /vendor
 .vercel
 .env*.local
+graphify-out/

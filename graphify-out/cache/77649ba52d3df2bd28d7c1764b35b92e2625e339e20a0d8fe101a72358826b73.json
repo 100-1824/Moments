@@ -1,1 +1,0 @@
-{"nodes": [{"id": "vendor_psr_cache_src_invalidargumentexception_php", "label": "InvalidArgumentException.php", "file_type": "code", "source_file": "vendor/psr/cache/src/InvalidArgumentException.php", "source_location": "L1"}], "edges": []}
