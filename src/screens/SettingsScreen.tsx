@@ -84,8 +84,8 @@ export default function SettingsScreen({
 
   const getPartnerDisplayName = React.useCallback(() => {
     if (!partner) return "Partner";
-    return partner.partner_nickname || partner.name;
-  }, [partner]);
+    return user?.partner_nickname || partner.name;
+  }, [user, partner]);
 
   const handleSaveNickname = async () => {
     setIsSavingNickname(true);
