@@ -29,6 +29,7 @@ class StoreMomentRequest extends FormRequest
                 ? ['nullable', 'string']
                 : ['nullable', 'string', 'max:2000'],
             'is_encrypted' => ['sometimes', 'boolean'],
+        ];
     }
 
     protected function prepareForValidation(): void
