@@ -263,7 +263,7 @@ export async function fetchTodayMoments(): Promise<{
       moments: ApiMoment[];
       window: { start_utc: string; end_utc: string; timezone: string };
     };
-  }>("/moments");
+  }>("/moments/today");
   return res.data;
 }
 
