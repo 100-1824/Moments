@@ -398,7 +398,6 @@ export default function HomeScreen({
   const [isEditMode, setIsEditMode] = React.useState(false);
   const [cardOrder, setCardOrder] = React.useState<string[]>(() => [...DEFAULT_CARD_ORDER]);
   const cardIds = React.useMemo(() => cards.map((card) => card.id), [cards]);
-  const cardIdsKey = React.useMemo(() => cardIds.join("|"), [cardIds]);
 
   React.useEffect(() => {
     setCardOrder((prev) => {
@@ -409,7 +408,7 @@ export default function HomeScreen({
       const nextOrder = [...persisted, ...missing];
       return nextOrder.length === prev.length && nextOrder.every((id, index) => id === prev[index]) ? prev : nextOrder;
     });
-  }, [cardIds, cardIdsKey]);
+  }, [cardIds]);
 
   const cardsById = React.useMemo(() => {
     return cards.reduce<Record<string, HomeCardConfig>>((acc, card) => {
