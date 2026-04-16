@@ -60,6 +60,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::get('/notes/latest', [NoteController::class, 'latest']);
     Route::post('/notes', [NoteController::class, 'store']);
     Route::post('/notes/{note}/reveal', [NoteController::class, 'reveal']);
+    Route::delete('/notes/{note}', [NoteController::class, 'destroy']);
 
     // Data export
     Route::get('/export/archive', [ExportController::class, 'archive']);

@@ -428,6 +428,12 @@ export async function revealNote(noteId: string): Promise<ApiNote> {
   return res.data.note;
 }
 
+export async function deleteNote(noteId: string): Promise<void> {
+  await request(`/notes/${noteId}`, {
+    method: "DELETE",
+  });
+}
+
 export async function updatePartnerNickname(nickname: string | null): Promise<ApiUser> {
   const res = await request<{ status: string; data: ApiUser }>('/auth/partner-nickname', {
     method: 'POST',

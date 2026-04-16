@@ -117,6 +117,32 @@ class NoteController extends Controller
     }
 
     /**
+     * DELETE /notes/{note}
+     *
+     * Author deletes their own note (marks as replaced).
+     * Only the author can delete their note.
+     */
+    public function destroy(Request $request, string $noteId): JsonResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+
+        $note = Note::query()
+            ->where('id', $noteId)
+            ->where('couple_id', $user->couple_id)
+            ->whereNull('replaced_at')
+            ->firstOrFail();
+
+        if ($note->author_id !== $user->id) {
+            return $this->error('You can only delete your own notes.', 403);
+        }
+
+        $note->update(['replaced_at' => now()]);
+
+        return $this->success(null, 204);
+    }
+
+    /**
      * @return array<string, mixed>
      */
     private function presentNote(Note $note, User $viewer): array

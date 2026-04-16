@@ -2,9 +2,9 @@ import * as React from "react";
 import { motion, AnimatePresence, useMotionValue, useTransform } from "motion/react";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
-import { ArrowLeft, Send, RefreshCw, Pencil } from "lucide-react";
+import { ArrowLeft, Send, RefreshCw, Pencil, Trash2 } from "lucide-react";
 import { cn } from "@/src/lib/utils";
-import { getLatestNote, writeNote, revealNote, type ApiNote } from "@/src/lib/api";
+import { getLatestNote, writeNote, revealNote, deleteNote, type ApiNote } from "@/src/lib/api";
 
 // ─── Fog layer (CSS canvas — no camera needed) ──────────────────────────────
 //
@@ -112,10 +112,14 @@ function AuthorView({
   note,
   onSave,
   isSaving,
+  onDelete,
+  isDeleting,
 }: {
   note: ApiNote | null;
   onSave: (text: string) => void;
   isSaving: boolean;
+  onDelete: () => void;
+  isDeleting: boolean;
 }) {
   const [text, setText] = React.useState(note?.content ?? "");
   const max = 280;
@@ -140,33 +144,57 @@ function AuthorView({
           placeholder={"Write something sweet...\n\n\"Thinking of you today.\""}
           className="relative z-10 w-full h-full resize-none bg-transparent p-4 text-text-main text-sm font-medium leading-relaxed placeholder:text-text-main/20 focus:outline-none"
           style={{ fontFamily: "'Georgia', serif" }}
-          disabled={isSaving}
+          disabled={isSaving || isDeleting}
         />
         <div className="absolute bottom-3 right-4 text-[10px] text-text-main/20 font-bold z-10">
           {text.length}/{max}
         </div>
       </div>
 
-      <motion.button
-        whileTap={{ scale: 0.96 }}
-        disabled={!text.trim() || isSaving}
-        onClick={() => onSave(text)}
-        className={cn(
-          "flex items-center justify-center gap-2 w-full py-4 rounded-2xl",
-          "text-sm font-black uppercase tracking-[0.15em]",
-          "transition-all duration-300",
-          text.trim() && !isSaving
-            ? "bg-accent-terracotta text-white shadow-[0_4px_24px_rgba(217,119,87,0.4)]"
-            : "bg-white/[0.04] text-text-main/20 cursor-not-allowed"
+      <div className="flex gap-3">
+        <motion.button
+          whileTap={{ scale: 0.96 }}
+          disabled={!text.trim() || isSaving || isDeleting}
+          onClick={() => onSave(text)}
+          className={cn(
+            "flex-1 flex items-center justify-center gap-2 py-4 rounded-2xl",
+            "text-sm font-black uppercase tracking-[0.15em]",
+            "transition-all duration-300",
+            text.trim() && !isSaving && !isDeleting
+              ? "bg-accent-terracotta text-white shadow-[0_4px_24px_rgba(217,119,87,0.4)]"
+              : "bg-white/[0.04] text-text-main/20 cursor-not-allowed"
+          )}
+        >
+          {isSaving ? (
+            <RefreshCw className="w-4 h-4 animate-spin" />
+          ) : (
+            <Send className="w-4 h-4" />
+          )}
+          {isSaving ? "Frosting..." : note ? "Refrost" : "Frost It"}
+        </motion.button>
+
+        {note && (
+          <motion.button
+            whileTap={{ scale: 0.96 }}
+            disabled={isSaving || isDeleting}
+            onClick={onDelete}
+            className={cn(
+              "flex items-center justify-center gap-2 px-4 py-4 rounded-2xl",
+              "text-sm font-black uppercase tracking-[0.15em]",
+              "transition-all duration-300",
+              !isSaving && !isDeleting
+                ? "bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20"
+                : "bg-white/[0.04] text-text-main/20 cursor-not-allowed"
+            )}
+          >
+            {isDeleting ? (
+              <RefreshCw className="w-4 h-4 animate-spin" />
+            ) : (
+              <Trash2 className="w-4 h-4" />
+            )}
+          </motion.button>
         )}
-      >
-        {isSaving ? (
-          <RefreshCw className="w-4 h-4 animate-spin" />
-        ) : (
-          <Send className="w-4 h-4" />
-        )}
-        {isSaving ? "Frosting..." : note ? "Refrost" : "Frost It"}
-      </motion.button>
+      </div>
     </div>
   );
 }
@@ -244,6 +272,29 @@ function ReceiverView({
           )}
         </AnimatePresence>
       </div>
+
+      {/* Reveal button for browser/desktop users */}
+      {!revealed && (
+        <motion.button
+          whileTap={{ scale: 0.96 }}
+          disabled={isRevealing}
+          onClick={onReveal}
+          className={cn(
+            "flex items-center justify-center gap-2 w-full py-4 rounded-2xl",
+            "text-sm font-black uppercase tracking-[0.15em]",
+            "transition-all duration-300",
+            !isRevealing
+              ? "bg-accent-terracotta text-white shadow-[0_4px_24px_rgba(217,119,87,0.4)]"
+              : "bg-white/[0.04] text-text-main/20 cursor-not-allowed"
+          )}
+        >
+          {isRevealing ? (
+            <RefreshCw className="w-4 h-4 animate-spin" />
+          ) : (
+            <>✨ Reveal the fog</>
+          )}
+        </motion.button>
+      )}
     </div>
   );
 }
@@ -253,6 +304,7 @@ export default function FoggyMirrorScreen({ onBack }: { onBack: () => void }) {
   const [note, setNote] = React.useState<ApiNote | null | undefined>(undefined);
   const [isSaving, setIsSaving] = React.useState(false);
   const [isRevealing, setIsRevealing] = React.useState(false);
+  const [isDeleting, setIsDeleting] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const containerRef = React.useRef<HTMLDivElement>(null);
 
@@ -298,6 +350,22 @@ export default function FoggyMirrorScreen({ onBack }: { onBack: () => void }) {
       // silently fail — content will still show from local state if needed
     } finally {
       setIsRevealing(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!note || isDeleting) return;
+    if (!confirm("Delete this note? Your partner won't see it anymore.")) return;
+    
+    setIsDeleting(true);
+    setError(null);
+    try {
+      await deleteNote(note.id);
+      setNote(null);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Failed to delete. Try again.");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -362,6 +430,8 @@ export default function FoggyMirrorScreen({ onBack }: { onBack: () => void }) {
               note={note ?? null}
               onSave={handleSave}
               isSaving={isSaving}
+              onDelete={handleDelete}
+              isDeleting={isDeleting}
             />
           ) : (
             <ReceiverView
