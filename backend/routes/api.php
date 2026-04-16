@@ -47,6 +47,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
 
     // Daily moments
     Route::post('/moments', [MomentController::class, 'store']);
+    Route::delete('/moments/{moment}', [MomentController::class, 'destroy']);
     Route::get('/moments/today', [MomentController::class, 'today']);
     Route::post('/moments/sync', [MomentController::class, 'sync']);
 
@@ -81,6 +82,7 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\IsAdmin::class])
 
         // Module 3: Media Analytics
         Route::get('/media-stats', [AdminController::class, 'getMediaStats']);
+        Route::delete('/moments/{moment}', [AdminController::class, 'deleteMoment']);
 
         // Module 4: Engagement Metrics
         Route::get('/engagement', [AdminController::class, 'getEngagementMetrics']);

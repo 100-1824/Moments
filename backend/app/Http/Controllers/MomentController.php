@@ -89,8 +89,6 @@ class MomentController extends Controller
         ], 201);
     }
 
-    /**
-     * Return the partner's moments captured during the *authenticated*
      * user's local day. Defaults to today; pass `?date=YYYY-MM-DD` to
      * fetch a specific local day.
      */

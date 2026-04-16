@@ -60,6 +60,7 @@ export interface ApiMoment {
   caption_payload: string | null;
   is_encrypted: boolean;
   captured_at: string | null;
+  slot: "morning" | "evening" | "night";
   created_at: string;
 }
 
@@ -72,6 +73,7 @@ export interface QueuedMoment {
   caption_payload: string | null;
   is_encrypted: boolean;
   captured_at: string;
+  slot: "morning" | "evening" | "night" | null;
 }
 
 // ─── Core fetch wrapper ─────────────────────────────────────────────────────
@@ -228,12 +230,14 @@ export async function uploadMoment(
   type: "image" | "audio",
   captionPayload: string | null,
   isEncrypted: boolean,
+  slot: "morning" | "evening" | "night",
 ): Promise<{ moment: ApiMoment; remaining_today: number }> {
   const form = new FormData();
   form.append("media", file);
   form.append("type", type);
   form.append("is_encrypted", isEncrypted ? "true" : "false");
   form.append("captured_at", new Date().toISOString());
+  form.append("slot", slot);
   if (captionPayload !== null) {
     form.append("caption_payload", captionPayload);
   }
@@ -245,14 +249,21 @@ export async function uploadMoment(
   return res.data;
 }
 
+export async function deleteMoment(id: string): Promise<void> {
+  await request(`/moments/${id}`, { method: "DELETE" });
+}
+
 export async function fetchTodayMoments(): Promise<{
   moments: ApiMoment[];
   window: { start_utc: string; end_utc: string; timezone: string };
 }> {
   const res = await request<{
     status: string;
-    data: { moments: ApiMoment[]; window: { start_utc: string; end_utc: string; timezone: string } };
-  }>("/moments/today");
+    data: {
+      moments: ApiMoment[];
+      window: { start_utc: string; end_utc: string; timezone: string };
+    };
+  }>("/moments");
   return res.data;
 }
 
@@ -279,10 +290,6 @@ export async function syncOfflineQueue(
     form.append(`moments[${i}][type]`, item.type);
     form.append(`moments[${i}][client_id]`, item.client_id);
     form.append(`moments[${i}][is_encrypted]`, item.is_encrypted ? "true" : "false");
-    if (item.caption_payload) {
-      form.append(`moments[${i}][caption_payload]`, item.caption_payload);
-    }
-    form.append(`moments[${i}][captured_at]`, item.captured_at);
   });
 
   const res = await request<{
@@ -363,6 +370,10 @@ export interface AdminAnalytics {
 export async function getAdminAnalytics(): Promise<AdminAnalytics> {
   const res = await request<{ status: string; data: AdminAnalytics }>("/admin/analytics");
   return res.data;
+}
+
+export async function adminDeleteMoment(id: string): Promise<void> {
+  await request(`/admin/moments/${id}`, { method: "DELETE" });
 }
 
 export { ApiError };

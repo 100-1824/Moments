@@ -19,6 +19,8 @@ export default function FeedScreen({
   const [moments, setMoments] = React.useState<api.ApiMoment[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
+  // Sentinel ref for IntersectionObserver — stub for pagination
+  const sentinelRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
     api
@@ -27,6 +29,23 @@ export default function FeedScreen({
       .catch((e) => setError(e instanceof Error ? e.message : "Could not load feed."))
       .finally(() => setIsLoading(false));
   }, []);
+
+  // Primitive IntersectionObserver: fires when sentinel enters viewport
+  React.useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          // TODO: wire to real pagination API call (e.g. fetchNextPage())
+          console.log("[feed] sentinel visible — trigger next page fetch");
+        }
+      },
+      { threshold: 0.1 },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [isLoading]); // re-attach after initial load completes
 
   return (
     <motion.div
@@ -74,7 +93,7 @@ export default function FeedScreen({
                   image2Url={moments[1].media_url} 
                 />
                 <div className="px-2 flex justify-between items-center">
-                  <span className="text-xs font-bold opacity-30 uppercase tracking-widest">
+                  <span className="text-xs font-bold opacity-50 uppercase tracking-widest">
                     Shared Moments
                   </span>
                   <div className="flex -space-x-2">
@@ -97,7 +116,7 @@ export default function FeedScreen({
                         {moment.caption_payload}
                       </p>
                     )}
-                    <span className="text-xs font-bold opacity-30 uppercase tracking-widest">
+                    <span className="text-xs font-bold opacity-50 uppercase tracking-widest">
                       {moment.created_at ? new Date(moment.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ""}
                     </span>
                   </div>
@@ -126,7 +145,7 @@ export default function FeedScreen({
                       🔒 Encrypted message
                     </p>
                   )}
-                  <span className="text-xs font-bold opacity-30 uppercase tracking-widest">
+                  <span className="text-xs font-bold opacity-50 uppercase tracking-widest">
                     {moment.created_at
                       ? new Intl.RelativeTimeFormat("en", { numeric: "auto" }).format(
                           Math.round(
@@ -140,6 +159,8 @@ export default function FeedScreen({
               </div>
             ))
           )}
+          {/* Infinite scroll sentinel — IntersectionObserver fires console.log here */}
+          <div ref={sentinelRef} className="h-4 w-full" aria-hidden="true" />
         </div>
       )}
     </motion.div>

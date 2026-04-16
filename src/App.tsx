@@ -4,7 +4,7 @@
  */
 
 import * as React from "react";
-import { motion, AnimatePresence } from "motion/react";
+import { motion, AnimatePresence, useReducedMotion } from "motion/react";
 import {
   Heart,
   Users,
@@ -88,10 +88,12 @@ export default function App() {
   const [currentScreen, setCurrentScreen] = React.useState<Screen>("loading");
   const [showSuccessRipple, setShowSuccessRipple] = React.useState(false);
   const [isOffline, setIsOffline] = React.useState(!navigator.onLine);
+  const [selectedSlot, setSelectedSlot] = React.useState<string | undefined>();
   const [isLocked, setIsLocked] = React.useState(false);
   const [glowColor, setGlowColor] = React.useState("#D97757");
   const [moodColors] = React.useState(["#D97757", "#8A9A5B", "#5797D9"]);
 
+  const shouldReduceMotion = useReducedMotion();
   const [hasInitialized, setHasInitialized] = React.useState(false);
 
   // Navigate to the correct initial screen once auth is resolved.
@@ -206,10 +208,10 @@ export default function App() {
           <AnimatePresence>
             {showSuccessRipple && (
               <motion.div
-                initial={{ scale: 0, opacity: 0.5 }}
-                animate={{ scale: 4, opacity: 0 }}
+                initial={{ opacity: shouldReduceMotion ? 0 : 0.5, scale: shouldReduceMotion ? 1 : 0 }}
+                animate={{ opacity: 0, scale: shouldReduceMotion ? 1 : 4 }}
                 exit={{ opacity: 0 }}
-                transition={{ duration: 1.5, ease: "easeOut" }}
+                transition={{ duration: shouldReduceMotion ? 0.4 : 1.5, ease: "easeOut" }}
                 className="fixed inset-0 z-[100] pointer-events-none flex items-center justify-center"
               >
                 <div className="w-64 h-64 rounded-full bg-accent-terracotta/20 blur-3xl" />
@@ -253,8 +255,10 @@ export default function App() {
               {currentScreen === "home" && (
                 <HomeScreen
                   key="home"
-                  count={auth.dailyCount}
-                  onUpload={() => navigate("upload")}
+                  onUpload={(slot) => {
+                    setSelectedSlot(slot);
+                    navigate("upload");
+                  }}
                   onOutbox={() => navigate("outbox")}
                   onFoggyMirror={() => navigate("foggy_mirror")}
                 />
@@ -267,8 +271,15 @@ export default function App() {
               {currentScreen === "upload" && (
                 <UploadScreen
                   key="upload"
-                  onBack={() => navigate("home")}
-                  onSuccess={handleUploadSuccess}
+                  initialSlot={selectedSlot}
+                  onBack={() => {
+                    setSelectedSlot(undefined);
+                    navigate("home");
+                  }}
+                  onSuccess={(remaining) => {
+                    setSelectedSlot(undefined);
+                    handleUploadSuccess(remaining);
+                  }}
                 />
               )}
               {currentScreen === "feed" && (
