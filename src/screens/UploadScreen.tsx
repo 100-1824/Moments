@@ -169,7 +169,14 @@ export default function UploadScreen({
             mimeType: offlineFile.type,
             caption_payload: caption.trim() || null,
             is_encrypted: false,
-            captured_at: new Date().toISOString(),
+            captured_at: (() => {
+              const now = new Date();
+              const isoString = now.toISOString();
+              const [datePart, timePart] = isoString.split('T');
+              const [time, ms] = timePart.split('.');
+              const microseconds = ms.slice(0, -1).padEnd(6, '0');
+              return `${datePart}T${time}.${microseconds}Z`;
+            })(),
             slot,
           });
           onSuccess(3); // optimistic: assume queued
