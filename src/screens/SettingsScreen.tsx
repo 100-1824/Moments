@@ -77,7 +77,7 @@ export default function SettingsScreen({
   onAdmin: () => void;
   onLogout: () => void;
 }) {
-  const { user, partner } = useAuth();
+  const { user, partner, refreshMe } = useAuth();
   const [isEditingNickname, setIsEditingNickname] = React.useState(false);
   const [nicknameValue, setNicknameValue] = React.useState(user?.partner_nickname || "");
   const [isSavingNickname, setIsSavingNickname] = React.useState(false);
@@ -91,6 +91,8 @@ export default function SettingsScreen({
     setIsSavingNickname(true);
     try {
       await api.updatePartnerNickname(nicknameValue || null);
+      // Refresh auth context to update partner data throughout the app
+      await refreshMe();
       setIsEditingNickname(false);
     } catch (err) {
       alert("Failed to update partner nickname");
