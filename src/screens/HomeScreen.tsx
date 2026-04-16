@@ -160,10 +160,12 @@ export default function HomeScreen({
   onUpload,
   onOutbox,
   onFoggyMirror,
+  onOurMoments,
 }: {
   onUpload: (slot?: string) => void;
   onOutbox: () => void;
   onFoggyMirror: () => void;
+  onOurMoments?: () => void;
 }) {
   const { user, partner } = useAuth();
   const [moments, setMoments] = React.useState<any[]>([]);
@@ -322,13 +324,22 @@ export default function HomeScreen({
                 {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
               </p>
             </div>
-            <button
-              onClick={onOutbox}
-              className="w-9 h-9 rounded-xl flex items-center justify-center bg-white/[0.04] border border-white/[0.06] hover:border-accent-terracotta/50 hover:text-accent-terracotta transition-all duration-300 group/btn mt-1"
-              aria-label="Refresh outbox"
-            >
-              <RefreshCw className="w-4 h-4 text-text-main/40 group-hover/btn:rotate-180 group-hover/btn:text-accent-terracotta transition-transform duration-500" />
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={onOurMoments}
+                className="w-9 h-9 rounded-xl flex items-center justify-center bg-white/[0.04] border border-white/[0.06] hover:border-accent-terracotta/50 hover:text-accent-terracotta transition-all duration-300 group/btn mt-1"
+                aria-label="View our moments"
+              >
+                <Heart className="w-4 h-4 text-text-main/40 group-hover/btn:text-accent-terracotta transition-colors duration-300" />
+              </button>
+              <button
+                onClick={onOutbox}
+                className="w-9 h-9 rounded-xl flex items-center justify-center bg-white/[0.04] border border-white/[0.06] hover:border-accent-terracotta/50 hover:text-accent-terracotta transition-all duration-300 group/btn mt-1"
+                aria-label="Refresh outbox"
+              >
+                <RefreshCw className="w-4 h-4 text-text-main/40 group-hover/btn:rotate-180 group-hover/btn:text-accent-terracotta transition-transform duration-500" />
+              </button>
+            </div>
           </div>
           <div className="flex items-center gap-2.5 mt-4">
             <PulsingDot active={isPartnerActive} />
