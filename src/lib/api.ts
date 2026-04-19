@@ -481,11 +481,14 @@ export async function subscribeToPushNotifications(): Promise<boolean> {
       return false;
     }
 
-    // Subscribe to push
-    const subscription = await registration.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
-    });
+    // Reuse existing subscription when present to avoid duplicate subscribe errors.
+    const existingSubscription = await registration.pushManager.getSubscription();
+    const subscription =
+      existingSubscription ??
+      (await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
+      }));
 
     // Send subscription to backend
     await request("/push/subscribe", {

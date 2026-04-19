@@ -26,6 +26,7 @@ import {
 import { cn } from "@/src/lib/utils";
 import { useAuth } from "@/src/contexts/AuthContext";
 import { ErrorBoundary } from "@/src/components/ErrorBoundary";
+import { usePushNotifications } from "@/src/hooks/usePushNotifications";
 import {
   AmbientGlowWrapper,
   VaultScreen,
@@ -81,6 +82,7 @@ function ScreenLoader() {
 
 export default function App() {
   const auth = useAuth();
+  usePushNotifications({ enabled: Boolean(auth.user) && !auth.user?.is_admin });
 
   const [currentScreen, setCurrentScreen] = React.useState<Screen>("loading");
   const [showSuccessRipple, setShowSuccessRipple] = React.useState(false);
