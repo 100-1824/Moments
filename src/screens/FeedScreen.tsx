@@ -35,24 +35,49 @@ export default function FeedScreen({
   }, { dependencies: [isLoading, moments] });
 
   React.useEffect(() => {
+    let isMounted = true;
+
     const fetchAllMoments = async () => {
       try {
-        const response = await fetch('/api/moments', {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('moments_token')}`
+        const token = api.getToken();
+        const headers: HeadersInit = token ? { Authorization: `Bearer ${token}` } : {};
+
+        let page = 1;
+        let lastPage = 1;
+        const allMoments: api.ApiMoment[] = [];
+
+        do {
+          const response = await fetch(`/api/moments?page=${page}`, { headers });
+          if (!response.ok) {
+            throw new Error(`Failed to fetch moments page ${page}`);
           }
-        });
-        if (response.ok) {
+
           const data = await response.json();
-          setMoments(data.data?.moments || []);
+          const pageMoments: api.ApiMoment[] = data.data?.moments || [];
+          const meta = data.data?.meta;
+
+          allMoments.push(...pageMoments);
+          lastPage = Number(meta?.last_page ?? page);
+          page += 1;
+        } while (page <= lastPage);
+
+        if (isMounted) {
+          setMoments(allMoments);
         }
       } catch (err) {
         console.error("Failed to fetch moments", err);
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     };
+
     fetchAllMoments();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const openDeleteDialog = (id: string) => {
@@ -122,11 +147,17 @@ export default function FeedScreen({
               <div className="relative w-full aspect-square bg-black/50 overflow-hidden">
                 {moment.media_url ? (
                   <>
-                    <img
-                      src={moment.media_url}
-                      alt="Moment"
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
+                    {moment.type === "audio" ? (
+                      <div className="w-full h-full flex items-center justify-center p-4">
+                        <audio src={moment.media_url} controls className="w-full" />
+                      </div>
+                    ) : (
+                      <img
+                        src={moment.media_url}
+                        alt="Moment"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    )}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent pointer-events-none" />
                   </>
                 ) : (

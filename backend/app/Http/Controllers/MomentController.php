@@ -16,6 +16,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
@@ -50,6 +51,15 @@ class MomentController extends Controller
         }
 
         $moment = DB::transaction(function () use ($request, $user, $startUtc, $endUtc, $slot): Moment {
+            $count = Moment::query()
+                ->where('user_id', $user->id)
+                ->whereBetween('created_at', [$startUtc, $endUtc])
+                ->count();
+
+            if ($count >= self::DAILY_LIMIT) {
+                throw new HttpException(429, 'You have already shared all 3 moments for today.');
+            }
+
             if ($slot) {
                 $exists = Moment::query()
                     ->where('user_id', $user->id)
@@ -59,15 +69,6 @@ class MomentController extends Controller
 
                 if ($exists) {
                     throw new HttpException(409, "You have already shared a moment for the $slot slot today.");
-                }
-            } else {
-                $count = Moment::query()
-                    ->where('user_id', $user->id)
-                    ->whereBetween('created_at', [$startUtc, $endUtc])
-                    ->count();
-
-                if ($count >= self::DAILY_LIMIT) {
-                    throw new HttpException(429, 'You have already shared all 3 moments for today.');
                 }
             }
 
@@ -119,15 +120,49 @@ class MomentController extends Controller
         $user = $request->user();
         $partner = $user->partner();
 
+        $validator = Validator::make($request->query(), [
+            'date' => ['nullable', 'date_format:Y-m-d'],
+        ]);
+
+        if ($validator->fails()) {
+            return $this->error('The date query parameter must be in YYYY-MM-DD format.', 422, [
+                'errors' => $validator->errors()->toArray(),
+            ]);
+        }
+
         if (! $partner) {
-            return $this->success(['moments' => [], 'partner' => null]);
+            $date = $request->query('date');
+            [$startUtc, $endUtc] = $this->dayWindowUtc($user, is_string($date) ? $date : null);
+
+            $myMoments = Moment::query()
+                ->where('user_id', $user->id)
+                ->whereBetween('created_at', [$startUtc, $endUtc])
+                ->orderBy('created_at')
+                ->get();
+
+            return $this->success([
+                'window' => [
+                    'start_utc' => $startUtc->toIso8601String(),
+                    'end_utc'   => $endUtc->toIso8601String(),
+                    'timezone'  => $user->timezone,
+                ],
+                'partner'    => null,
+                'moments'    => [],
+                'my_moments' => $myMoments->map(fn (Moment $m) => $this->presentMoment($m))->all(),
+            ]);
         }
 
         $date = $request->query('date');
         [$startUtc, $endUtc] = $this->dayWindowUtc($user, is_string($date) ? $date : null);
 
-        $moments = Moment::query()
+        $partnerMoments = Moment::query()
             ->where('user_id', $partner->id)
+            ->whereBetween('created_at', [$startUtc, $endUtc])
+            ->orderBy('created_at')
+            ->get();
+
+        $myMoments = Moment::query()
+            ->where('user_id', $user->id)
             ->whereBetween('created_at', [$startUtc, $endUtc])
             ->orderBy('created_at')
             ->get();
@@ -138,7 +173,8 @@ class MomentController extends Controller
                 'end_utc'   => $endUtc->toIso8601String(),
                 'timezone'  => $user->timezone,
             ],
-            'moments' => $moments->map(fn (Moment $m) => $this->presentMoment($m))->all(),
+            'moments'    => $partnerMoments->map(fn (Moment $m) => $this->presentMoment($m))->all(),
+            'my_moments' => $myMoments->map(fn (Moment $m) => $this->presentMoment($m))->all(),
         ]);
     }
 
@@ -227,6 +263,14 @@ class MomentController extends Controller
                 $clientId = $payload['client_id'] ?? null;
                 $slot = $payload['slot'] ?? null;
 
+                if ($existingCount >= self::DAILY_LIMIT) {
+                    $rejected[] = [
+                        'client_id' => $clientId,
+                        'reason'    => 'daily_limit_reached',
+                    ];
+                    continue;
+                }
+
                 if ($slot) {
                     $exists = Moment::query()
                         ->where('user_id', $user->id)
@@ -241,12 +285,6 @@ class MomentController extends Controller
                         ];
                         continue;
                     }
-                } elseif ($existingCount >= self::DAILY_LIMIT) {
-                    $rejected[] = [
-                        'client_id' => $clientId,
-                        'reason'    => 'daily_limit_reached',
-                    ];
-                    continue;
                 }
 
                 if (! $file) {

@@ -26,9 +26,7 @@ return Application::configure(basePath: dirname(__DIR__))
             \Illuminate\Http\Middleware\HandleCors::class,
         ]);
 
-        $middleware->throttleApi('api', [
-            'except' => ['api/migrate'],
-        ]);
+        $middleware->throttleApi();
     })
     ->withExceptions(function (Exceptions $exceptions) {
         // Render every exception as a consistent JSON envelope.

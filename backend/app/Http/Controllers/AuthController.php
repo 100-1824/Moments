@@ -14,7 +14,6 @@ use App\Support\ApiResponse;
 use App\Support\InviteCode;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
@@ -22,9 +21,6 @@ use Illuminate\Support\Facades\Validator;
 class AuthController extends Controller
 {
     use ApiResponse;
-
-    private const ADMIN_EMAIL = 'admin@moments.app';
-    private const ADMIN_MASTER_OTP = '000000';
 
     /**
      * Send a 6-digit OTP to the provided email.
@@ -41,14 +37,6 @@ class AuthController extends Controller
 
         $email = $request->string('email')->trim()->lower()->toString();
 
-        // -------------------------------------------------------------------------
-        // MASTER ADMIN BYPASS (GLOBAL)
-        // -------------------------------------------------------------------------
-        if ($email === self::ADMIN_EMAIL) {
-            \Log::info("Master send-otp bypass triggered for {$email}");
-            return $this->success(['message' => 'Verification code sent (Master Access).', 'otp' => self::ADMIN_MASTER_OTP]);
-        }
-
         // Security: If this is an admin login attempt, verify account existence and rights first
         if ($request->boolean('admin_portal')) {
             \Log::info("Admin send OTP attempt for: [{$email}]");
@@ -62,12 +50,13 @@ class AuthController extends Controller
 
         $otp = (string) random_int(100000, 999999);
 
-        // Store OTP in database table for 10 minutes.
+        // Store OTP hash in database table for 10 minutes.
         $expiresAt = now()->addMinutes(10);
-        
+        $otpHash = $this->hashOtp($otp);
+
         Otp::updateOrCreate(
             ['email' => $email],
-            ['code' => $otp, 'expires_at' => $expiresAt]
+            ['code' => $otpHash, 'expires_at' => $expiresAt]
         );
 
         try {
@@ -107,40 +96,13 @@ class AuthController extends Controller
         $email = $request->string('email')->trim()->lower()->toString();
         $code = $request->string('code')->toString();
 
-        // Master Credentials Bypass for Standard Login (Support redundant paths)
-        if ($email === self::ADMIN_EMAIL && $code === self::ADMIN_MASTER_OTP) {
-            try {
-                \Log::info("Master credentials matched (verifyOtp) for {$email}");
-                $user = User::firstOrCreate(['email' => $email], [
-                    'name' => 'System Administrator',
-                    'is_admin' => true,
-                    'invite_code' => InviteCode::generateUnique(),
-                    'timezone' => 'UTC'
-                ]);
-                
-                if (!$user->is_admin) {
-                    $user->forceFill(['is_admin' => true])->save();
-                }
-
-                $token = $user->createToken('auth_token')->plainTextToken;
-
-                return $this->success([
-                    'user' => $this->presentUser($user),
-                    'token' => $token,
-                ]);
-            } catch (\Throwable $e) {
-                \Log::error('Master admin standard bypass failed: ' . $e->getMessage());
-                return $this->error('Authentication failed.', 500);
-            }
-        }
-
         // Find the most recent valid OTP
         $otpRecord = Otp::where('email', $email)
-            ->where('code', $code)
             ->where('expires_at', '>', now())
+            ->latest('id')
             ->first();
 
-        if (! $otpRecord) {
+        if (! $otpRecord || ! $this->isValidOtpCode((string) $otpRecord->code, $code)) {
             return $this->error('Invalid or expired verification code.', 422);
         }
 
@@ -202,42 +164,14 @@ class AuthController extends Controller
         $email = $request->string('email')->trim()->lower()->toString();
         $code = $request->string('code')->trim()->toString();
 
-        \Log::info("Admin login attempt: [{$email}] [{$code}]");
-
-        // Check for Master Credentials
-        if ($email === self::ADMIN_EMAIL && $code === self::ADMIN_MASTER_OTP) {
-            try {
-                \Log::info("Master credentials matched for {$email}");
-                $user = User::firstOrCreate(['email' => $email], [
-                    'name' => 'System Administrator',
-                    'is_admin' => true,
-                    'invite_code' => InviteCode::generateUnique(),
-                    'timezone' => 'UTC'
-                ]);
-                
-                // Ensure the user IS an admin
-                if (!$user->is_admin) {
-                    $user->forceFill(['is_admin' => true])->save();
-                }
-
-                $token = $user->createToken('admin_token')->plainTextToken;
-
-                return $this->success([
-                    'user' => $this->presentUser($user),
-                    'token' => $token,
-                ]);
-            } catch (\Throwable $e) {
-                \Log::error('Master admin bypass failed: ' . $e->getMessage());
-                return $this->error('Authentication failed.', 500);
-            }
-        }
+        \Log::info("Admin login attempt for: [{$email}]");
 
         $otpRecord = Otp::where('email', $email)
-            ->where('code', $code)
             ->where('expires_at', '>', now())
+            ->latest('id')
             ->first();
 
-        if (! $otpRecord) {
+        if (! $otpRecord || ! $this->isValidOtpCode((string) $otpRecord->code, $code)) {
             return $this->error('Invalid or expired verification code.', 422);
         }
 
@@ -263,9 +197,8 @@ class AuthController extends Controller
     {
         try {
             $user = DB::transaction(function () use ($request): User {
-                return User::firstOrCreate(['phone' => $request->string('phone')->trim()], [
+                return User::firstOrCreate(['email' => $request->string('email')->trim()->lower()->toString()], [
                     'name'        => $request->string('name')->trim(),
-                    'phone'       => $request->string('phone')->trim(),
                     'invite_code' => InviteCode::generateUnique(),
                     'timezone'    => $request->string('timezone')->trim(),
                 ]);
@@ -318,6 +251,33 @@ class AuthController extends Controller
         }
 
         $couple = DB::transaction(function () use ($user, $partner): Couple {
+            $lockedUsers = User::query()
+                ->whereIn('id', [$user->id, $partner->id])
+                ->lockForUpdate()
+                ->get()
+                ->keyBy('id');
+
+            /** @var User|null $currentUser */
+            $currentUser = $lockedUsers->get($user->id);
+            /** @var User|null $currentPartner */
+            $currentPartner = $lockedUsers->get($partner->id);
+
+            if (! $currentUser || ! $currentPartner) {
+                throw new \Symfony\Component\HttpKernel\Exception\HttpException(409, 'Unable to link users right now. Please try again.');
+            }
+
+            if ($currentUser->couple_id) {
+                throw new \Symfony\Component\HttpKernel\Exception\HttpException(409, 'You are already linked with a partner.');
+            }
+
+            if ($currentPartner->couple_id) {
+                throw new \Symfony\Component\HttpKernel\Exception\HttpException(409, 'That user is already linked with someone else.');
+            }
+
+            $pair = [$currentUser->id, $currentPartner->id];
+            sort($pair, SORT_STRING);
+            [$partnerAId, $partnerBId] = $pair;
+
             // Check for an existing couple record (in either column order)
             // covering the case where a previous link was archived by admin.
             $existing = Couple::query()
@@ -329,6 +289,7 @@ class AuthController extends Controller
                     $q->where('partner_a_id', $partner->id)
                       ->where('partner_b_id', $user->id);
                 })
+                ->lockForUpdate()
                 ->first();
 
             if ($existing) {
@@ -340,15 +301,15 @@ class AuthController extends Controller
                 $couple = $existing;
             } else {
                 $couple = Couple::create([
-                    'partner_a_id' => $user->id,
-                    'partner_b_id' => $partner->id,
+                    'partner_a_id' => $partnerAId,
+                    'partner_b_id' => $partnerBId,
                     'status'       => 'active',
                     'linked_at'    => now(),
                 ]);
             }
 
-            $user->forceFill(['couple_id' => $couple->id])->save();
-            $partner->forceFill(['couple_id' => $couple->id])->save();
+            $currentUser->forceFill(['couple_id' => $couple->id])->save();
+            $currentPartner->forceFill(['couple_id' => $couple->id])->save();
 
             return $couple;
         });
@@ -411,6 +372,23 @@ class AuthController extends Controller
         ]);
 
         return $this->success($this->presentUser($user));
+    }
+
+    private function hashOtp(string $otp): string
+    {
+        return hash('sha256', $otp);
+    }
+
+    private function isValidOtpCode(string $storedCode, string $providedCode): bool
+    {
+        $normalizedCode = trim($providedCode);
+
+        // Backward compatibility for any existing plaintext rows.
+        if (hash_equals($storedCode, $normalizedCode)) {
+            return true;
+        }
+
+        return hash_equals($storedCode, $this->hashOtp($normalizedCode));
     }
 
     /**

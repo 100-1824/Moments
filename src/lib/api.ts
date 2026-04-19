@@ -132,6 +132,10 @@ async function request<T>(
     );
   }
 
+  if (res.status === 204 || res.status === 205) {
+    return undefined as T;
+  }
+
   return res.json() as Promise<T>;
 }
 
@@ -265,12 +269,14 @@ export async function deleteMoment(id: string): Promise<void> {
 
 export async function fetchTodayMoments(): Promise<{
   moments: ApiMoment[];
+  my_moments: ApiMoment[];
   window: { start_utc: string; end_utc: string; timezone: string };
 }> {
   const res = await request<{
     status: string;
     data: {
       moments: ApiMoment[];
+      my_moments: ApiMoment[];
       window: { start_utc: string; end_utc: string; timezone: string };
     };
   }>("/moments/today");
@@ -382,6 +388,7 @@ export interface AdminAnalytics {
   moments_total: number;
   moments_by_type: { image: number; audio: number };
   moments_encrypted: number;
+  total_pings: number;
 }
 
 export async function getAdminAnalytics(): Promise<AdminAnalytics> {

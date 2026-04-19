@@ -167,7 +167,7 @@ export default function HomeScreen({
   onConnect?: () => void;
 }) {
   const { user, partner, isLoading: authLoading } = useAuth();
-  const [moments, setMoments] = React.useState<any[]>([]);
+  const [moments, setMoments] = React.useState<api.ApiMoment[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [isDeleting, setIsDeleting] = React.useState<string | null>(null);
 
@@ -190,11 +190,8 @@ export default function HomeScreen({
   
   const refreshMoments = React.useCallback(async () => {
     try {
-      const { moments: data } = await api.fetchTodayMoments();
-      // Filter for today's moments only
-      const today = new Date().toISOString().split('T')[0];
-      const todayMoments = data.filter((m: any) => m.captured_at?.startsWith(today));
-      setMoments(todayMoments);
+      const { my_moments: myMoments } = await api.fetchTodayMoments();
+      setMoments(myMoments);
     } catch (err) {
       console.error("Failed to fetch moments", err);
     } finally {
@@ -530,7 +527,7 @@ export default function HomeScreen({
                       />
                       <div className="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-black/80 via-black/40 to-transparent">
                         <p className="text-xs font-medium text-white line-clamp-2">
-                          {moment.caption || `Captured in the ${slotInfo.label}`}
+                          {moment.caption_payload || `Captured in the ${slotInfo.label}`}
                         </p>
                       </div>
                       

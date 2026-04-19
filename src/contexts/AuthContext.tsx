@@ -112,10 +112,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const refreshMe = async () => {
     const { user, partner } = await api.me();
     // Fetch today's moments to populate dailySlots
-    const { moments } = await api.fetchTodayMoments();
-    const myFilledSlots = moments
-      .filter((m) => m.user_id === user.id)
-      .map((m) => m.slot);
+    const { my_moments } = await api.fetchTodayMoments();
+    const myFilledSlots = my_moments.map((m) => m.slot);
 
     setState((s) => ({ ...s, user, partner, dailySlots: myFilledSlots }));
   };

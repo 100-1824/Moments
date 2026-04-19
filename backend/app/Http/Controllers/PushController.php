@@ -28,11 +28,19 @@ class PushController extends Controller
         /** @var \App\Models\User $user */
         $user = $request->user();
 
-        // Update or create the subscription
+        $endpoint = $request->string('endpoint')->toString();
+        $existing = PushSubscription::query()
+            ->where('endpoint', $endpoint)
+            ->first();
+
+        if ($existing && $existing->user_id !== $user->id) {
+            return $this->error('That push subscription is already bound to another account.', 409);
+        }
+
+        // Update or create the subscription for the authenticated user only.
         PushSubscription::updateOrCreate(
-            ['endpoint' => $request->string('endpoint')],
+            ['user_id' => $user->id, 'endpoint' => $endpoint],
             [
-                'user_id' => $user->id,
                 'public_key' => $request->string('publicKey'),
                 'auth_token' => $request->string('authToken'),
             ]

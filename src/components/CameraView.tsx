@@ -65,7 +65,10 @@ export const CameraView = ({ onCapture, onClose }: CameraViewProps) => {
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
     const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+    if (!ctx) {
+      setIsCapturing(false);
+      return;
+    }
 
     if (facingMode === "user") {
       ctx.translate(canvas.width, 0);

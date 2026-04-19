@@ -9,7 +9,7 @@
  */
 
 return [
-    'app_key' => env('APP_KEY', 'base64:vy6dXzl9qTfPiCzZtBJBGb7JGbc9hInaiobAXX9tjY8='),
+    'app_key' => env('APP_KEY'),
     'app_env' => env('APP_ENV', 'production'),
     'app_debug' => filter_var(env('APP_DEBUG', 'false'), FILTER_VALIDATE_BOOLEAN),
     

@@ -315,6 +315,7 @@ class AdminController extends Controller
         $imageMoments = Moment::where('type', 'image')->count();
         $audioMoments = Moment::where('type', 'audio')->count();
         $encryptedMoments = Moment::where('is_encrypted', true)->count();
+        $totalPings = Ping::count();
 
         return response()->json([
             'status' => 'success',
@@ -324,6 +325,7 @@ class AdminController extends Controller
                 'moments_total' => $momentsCount,
                 'moments_by_type' => ['image' => $imageMoments, 'audio' => $audioMoments],
                 'moments_encrypted' => $encryptedMoments,
+                'total_pings' => $totalPings,
             ],
         ]);
     }

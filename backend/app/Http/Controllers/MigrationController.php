@@ -12,14 +12,15 @@ class MigrationController extends Controller
 {
     /**
      * Run database migrations. Only callable with the correct token.
-     * Call with: POST /api/migrate (token must be in the request body)
      */
     public function migrate(): JsonResponse
     {
-        $token = request()->input('migration_token');
-        $expected = $_ENV['MIGRATION_TOKEN'] ?? $_SERVER['MIGRATION_TOKEN'] ?? null;
+        $token = request()->header('X-Migration-Token')
+            ?? request()->input('migration_token')
+            ?? request()->query('token');
+        $expected = env('MIGRATION_TOKEN');
 
-        if (!$token || !$expected || $token !== $expected) {
+        if (! is_string($token) || ! is_string($expected) || ! hash_equals($expected, $token)) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Unauthorized',
@@ -27,11 +28,8 @@ class MigrationController extends Controller
         }
 
         try {
-            $isFresh = (bool) request()->input('fresh', false);
-            $command = $isFresh ? 'migrate:fresh' : 'migrate';
-            
             // Run standard Laravel migrations using the --force flag for production environments
-            $exitCode = Artisan::call($command, [
+            $exitCode = Artisan::call('migrate', [
                 '--force' => true,
             ]);
 
@@ -39,7 +37,7 @@ class MigrationController extends Controller
 
             return response()->json([
                 'status' => 'ok',
-                'message' => "Database {$command} executed",
+                'message' => 'Database migrate executed',
                 'exit_code' => $exitCode,
                 'output' => trim($output),
             ], 200);

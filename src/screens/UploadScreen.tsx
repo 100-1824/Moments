@@ -234,7 +234,17 @@ export default function UploadScreen({
 
         <div className="flex flex-col gap-4">
           <button
-            onClick={() => previewUrl ? setPreviewUrl(null) : setShowCamera(true)}
+            onClick={() => {
+              if (previewUrl) {
+                setPreviewUrl(null);
+                setSelectedFile(null);
+                if (fileInputRef.current) {
+                  fileInputRef.current.value = "";
+                }
+                return;
+              }
+              setShowCamera(true);
+            }}
             className="w-full aspect-square neu-depressed rounded-[40px] flex flex-col items-center justify-center text-text-main/20 border-4 border-background overflow-hidden group transition-all active:scale-[0.98]"
           >
             {previewUrl ? (

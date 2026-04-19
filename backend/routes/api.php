@@ -37,7 +37,8 @@ Route::post('/auth/register', [AuthController::class, 'register'])
     ->middleware('throttle:10,1');
 
 // Migration endpoint (requires token)
-Route::post('/migrate', [MigrationController::class, 'migrate']);
+Route::post('/migrate', [MigrationController::class, 'migrate'])
+    ->middleware('throttle:5,1');
 
 // --- Authenticated --------------------------------------------------------
 Route::middleware('auth:sanctum')->group(function (): void {
