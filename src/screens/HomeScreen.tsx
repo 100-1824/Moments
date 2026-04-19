@@ -310,7 +310,7 @@ export default function HomeScreen({
         setShowTooltip(false);
       }, 2200);
     } else {
-      onUpload();
+      onUpload(slot);
     }
   };
 

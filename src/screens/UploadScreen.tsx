@@ -25,6 +25,15 @@ import { AudioCaption } from "@/src/components/Features";
 import { CameraView } from "@/src/components/CameraView";
 import * as api from "@/src/lib/api";
 
+type MomentSlot = "morning" | "evening" | "night";
+
+const getCurrentSlot = (): MomentSlot => {
+  const h = new Date().getHours();
+  if (h >= 5 && h < 12) return "morning";
+  if (h >= 12 && h < 18) return "evening";
+  return "night";
+};
+
 export default function UploadScreen({
   onBack,
   onSuccess,
@@ -32,7 +41,7 @@ export default function UploadScreen({
 }: {
   onBack: () => void;
   onSuccess: (remaining: number) => void;
-  initialSlot?: "morning" | "evening" | "night";
+  initialSlot?: MomentSlot;
 }) {
   const [caption, setCaption] = React.useState("");
   const [selectedFile, setSelectedFile] = React.useState<File | null>(null);
@@ -40,7 +49,11 @@ export default function UploadScreen({
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [showCamera, setShowCamera] = React.useState(false);
-  const [slot, setSlot] = React.useState<"morning" | "evening" | "night">(initialSlot || "morning");
+  const currentSlot = getCurrentSlot();
+  const resolveSlot = React.useCallback((candidate?: MomentSlot): MomentSlot => {
+    return candidate === currentSlot ? candidate : currentSlot;
+  }, [currentSlot]);
+  const [slot, setSlot] = React.useState<MomentSlot>(() => resolveSlot(initialSlot));
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const containerRef = React.useRef<HTMLDivElement>(null);
   const slotButtonsRef = React.useRef<(HTMLButtonElement | null)[]>([]);
@@ -74,6 +87,10 @@ export default function UploadScreen({
       if (previewUrl) URL.revokeObjectURL(previewUrl);
     };
   }, [previewUrl]);
+
+  React.useEffect(() => {
+    setSlot(resolveSlot(initialSlot));
+  }, [initialSlot, resolveSlot]);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -128,14 +145,6 @@ export default function UploadScreen({
       img.onerror = () => { URL.revokeObjectURL(objUrl); resolve(file); };
       img.src = objUrl;
     });
-  };
-
-  // Derive slot from current local hour
-  const getCurrentSlot = (): "morning" | "evening" | "night" => {
-    const h = new Date().getHours();
-    if (h >= 5 && h < 12) return "morning";
-    if (h >= 12 && h < 18) return "evening";
-    return "night";
   };
 
   const handleSend = async () => {
@@ -296,21 +305,21 @@ export default function UploadScreen({
             Posting Slot
           </label>
           <div className="flex gap-4">
-            {[
+            {([
               { id: "morning", icon: Sun, label: "Morning" },
               { id: "evening", icon: Cloud, label: "Evening" },
               { id: "night", icon: Moon, label: "Night" },
-            ].map((s, index) => {
-              const currentSlot = getCurrentSlot();
+            ] as const).map((s, index) => {
               const isCurrentSlot = s.id === currentSlot;
+              const isSelected = s.id === slot;
               return (
                 <button
                   key={s.id}
                   ref={(el) => { if (el) slotButtonsRef.current[index] = el; }}
-                  onClick={() => isCurrentSlot && setSlot(s.id as any)}
+                  onClick={() => isCurrentSlot && setSlot(s.id)}
                   disabled={!isCurrentSlot}
                   className={`flex-1 py-4 rounded-3xl flex flex-col items-center gap-2 transition-all duration-300 ${
-                    isCurrentSlot
+                    isCurrentSlot && isSelected
                       ? "neu-depressed text-accent-terracotta bg-background/50 scale-[0.98]"
                       : "neu-extruded text-text-main/20 opacity-40 cursor-not-allowed"
                   }`}

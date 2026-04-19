@@ -87,14 +87,16 @@ class MomentController extends Controller
             ]);
         });
 
-        // Send push notification to partner
+        // Send push notification to partner when push is configured.
         if ($user->couple_id) {
             $partner = User::where('couple_id', $user->couple_id)
                 ->where('id', '!=', $user->id)
                 ->first();
 
-            if ($partner) {
-                $partner->notify(new MomentReceivedNotification($user));
+            if ($partner && $this->canSendWebPush($partner)) {
+                dispatch(function () use ($partner, $user): void {
+                    $partner->notify(new MomentReceivedNotification($user));
+                })->afterResponse();
             }
         }
 
@@ -311,6 +313,16 @@ class MomentController extends Controller
             ->where('user_id', $user->id)
             ->whereBetween('created_at', [$startUtc, $endUtc])
             ->count();
+    }
+
+    private function canSendWebPush(User $user): bool
+    {
+        if (! $user->pushSubscriptions()->exists()) {
+            return false;
+        }
+
+        return filled(config('webpush.vapid.public_key'))
+            && filled(config('webpush.vapid.private_key'));
     }
 
     /**
