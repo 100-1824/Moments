@@ -20,6 +20,7 @@ import { cn } from "@/src/lib/utils";
 import { useAuth } from "@/src/contexts/AuthContext";
 import { NeuCard, NeuButton } from "@/src/components/ui/Neumorphic";
 import { SocialBatterySlider } from "@/src/components/AdvancedFeatures";
+import { usePushNotifications } from "@/src/hooks/usePushNotifications";
 import * as api from "@/src/lib/api";
 
 function SettingItem({
@@ -80,6 +81,16 @@ export default function SettingsScreen({
   onLogout: () => void;
 }) {
   const { user, partner, refreshMe } = useAuth();
+  const {
+    permissionStatus,
+    isSubscribing,
+    subscribeError,
+    subscribe,
+    isSupported,
+  } = usePushNotifications({
+    enabled: Boolean(user) && !user?.is_admin,
+    requestOnEnable: false,
+  });
   const [isEditingNickname, setIsEditingNickname] = React.useState(false);
   const [nicknameValue, setNicknameValue] = React.useState(user?.partner_nickname || "");
   const [isSavingNickname, setIsSavingNickname] = React.useState(false);
@@ -110,6 +121,13 @@ export default function SettingsScreen({
     }
   };
 
+  const pushStatus = React.useMemo(() => {
+    if (!isSupported) return "Not supported on this browser.";
+    if (permissionStatus === "granted") return "Enabled";
+    if (permissionStatus === "denied") return "Blocked in browser settings";
+    return "Disabled";
+  }, [isSupported, permissionStatus]);
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -128,6 +146,32 @@ export default function SettingsScreen({
           <div className="space-y-4">
             <SettingItem label="Daily Reminders" active />
             <SettingItem label="Haptic Feedback" active />
+            <NeuCard className="p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="font-semibold">Push Notifications</p>
+                <span className="text-xs opacity-50">{pushStatus}</span>
+              </div>
+              <button
+                onClick={() => void subscribe()}
+                disabled={
+                  !isSupported ||
+                  isSubscribing ||
+                  permissionStatus === "granted" ||
+                  permissionStatus === "denied"
+                }
+                className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-accent-terracotta/20 hover:bg-accent-terracotta/30 rounded-lg transition-colors disabled:opacity-50 text-sm font-semibold"
+              >
+                {isSubscribing ? "Enabling..." : permissionStatus === "granted" ? "Enabled" : "Enable Push Notifications"}
+              </button>
+              {permissionStatus === "denied" && (
+                <p className="text-xs opacity-60">
+                  Open browser site settings and allow notifications, then reload.
+                </p>
+              )}
+              {subscribeError && (
+                <p className="text-xs text-accent-terracotta/80">{subscribeError}</p>
+              )}
+            </NeuCard>
             <SettingItem label="Privacy & Encryption" onClick={onPrivacy} />
           </div>
         </section>

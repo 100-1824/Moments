@@ -82,7 +82,10 @@ function ScreenLoader() {
 
 export default function App() {
   const auth = useAuth();
-  usePushNotifications({ enabled: Boolean(auth.user) && !auth.user?.is_admin });
+  usePushNotifications({
+    enabled: Boolean(auth.user) && !auth.user?.is_admin,
+    requestOnEnable: false,
+  });
 
   const [currentScreen, setCurrentScreen] = React.useState<Screen>("loading");
   const [showSuccessRipple, setShowSuccessRipple] = React.useState(false);
