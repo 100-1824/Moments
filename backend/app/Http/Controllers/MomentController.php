@@ -88,18 +88,12 @@ class MomentController extends Controller
             ]);
         });
 
-        // Send push notification to partner when push is configured.
-        if ($user->couple_id) {
-            $partner = User::where('couple_id', $user->couple_id)
-                ->where('id', '!=', $user->id)
-                ->first();
-
-            if ($partner && $this->canSendWebPush($partner)) {
-                dispatch(function () use ($partner, $user): void {
-                    $partner->notify(new MomentReceivedNotification($user));
-                })->afterResponse();
-            }
-        }
+        $this->notifyPartnerOfMoment(
+            sender: $user,
+            momentCount: 1,
+            slot: $moment->slot,
+            previewImageUrl: $this->pushPreviewUrl($moment)
+        );
 
         $remaining = max(0, self::DAILY_LIMIT - $this->countToday($user, $startUtc, $endUtc));
 
@@ -250,8 +244,9 @@ class MomentController extends Controller
 
         $accepted = [];
         $rejected = [];
+        $latestAcceptedMoment = null;
 
-        DB::transaction(function () use ($request, $user, $startUtc, $endUtc, &$accepted, &$rejected): void {
+        DB::transaction(function () use ($request, $user, $startUtc, $endUtc, &$accepted, &$rejected, &$latestAcceptedMoment): void {
             $existingCount = Moment::query()
                 ->where('user_id', $user->id)
                 ->whereBetween('created_at', [$startUtc, $endUtc])
@@ -312,12 +307,22 @@ class MomentController extends Controller
                 ]);
 
                 $existingCount++;
+                $latestAcceptedMoment = $moment;
                 $accepted[] = [
                     'client_id' => $clientId,
                     'moment'    => $this->presentMoment($moment),
                 ];
             }
         });
+
+        if ($accepted !== []) {
+            $this->notifyPartnerOfMoment(
+                sender: $user,
+                momentCount: count($accepted),
+                slot: $latestAcceptedMoment?->slot,
+                previewImageUrl: $this->pushPreviewUrl($latestAcceptedMoment)
+            );
+        }
 
         return $this->success([
             'accepted'        => $accepted,
@@ -361,6 +366,36 @@ class MomentController extends Controller
 
         return filled(config('webpush.vapid.public_key'))
             && filled(config('webpush.vapid.private_key'));
+    }
+
+    private function notifyPartnerOfMoment(
+        User $sender,
+        int $momentCount = 1,
+        ?string $slot = null,
+        ?string $previewImageUrl = null
+    ): void {
+        if (! $sender->couple_id) {
+            return;
+        }
+
+        $partner = $sender->partner();
+        if (! $partner || ! $this->canSendWebPush($partner)) {
+            return;
+        }
+
+        $partner->notify(new MomentReceivedNotification($sender, $momentCount, $previewImageUrl, $slot));
+    }
+
+    private function pushPreviewUrl(?Moment $moment): ?string
+    {
+        if (! $moment || $moment->type !== 'image') {
+            return null;
+        }
+
+        $presented = $this->presentMoment($moment);
+        $mediaUrl = $presented['media_url'] ?? null;
+
+        return is_string($mediaUrl) ? $mediaUrl : null;
     }
 
     /**

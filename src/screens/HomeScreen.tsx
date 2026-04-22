@@ -46,6 +46,7 @@ const DEFAULT_CARD_ORDER = [
   "foggy",
   "daily-grid",
   "upload",
+  "just-sent",
   "prompt",
   "now-playing",
   "quote",
@@ -226,6 +227,15 @@ export default function HomeScreen({
   const count = React.useMemo(() => {
     return [momentsBySlot.morning, momentsBySlot.evening, momentsBySlot.night].filter(Boolean).length;
   }, [momentsBySlot]);
+  const latestSentMoment = React.useMemo(() => {
+    if (moments.length === 0) {
+      return null;
+    }
+
+    return [...moments].sort((a, b) => {
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    })[0];
+  }, [moments]);
   const shouldReduceMotion = useReducedMotion();
   const [isShaking, setIsShaking] = React.useState(false);
   const [showTooltip, setShowTooltip] = React.useState(false);
@@ -599,6 +609,53 @@ export default function HomeScreen({
       ),
     },
     {
+      id: "just-sent",
+      mdColSpan: 2,
+      delay: 0.28,
+      glowColor: "rgba(153,137,182,0.18)",
+      className: "min-h-[180px]",
+      noPadding: true,
+      content: latestSentMoment ? (
+        <div className="relative h-full min-h-[180px] overflow-hidden">
+          {latestSentMoment.type === "image" ? (
+            <img
+              src={latestSentMoment.media_url}
+              alt="Latest sent moment"
+              className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
+              loading="lazy"
+              decoding="async"
+            />
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center bg-accent-primary/10">
+              <Heart className="w-8 h-8 text-accent-primary/70 fill-accent-primary/15" />
+            </div>
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/35 to-transparent pointer-events-none" />
+          <div className="absolute inset-x-0 bottom-0 p-5 z-10">
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/80">
+              Just Sent
+            </p>
+            <p className="mt-2 text-sm font-semibold text-white line-clamp-2 drop-shadow-[0_2px_12px_rgba(0,0,0,0.55)]">
+              {latestSentMoment.caption_payload || "Shared with love."}
+            </p>
+            <p className="mt-2 text-[10px] font-bold uppercase tracking-widest text-white/70">
+              {new Date(latestSentMoment.created_at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}
+            </p>
+          </div>
+        </div>
+      ) : (
+        <div className="h-full min-h-[180px] flex flex-col items-center justify-center text-center p-5">
+          <Heart className="w-7 h-7 text-accent-primary/45 fill-accent-primary/10 mb-3" />
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-text-main/45">
+            Just Sent Widget
+          </p>
+          <p className="mt-2 text-xs text-text-main/40">
+            Send your first moment to pin it here.
+          </p>
+        </div>
+      ),
+    },
+    {
       id: "prompt",
       mdColSpan: 3,
       delay: 0.31,
@@ -642,7 +699,7 @@ export default function HomeScreen({
         </>
       ),
     },
-  ]), [count, handleUploadClick, isPartnerActive, isPartnerMomentLoading, isShaking, onFoggyMirror, onOutbox, partner?.id, partner?.name, partnerLatestMoment, partnerLocalTime]);
+  ]), [count, handleUploadClick, isPartnerActive, isPartnerMomentLoading, isShaking, latestSentMoment, onFoggyMirror, onOutbox, partner?.id, partner?.name, partnerLatestMoment, partnerLocalTime]);
 
   const [isEditMode, setIsEditMode] = React.useState(false);
   const [cardOrder, setCardOrder] = React.useState<string[]>(() => [...DEFAULT_CARD_ORDER]);

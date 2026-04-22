@@ -19,6 +19,8 @@ self.addEventListener("push", (event) => {
       body: data.body || "You have a new notification from Moments",
       icon: "/icon-192x192.png",
       badge: "/badge-72x72.png",
+      image: data.image || undefined,
+      actions: Array.isArray(data.actions) ? data.actions : undefined,
       tag: data.tag || "moments-notification",
       requireInteraction: data.requireInteraction || false,
       data: data.data || {},
