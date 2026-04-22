@@ -8,6 +8,11 @@
   --color-surface-brighter: var(--app-color-surface-brighter);
   --color-highlight: var(--app-color-highlight);
   --color-shadow: var(--app-color-shadow);
+  --color-accent-primary: var(--app-color-accent-primary);
+  --color-accent-primary-muted: var(--app-color-accent-primary-muted);
+  --color-accent-secondary: var(--app-color-accent-secondary);
+  --color-glass-bg: var(--app-color-glass-bg);
+  --color-glass-border: var(--app-color-glass-border);
   --color-accent-terracotta: var(--app-color-accent-terracotta);
   --color-accent-terracotta-muted: var(--app-color-accent-terracotta-muted);
   --color-accent-sage: var(--app-color-accent-sage);
@@ -19,36 +24,48 @@
 }
 
 :root {
-  --app-color-background: #f3f4f8;
-  --app-color-surface: #fcfcff;
-  --app-color-surface-brighter: #ffffff;
-  --app-color-highlight: rgba(255, 255, 255, 0.92);
-  --app-color-shadow: rgba(89, 99, 125, 0.26);
-  --app-color-accent-terracotta: #bc5b42;
-  --app-color-accent-terracotta-muted: rgba(188, 91, 66, 0.2);
-  --app-color-accent-sage: #637a46;
-  --app-color-text-main: #10131c;
-  --app-color-text-muted: #4f566c;
-  --app-neu-border-extruded: color-mix(in srgb, var(--app-color-highlight) 92%, transparent);
-  --app-neu-border-depressed: color-mix(in srgb, var(--app-color-highlight) 85%, transparent);
-  --app-neu-border-tact: color-mix(in srgb, var(--app-color-highlight) 88%, transparent);
+  --app-color-background: #0F0F12;
+  --app-color-surface: rgba(153, 137, 182, 0.1);
+  --app-color-surface-brighter: rgba(153, 137, 182, 0.14);
+  --app-color-highlight: rgba(153, 137, 182, 0.2);
+  --app-color-shadow: rgba(0, 0, 0, 0.45);
+  --app-color-accent-primary: #9989B6;
+  --app-color-accent-primary-muted: rgba(153, 137, 182, 0.2);
+  --app-color-accent-secondary: #B3A8C9;
+  --app-color-glass-bg: rgba(153, 137, 182, 0.1);
+  --app-color-glass-border: rgba(153, 137, 182, 0.2);
+  --app-glass-blur: 12px;
+  --app-color-accent-terracotta: var(--app-color-accent-primary);
+  --app-color-accent-terracotta-muted: var(--app-color-accent-primary-muted);
+  --app-color-accent-sage: var(--app-color-accent-secondary);
+  --app-color-text-main: #F4F2FA;
+  --app-color-text-muted: #C7C3D4;
+  --app-neu-border-extruded: var(--app-color-glass-border);
+  --app-neu-border-depressed: rgba(153, 137, 182, 0.16);
+  --app-neu-border-tact: rgba(153, 137, 182, 0.24);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --app-color-background: #09090B;
-    --app-color-surface: #18181B;
-    --app-color-surface-brighter: #27272A;
-    --app-color-highlight: rgba(255, 255, 255, 0.06);
-    --app-color-shadow: rgba(0, 0, 0, 0.4);
-    --app-color-accent-terracotta: #D97757;
-    --app-color-accent-terracotta-muted: rgba(217, 119, 87, 0.2);
-    --app-color-accent-sage: #8a9a5b;
-    --app-color-text-main: #FAFAFA;
-    --app-color-text-muted: #A1A1AA;
-    --app-neu-border-extruded: color-mix(in srgb, var(--app-color-highlight) 92%, transparent);
-    --app-neu-border-depressed: color-mix(in srgb, var(--app-color-highlight) 85%, transparent);
-    --app-neu-border-tact: color-mix(in srgb, var(--app-color-highlight) 88%, transparent);
+    --app-color-background: #0F0F12;
+    --app-color-surface: rgba(153, 137, 182, 0.1);
+    --app-color-surface-brighter: rgba(153, 137, 182, 0.14);
+    --app-color-highlight: rgba(153, 137, 182, 0.2);
+    --app-color-shadow: rgba(0, 0, 0, 0.45);
+    --app-color-accent-primary: #9989B6;
+    --app-color-accent-primary-muted: rgba(153, 137, 182, 0.2);
+    --app-color-accent-secondary: #B3A8C9;
+    --app-color-glass-bg: rgba(153, 137, 182, 0.1);
+    --app-color-glass-border: rgba(153, 137, 182, 0.2);
+    --app-glass-blur: 12px;
+    --app-color-accent-terracotta: var(--app-color-accent-primary);
+    --app-color-accent-terracotta-muted: var(--app-color-accent-primary-muted);
+    --app-color-accent-sage: var(--app-color-accent-secondary);
+    --app-color-text-main: #F4F2FA;
+    --app-color-text-muted: #C7C3D4;
+    --app-neu-border-extruded: var(--app-color-glass-border);
+    --app-neu-border-depressed: rgba(153, 137, 182, 0.16);
+    --app-neu-border-tact: rgba(153, 137, 182, 0.24);
   }
 }
 
@@ -62,17 +79,28 @@
   }
 }
 
+@utility glass-card {
+  background-color: var(--app-color-glass-bg);
+  border: 1px solid var(--app-color-glass-border);
+  backdrop-filter: blur(var(--app-glass-blur));
+  -webkit-backdrop-filter: blur(var(--app-glass-blur));
+}
+
 @utility neu-extruded {
-  background-color: var(--color-surface);
+  background-color: var(--app-color-glass-bg);
   border: 1px solid var(--app-neu-border-extruded);
+  backdrop-filter: blur(var(--app-glass-blur));
+  -webkit-backdrop-filter: blur(var(--app-glass-blur));
   box-shadow: 
     0 10px 30px -10px var(--color-shadow),
     0 4px 10px -5px var(--color-shadow);
 }
 
 @utility neu-extruded-sm {
-  background-color: var(--color-surface);
+  background-color: var(--app-color-glass-bg);
   border: 1px solid var(--app-neu-border-extruded);
+  backdrop-filter: blur(var(--app-glass-blur));
+  -webkit-backdrop-filter: blur(var(--app-glass-blur));
   box-shadow: 
     0 4px 12px -2px var(--color-shadow);
 }
@@ -96,7 +124,7 @@
 }
 
 @utility tact-glow {
-  box-shadow: 0 0 20px 0 var(--color-accent-terracotta-muted);
+  box-shadow: 0 0 20px 0 var(--color-accent-primary-muted);
 }
 
 @utility neu-button {

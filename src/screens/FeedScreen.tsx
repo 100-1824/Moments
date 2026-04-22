@@ -121,7 +121,7 @@ export default function FeedScreen({
 
       {isLoading && (
         <div className="flex-1 flex items-center justify-center">
-          <Loader2 className="w-8 h-8 animate-spin text-accent-terracotta" />
+          <Loader2 className="w-8 h-8 animate-spin text-accent-primary" />
         </div>
       )}
 
@@ -141,7 +141,7 @@ export default function FeedScreen({
           {moments.map((moment) => (
             <motion.div
               key={moment.id}
-              className="moment-card group rounded-3xl overflow-hidden bg-zinc-900/90 border border-white/5 backdrop-blur-md hover:border-white/20 transition-all duration-300 hover:shadow-xl hover:shadow-black/20"
+              className="moment-card glass-card group rounded-3xl overflow-hidden hover:border-accent-primary/40 transition-all duration-300 hover:shadow-xl hover:shadow-black/20"
             >
               {/* Image Container */}
               <div className="relative w-full aspect-square bg-black/50 overflow-hidden">
@@ -172,13 +172,13 @@ export default function FeedScreen({
                     whileTap={{ scale: 0.95 }}
                     onClick={() => openDeleteDialog(moment.id)}
                     disabled={isDeleting === moment.id}
-                    className="absolute top-2 right-2 p-2 rounded-lg bg-accent-terracotta/20 hover:bg-accent-terracotta/40 transition-colors disabled:opacity-50"
+                    className="absolute top-2 right-2 p-2 rounded-lg bg-accent-primary/20 hover:bg-accent-primary/35 transition-colors disabled:opacity-50"
                     aria-label="Delete moment"
                   >
                     {isDeleting === moment.id ? (
-                      <Loader2 className="w-4 h-4 animate-spin text-accent-terracotta" />
+                      <Loader2 className="w-4 h-4 animate-spin text-accent-primary" />
                     ) : (
-                      <Trash2 className="w-4 h-4 text-accent-terracotta" />
+                      <Trash2 className="w-4 h-4 text-accent-primary" />
                     )}
                   </motion.button>
                 )}
@@ -196,7 +196,7 @@ export default function FeedScreen({
                     🔒 Encrypted message
                   </p>
                 )}
-                <div className="flex items-center justify-between text-xs text-zinc-400">
+                <div className="flex items-center justify-between text-xs text-text-muted">
                   <span>{moment.slot && `${moment.slot}`}</span>
                   <span>
                     {moment.created_at
@@ -224,19 +224,19 @@ export default function FeedScreen({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             onClick={(e) => e.stopPropagation()}
-            className="bg-zinc-900 rounded-2xl border border-white/10 p-6 w-full max-w-sm shadow-2xl"
+            className="glass-card rounded-2xl p-6 w-full max-w-sm shadow-2xl"
           >
             <div className="flex items-start justify-between mb-4">
               <h3 className="text-lg font-bold">Delete Moment</h3>
               <button
                 onClick={closeDeleteDialog}
-                className="p-1 hover:bg-white/10 rounded-lg transition-colors"
+                className="p-1 hover:bg-accent-primary/15 rounded-lg transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <p className="text-sm text-text-main/70 mb-6">
+            <p className="text-sm text-text-muted mb-6">
               Are you sure you want to delete this moment? This action cannot be undone.
             </p>
 
@@ -250,14 +250,14 @@ export default function FeedScreen({
               <button
                 onClick={closeDeleteDialog}
                 disabled={isDeleting !== null}
-                className="flex-1 px-4 py-2 rounded-lg border border-white/10 text-sm font-medium hover:bg-white/5 transition-colors disabled:opacity-50"
+                className="flex-1 px-4 py-2 rounded-lg border border-accent-primary/25 text-sm font-medium hover:bg-accent-primary/10 transition-colors disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
                 onClick={handleDelete}
                 disabled={isDeleting !== null}
-                className="flex-1 px-4 py-2 rounded-lg bg-accent-terracotta/80 text-sm font-medium text-white hover:bg-accent-terracotta transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                className="flex-1 px-4 py-2 rounded-lg bg-accent-primary/85 text-sm font-medium text-bg-main hover:bg-accent-primary transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {isDeleting ? (
                   <>

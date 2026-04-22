@@ -59,7 +59,7 @@ export const NeuButton = React.forwardRef<HTMLButtonElement, NeuButtonProps>(
             size === "md" ? "h-16" : 
             size === "xl" ? "h-24" : "h-20"
           ),
-          active && "neu-depressed text-accent-terracotta tact-glow",
+          active && "neu-depressed text-accent-primary tact-glow",
           className
         )}
         {...props}
@@ -107,7 +107,7 @@ export const BentoCard = React.forwardRef<HTMLDivElement, NeuProps>(
         whileHover={{ y: -8, scale: 1.01, transition: { type: "spring", stiffness: 300, damping: 20 } }}
         whileTap={{ scale: 0.98 }}
         className={cn(
-          "neu-extruded rounded-[32px] p-8 flex flex-col gap-4 h-full border border-white/5 relative overflow-hidden group transition-shadow duration-500 hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.5)]",
+          "neu-extruded rounded-[32px] p-8 flex flex-col gap-4 h-full border border-accent-primary/20 relative overflow-hidden group transition-shadow duration-500 hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.5)]",
           className
         )}
         {...props}
@@ -151,17 +151,17 @@ export const DailyProgress = ({ count, max = 3 }: { count: number; max?: number 
         <motion.div
           key={i}
           initial={false}
-          animate={{
-            scale: i < count ? 1.2 : 1,
-            backgroundColor: i < count ? "var(--color-accent-terracotta)" : "rgba(255,255,255,0.05)",
-          }}
-          className={cn(
-            "w-4 h-4 rounded-full transition-all duration-300",
-            i < count 
-              ? "tact-glow shadow-[0_0_10px_rgba(217,119,87,0.5)]" 
-              : "neu-depressed-sm"
-          )}
-        />
+            animate={{
+              scale: i < count ? 1.2 : 1,
+              backgroundColor: i < count ? "var(--color-accent-primary)" : "rgba(153,137,182,0.08)",
+            }}
+            className={cn(
+              "w-4 h-4 rounded-full transition-all duration-300",
+              i < count 
+                ? "tact-glow shadow-[0_0_10px_rgba(153,137,182,0.5)]" 
+                : "neu-depressed-sm"
+            )}
+          />
       ))}
     </div>
   );

@@ -59,7 +59,7 @@ function LiquidCard({
   mdColSpan,
   mdRowSpan,
   delay = 0,
-  glowColor = "rgba(217,119,87,0.15)",
+  glowColor = "rgba(153,137,182,0.16)",
   noPadding = false,
 }: {
   children: React.ReactNode;
@@ -114,11 +114,10 @@ function LiquidCard({
         mdColSpan === 3 && "md:col-span-3",
         mdColSpan === 4 && "md:col-span-4",
         mdRowSpan === 2 && "md:row-span-2",
-        "bg-zinc-900/90 backdrop-blur-md",
-        "border border-white/5",
+        "glass-card",
         "shadow-[0_4px_32px_rgba(0,0,0,0.25),inset_0_1px_0_rgba(255,255,255,0.05)]",
         "transition-all duration-300 ease-out",
-        onClick && "cursor-pointer hover:-translate-y-1 hover:border-white/20 hover:shadow-xl hover:shadow-black/20",
+        onClick && "cursor-pointer hover:-translate-y-1 hover:border-accent-primary/40 hover:shadow-xl hover:shadow-black/20",
         className
       )}
     >
@@ -128,7 +127,7 @@ function LiquidCard({
         style={{ background: `radial-gradient(circle at 50% 0%, ${glowColor} 0%, transparent 70%)` }}
       />
       {/* Top shine line */}
-      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent pointer-events-none" />
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-accent-primary/40 to-transparent pointer-events-none" />
       {/* Content */}
       {noPadding ? (
         <div className="relative z-10 h-full w-full">{children}</div>
@@ -176,7 +175,7 @@ export default function HomeScreen({
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <div className="text-center space-y-4">
-          <Heart className="w-12 h-12 text-accent-terracotta/50 mx-auto" />
+          <Heart className="w-12 h-12 text-accent-primary/60 mx-auto" />
           <p className="text-text-main/60">Please log in to continue</p>
         </div>
       </div>
@@ -333,21 +332,21 @@ export default function HomeScreen({
               >
                 MOMENTS
               </motion.h2>
-              <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-400 font-medium mt-1">
+              <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-text-muted font-medium mt-1">
                 {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
               </p>
             </div>
             <button
               onClick={onOutbox}
-              className="w-9 h-9 rounded-xl flex items-center justify-center bg-white/[0.04] border border-white/[0.06] hover:border-accent-terracotta/50 hover:text-accent-terracotta transition-all duration-300 group/btn mt-1"
+              className="w-9 h-9 rounded-xl flex items-center justify-center bg-accent-primary/12 border border-accent-primary/25 hover:border-accent-primary/60 hover:text-accent-primary transition-all duration-300 group/btn mt-1"
               aria-label="Refresh outbox"
             >
-              <RefreshCw className="w-4 h-4 text-text-main/40 group-hover/btn:rotate-180 group-hover/btn:text-accent-terracotta transition-transform duration-500" />
+              <RefreshCw className="w-4 h-4 text-text-main/40 group-hover/btn:rotate-180 group-hover/btn:text-accent-primary transition-transform duration-500" />
             </button>
           </div>
           <div className="flex items-center gap-2.5 mt-4">
             <PulsingDot active={isPartnerActive} />
-            <span className="text-xs font-semibold text-zinc-400 font-medium truncate">
+            <span className="text-xs font-semibold text-text-muted font-medium truncate">
               {isPartnerActive
                 ? `${getPartnerDisplayName()} is online now`
                 : partner
@@ -363,7 +362,7 @@ export default function HomeScreen({
       mdColSpan: 2,
       delay: 0.07,
       className: "flex flex-col items-center justify-center gap-3 min-h-[160px]",
-      glowColor: "rgba(138,154,91,0.18)",
+      glowColor: "rgba(153,137,182,0.2)",
       content: partnerLocalTime ? (
         <AmbientContext partnerTime={partnerLocalTime} weatherCondition="sunny" />
       ) : (
@@ -377,7 +376,7 @@ export default function HomeScreen({
       id: "partner-moment",
       mdColSpan: 2,
       delay: 0.1,
-      glowColor: "rgba(217,119,87,0.2)",
+      glowColor: "rgba(153,137,182,0.22)",
       className: "min-h-[220px]",
       noPadding: true,
       content: (
@@ -394,7 +393,7 @@ export default function HomeScreen({
               {/* Cinematic gradient overlay */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
               {/* Glass inner ring */}
-              <div className="absolute inset-0 rounded-3xl ring-1 ring-inset ring-white/10 pointer-events-none" />
+              <div className="absolute inset-0 rounded-3xl ring-1 ring-inset ring-accent-primary/30 pointer-events-none" />
               {/* Caption positioned absolutely at bottom-left */}
               <div className="absolute inset-x-0 bottom-0 p-5 md:p-6 z-10">
                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/80">
@@ -411,9 +410,9 @@ export default function HomeScreen({
             </>
           ) : partner ? (
             // Partner exists but no moment yet
-            <div className="relative h-full min-h-[220px] overflow-hidden flex flex-col items-center justify-center p-6 bg-gradient-to-br from-accent-terracotta/5 via-transparent to-accent-sage/5">
+            <div className="relative h-full min-h-[220px] overflow-hidden flex flex-col items-center justify-center p-6 bg-gradient-to-br from-accent-primary/10 via-transparent to-accent-primary/5">
               <div className="absolute inset-0 opacity-5">
-                <div className="absolute inset-0 bg-gradient-to-br from-accent-terracotta via-transparent to-accent-sage" />
+                <div className="absolute inset-0 bg-gradient-to-br from-accent-primary via-transparent to-accent-primary" />
               </div>
               <div className="relative z-10 flex flex-col items-center justify-center gap-4 text-center h-full">
                 <div className="space-y-2">
@@ -421,7 +420,7 @@ export default function HomeScreen({
                   <h3 className="text-lg font-bold text-text-main">
                     {getPartnerDisplayName()}
                   </h3>
-                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-accent-terracotta/60">
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-accent-primary/75">
                     Waiting for their first moment
                   </p>
                 </div>
@@ -435,13 +434,13 @@ export default function HomeScreen({
             <div className="relative h-full min-h-[220px] overflow-hidden flex flex-col items-center justify-center p-6">
               {/* Animated background grid */}
               <div className="absolute inset-0 opacity-5">
-                <div className="absolute inset-0 bg-gradient-to-br from-accent-terracotta via-transparent to-accent-sage" />
+                <div className="absolute inset-0 bg-gradient-to-br from-accent-primary via-transparent to-accent-primary" />
               </div>
               
               {/* Content */}
               <div className="relative z-10 flex flex-col items-center justify-center gap-4 text-center h-full">
                 <div className="space-y-1">
-                  <div className="text-[10px] font-black uppercase tracking-[0.2em] text-accent-terracotta/80">
+                  <div className="text-[10px] font-black uppercase tracking-[0.2em] text-accent-primary/85">
                     Not Yet Connected
                   </div>
                   <h3 className="text-lg font-bold text-text-main">
@@ -455,9 +454,9 @@ export default function HomeScreen({
                 
                 <button
                   onClick={onConnect}
-                  className="mt-2 px-4 py-2 rounded-full bg-accent-terracotta/10 border border-accent-terracotta/30 hover:border-accent-terracotta/60 hover:bg-accent-terracotta/20 transition-all duration-300 cursor-pointer"
+                  className="mt-2 px-4 py-2 rounded-full bg-accent-primary/10 border border-accent-primary/35 hover:border-accent-primary/65 hover:bg-accent-primary/20 transition-all duration-300 cursor-pointer"
                 >
-                  <span className="text-[10px] font-bold text-accent-terracotta tracking-widest uppercase">
+                  <span className="text-[10px] font-bold text-accent-primary tracking-widest uppercase">
                     Go to Connect
                   </span>
                 </button>
@@ -472,11 +471,11 @@ export default function HomeScreen({
       mdColSpan: 2,
       delay: 0.13,
       onClick: onFoggyMirror,
-      glowColor: "rgba(100,150,255,0.15)",
+      glowColor: "rgba(153,137,182,0.16)",
       className: "min-h-[160px] flex flex-col justify-center items-center",
       content: (
         <>
-          <Droplets className="w-8 h-8 text-blue-400/50 mb-3" />
+          <Droplets className="w-8 h-8 text-accent-primary/60 mb-3" />
           <span className="text-[10px] font-black uppercase tracking-[0.2em] text-text-main/50">Foggy Mirror</span>
         </>
       ),
@@ -495,8 +494,8 @@ export default function HomeScreen({
               <h3 className="text-xl font-bold bg-gradient-to-r from-text-main to-text-main/40 bg-clip-text text-transparent">Today's Journey</h3>
             </div>
             <div className="flex items-center gap-2">
-              <div className="px-3 py-1 rounded-full bg-accent-terracotta/10 border border-accent-terracotta/20">
-                <span className="text-[10px] font-black text-accent-terracotta uppercase tracking-tighter">
+              <div className="px-3 py-1 rounded-full bg-accent-primary/10 border border-accent-primary/30">
+                <span className="text-[10px] font-black text-accent-primary uppercase tracking-tighter">
                   {count}/3 Slots Filled
                 </span>
               </div>
@@ -505,9 +504,9 @@ export default function HomeScreen({
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 flex-1">
             {[
-              { id: "morning", label: "Morning", icon: Sun, color: "text-amber-400" },
-              { id: "evening", label: "Evening", icon: Cloud, color: "text-blue-400" },
-              { id: "night", label: "Night", icon: Moon, color: "text-purple-400" },
+              { id: "morning", label: "Morning", icon: Sun, color: "text-accent-primary/90" },
+              { id: "evening", label: "Evening", icon: Cloud, color: "text-accent-primary/75" },
+              { id: "night", label: "Night", icon: Moon, color: "text-accent-primary/60" },
             ].map((slotInfo) => {
               const moment = (momentsBySlot as any)[slotInfo.id];
               const isOwn = moment?.user_id === user?.id;
@@ -535,15 +534,15 @@ export default function HomeScreen({
                         <button
                           onClick={() => handleDelete(moment.id)}
                           disabled={isDeleting === moment.id}
-                          className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/20 backdrop-blur-md border border-white/10 flex items-center justify-center text-white/60 hover:text-red-400 hover:bg-black/40 transition-all opacity-0 group-hover/slot:opacity-100"
+                          className="absolute top-3 right-3 w-8 h-8 rounded-full bg-accent-primary/20 backdrop-blur-[12px] border border-accent-primary/35 flex items-center justify-center text-text-main/75 hover:text-accent-primary hover:bg-accent-primary/30 transition-all opacity-0 group-hover/slot:opacity-100"
                         >
                           {isDeleting === moment.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
                         </button>
                       )}
 
-                      <div className="absolute top-3 left-3 px-3 py-1 rounded-full bg-black/40 backdrop-blur-md border border-white/10 flex items-center gap-1.5">
+                      <div className="absolute top-3 left-3 px-3 py-1 rounded-full bg-accent-primary/20 backdrop-blur-[12px] border border-accent-primary/35 flex items-center gap-1.5">
                         <slotInfo.icon className={`w-3 h-3 ${slotInfo.color}`} />
-                        <span className="text-[9px] font-black text-white/90 uppercase tracking-widest">{slotInfo.label}</span>
+                        <span className="text-[9px] font-black text-text-main uppercase tracking-widest">{slotInfo.label}</span>
                       </div>
                     </motion.div>
                   ) : (
@@ -569,7 +568,7 @@ export default function HomeScreen({
       id: "upload",
       delay: 0.25,
       onClick: handleUploadClick,
-      glowColor: "rgba(217,119,87,0.2)",
+      glowColor: "rgba(153,137,182,0.22)",
       className: "min-h-[140px]",
       content: (
         <motion.div
@@ -582,8 +581,8 @@ export default function HomeScreen({
             transition={{ type: "spring", damping: 15, stiffness: 400 }}
             className={cn(
               "w-16 h-16 md:w-20 md:h-20 rounded-full flex-shrink-0 flex items-center justify-center",
-              "border border-white/[0.08] shadow-[0_4px_20px_rgba(0,0,0,0.25)]",
-              count < 3 ? "bg-accent-terracotta/10 text-accent-terracotta" : "bg-text-main/5 text-text-main/15"
+              "border border-accent-primary/25 shadow-[0_4px_20px_rgba(0,0,0,0.25)]",
+              count < 3 ? "bg-accent-primary/10 text-accent-primary" : "bg-text-main/5 text-text-main/15"
             )}
           >
             {count < 3 ? <Camera className="w-7 h-7 md:w-8 md:h-8" /> : <Heart className="w-7 h-7 md:w-8 md:h-8 fill-text-main/10" />}
@@ -603,13 +602,13 @@ export default function HomeScreen({
       id: "prompt",
       mdColSpan: 3,
       delay: 0.31,
-      glowColor: "rgba(138,154,91,0.12)",
+      glowColor: "rgba(153,137,182,0.14)",
       className: "min-h-[130px]",
       content: (
         <>
           <div className="flex items-center gap-2 mb-4">
-            <Sparkles className="w-4 h-4 text-accent-sage flex-shrink-0" />
-            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-accent-sage/70">Daily Prompt</span>
+            <Sparkles className="w-4 h-4 text-accent-primary flex-shrink-0" />
+            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-accent-primary/70">Daily Prompt</span>
           </div>
           <DailyPrompt />
         </>
@@ -619,24 +618,24 @@ export default function HomeScreen({
       id: "quote",
       mdColSpan: 3,
       delay: 0.49,
-      glowColor: "rgba(217,119,87,0.08)",
+      glowColor: "rgba(153,137,182,0.1)",
       className: "flex items-center justify-center min-h-[160px]",
       content: (
         <>
           <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-3xl">
-            <div className="absolute bottom-0 inset-x-0 h-1/2 bg-gradient-to-t from-accent-terracotta/5 to-transparent" />
+            <div className="absolute bottom-0 inset-x-0 h-1/2 bg-gradient-to-t from-accent-primary/12 to-transparent" />
           </div>
           <div className="z-10 text-center flex flex-col items-center gap-4">
             <motion.div
               animate={shouldReduceMotion ? {} : { scale: [1, 1.12, 1] }}
               transition={{ repeat: Infinity, duration: 2.8, ease: "easeInOut" }}
             >
-              <Heart aria-hidden="true" className="w-9 h-9 text-accent-terracotta fill-accent-terracotta/25" />
+              <Heart aria-hidden="true" className="w-9 h-9 text-accent-primary fill-accent-primary/25" />
             </motion.div>
             <p className="max-w-sm text-sm font-medium text-text-main/50 leading-relaxed italic">
               "Small moments are the big memories of tomorrow."
             </p>
-            <button className="px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-[0.18em] border border-white/[0.08] bg-white/[0.03] hover:bg-accent-terracotta/10 hover:border-accent-terracotta/30 hover:text-accent-terracotta transition-all duration-300">
+            <button className="px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-[0.18em] border border-accent-primary/25 bg-accent-primary/10 hover:bg-accent-primary/20 hover:border-accent-primary/45 hover:text-accent-primary transition-all duration-300">
               View Timeline
             </button>
           </div>
@@ -694,11 +693,11 @@ export default function HomeScreen({
           onClick={() => setIsEditMode((prev) => !prev)}
           className={cn(
             "group inline-flex items-center gap-2 rounded-full px-4 py-2 text-[10px] font-black uppercase tracking-[0.18em]",
-            "border border-white/[0.08] bg-white/[0.03] backdrop-blur-md transition-all duration-300",
-            isEditMode && "text-accent-terracotta border-accent-terracotta/35 bg-accent-terracotta/12"
+            "border border-accent-primary/25 bg-accent-primary/10 backdrop-blur-[12px] transition-all duration-300",
+            isEditMode && "text-accent-primary border-accent-primary/50 bg-accent-primary/18"
           )}
         >
-          <GripVertical className={cn("w-3.5 h-3.5 transition-colors", isEditMode ? "text-accent-terracotta" : "text-text-main/40")} />
+          <GripVertical className={cn("w-3.5 h-3.5 transition-colors", isEditMode ? "text-accent-primary" : "text-text-main/40")} />
           {isEditMode ? "Done" : "Edit Layout"}
         </motion.button>
       </div>
@@ -717,7 +716,7 @@ export default function HomeScreen({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 16, scale: 0.9 }}
             transition={{ type: "spring", damping: 20, stiffness: 300 }}
-            className="fixed bottom-28 left-1/2 -translate-x-1/2 bg-text-main/95 backdrop-blur-xl text-bg-main text-[11px] font-black py-4 px-8 rounded-full shadow-2xl z-[200] border border-white/20 uppercase tracking-widest whitespace-nowrap"
+            className="fixed bottom-28 left-1/2 -translate-x-1/2 bg-text-main/95 backdrop-blur-xl text-bg-main text-[11px] font-black py-4 px-8 rounded-full shadow-2xl z-[200] border border-accent-primary/35 uppercase tracking-widest whitespace-nowrap"
           >
             ✓ All 3 moments shared today
           </motion.div>
@@ -797,14 +796,14 @@ function BentoGrid({ orderedCards, isEditMode, moveCard }: BentoGridProps) {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 8 }}
                 transition={{ duration: 0.2 }}
-                className="absolute top-3 right-3 z-20 flex items-center gap-1.5 rounded-xl border border-white/[0.1] bg-background/80 backdrop-blur-md p-1.5 shadow-[0_6px_20px_rgba(0,0,0,0.2)]"
+                className="absolute top-3 right-3 z-20 flex items-center gap-1.5 rounded-xl border border-accent-primary/30 bg-background/80 backdrop-blur-[12px] p-1.5 shadow-[0_6px_20px_rgba(0,0,0,0.2)]"
               >
                 <button
                   type="button"
                   onClick={() => moveCard(index, -1)}
                   disabled={index === 0}
                   aria-label={`Move ${card.id} card up`}
-                  className="p-1 rounded-lg text-text-main/60 hover:text-accent-terracotta hover:bg-white/[0.06] transition-colors disabled:opacity-20 disabled:cursor-not-allowed"
+                   className="p-1 rounded-lg text-text-main/60 hover:text-accent-primary hover:bg-accent-primary/12 transition-colors disabled:opacity-20 disabled:cursor-not-allowed"
                 >
                   <ArrowUp className="w-3.5 h-3.5" />
                 </button>
@@ -813,7 +812,7 @@ function BentoGrid({ orderedCards, isEditMode, moveCard }: BentoGridProps) {
                   onClick={() => moveCard(index, 1)}
                   disabled={index === orderedCards.length - 1}
                   aria-label={`Move ${card.id} card down`}
-                  className="p-1 rounded-lg text-text-main/60 hover:text-accent-terracotta hover:bg-white/[0.06] transition-colors disabled:opacity-20 disabled:cursor-not-allowed"
+                   className="p-1 rounded-lg text-text-main/60 hover:text-accent-primary hover:bg-accent-primary/12 transition-colors disabled:opacity-20 disabled:cursor-not-allowed"
                 >
                   <ArrowDown className="w-3.5 h-3.5" />
                 </button>
