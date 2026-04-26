@@ -4,6 +4,8 @@ import { Heart, Sun, Moon, Cloud, Mic, Square, Play, Layers } from "lucide-react
 import { cn } from "@/src/lib/utils";
 import { NeuCard, NeuButton } from "@/src/components/ui/Neumorphic";
 import { sendPing } from "@/src/lib/api";
+import { Capacitor } from "@capacitor/core";
+import { Haptics, ImpactStyle } from "@capacitor/haptics";
 
 // 1. "Thinking of You" Haptic Ping Button
 export const HapticPingButton = ({ compact = false }: { compact?: boolean }) => {
@@ -12,8 +14,12 @@ export const HapticPingButton = ({ compact = false }: { compact?: boolean }) => 
   const [isRateLimited, setIsRateLimited] = React.useState(false);
   const timerRef = React.useRef<NodeJS.Timeout | null>(null);
 
-  const triggerHaptic = () => {
-    if ("vibrate" in navigator) {
+  const triggerHaptic = async () => {
+    if (Capacitor.isNativePlatform()) {
+      await Haptics.impact({ style: ImpactStyle.Medium });
+      await new Promise(r => setTimeout(r, 150));
+      await Haptics.impact({ style: ImpactStyle.Heavy });
+    } else if ("vibrate" in navigator) {
       navigator.vibrate([100, 50, 100]);
     }
   };
@@ -23,7 +29,7 @@ export const HapticPingButton = ({ compact = false }: { compact?: boolean }) => 
     if (isRateLimited) return;
     setIsPressing(true);
     timerRef.current = setTimeout(async () => {
-      triggerHaptic();
+      await triggerHaptic();
       setIsPressing(false);
       try {
         await sendPing();
