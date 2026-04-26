@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { subscribeToPushNotifications } from "../lib/api";
+import { Capacitor } from "@capacitor/core";
+import { Haptics, ImpactStyle, NotificationType } from "@capacitor/haptics";
 
 interface UsePushNotificationsOptions {
   enabled?: boolean;
@@ -17,6 +19,23 @@ export function usePushNotifications(options: UsePushNotificationsOptions = {}) 
   const [isSubscribing, setIsSubscribing] = useState(false);
   const [subscribeError, setSubscribeError] = useState<string | null>(null);
   const autoSubscribeAttemptedRef = useRef(false);
+
+  // On native: listen for foreground push notifications and trigger haptic for pings
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+    let cleanup: (() => void) | undefined;
+    import("@capacitor/push-notifications").then(({ PushNotifications }) => {
+      const handler = PushNotifications.addListener("pushNotificationReceived", async (notification) => {
+        if (notification.data?.type === "ping") {
+          await Haptics.notification({ type: NotificationType.Warning });
+          await new Promise(r => setTimeout(r, 200));
+          await Haptics.impact({ style: ImpactStyle.Heavy });
+        }
+      });
+      handler.then(h => { cleanup = () => h.remove(); });
+    });
+    return () => cleanup?.();
+  }, []);
 
   // Check initial permission status
   useEffect(() => {

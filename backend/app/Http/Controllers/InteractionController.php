@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Ping;
 use App\Models\User;
+use App\Notifications\PingNotification;
 use App\Support\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -47,6 +48,12 @@ class InteractionController extends Controller
             'sender_id'   => $user->id,
             'receiver_id' => $partner->id,
         ]);
+
+        try {
+            $partner->notify(new PingNotification($user));
+        } catch (\Throwable) {
+            // Non-fatal — ping saved, notification best-effort
+        }
 
         return $this->success([
             'ping' => [
