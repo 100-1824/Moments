@@ -66,21 +66,24 @@ class AdminController extends Controller
         DB::transaction(function () use ($userId): void {
             $user = User::findOrFail($userId);
 
-            // If user is in a couple, delete moments and unlink it
+            // If user is in a couple, archive it and clear both users
             if ($user->couple_id) {
                 $couple = Couple::find($user->couple_id);
                 if ($couple) {
-                    // Delete all moments for this couple
                     Moment::where('couple_id', $couple->id)->delete();
-
-                    // Clear couple reference on both users
                     User::whereIn('id', [$couple->partner_a_id, $couple->partner_b_id])
                         ->update(['couple_id' => null]);
                     $couple->update(['status' => 'archived']);
                 }
             }
 
-            // Delete the user
+            // Delete related records that have FK constraints on user_id
+            $user->pushSubscriptions()->delete();
+            $user->sentPings()->delete();
+            $user->receivedPings()->delete();
+            $user->tokens()->delete();
+            $user->moments()->delete();
+
             $user->delete();
         });
 
