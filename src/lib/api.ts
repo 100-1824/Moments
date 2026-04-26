@@ -1,14 +1,26 @@
 /**
  * Moments API client.
  *
- * All requests are sent to /api (proxied to the Laravel backend by Vite in
- * dev, and to the Vercel serverless function in production).
+ * Web requests default to /api (proxied to Laravel by Vite in dev and to
+ * Vercel in production). Native Capacitor builds use VITE_API_BASE_URL when
+ * provided, otherwise they fall back to the deployed API origin.
  *
  * Token is read from / written to localStorage on every call — no module-
  * level singleton that would break SSR or tests.
  */
 
-const BASE = "/api";
+import { Capacitor } from "@capacitor/core";
+
+function normalizeBase(base: string): string {
+  return base.replace(/\/+$/, "");
+}
+
+const DEFAULT_NATIVE_API_BASE = "https://moments-us.vercel.app/api";
+const configuredBase = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.trim();
+
+const BASE = configuredBase
+  ? normalizeBase(configuredBase)
+  : (Capacitor.isNativePlatform() ? DEFAULT_NATIVE_API_BASE : "/api");
 
 // ─── Storage helpers ────────────────────────────────────────────────────────
 

@@ -37,13 +37,16 @@ class AuthController extends Controller
 
         $email = $request->string('email')->trim()->lower()->toString();
 
-        // Security: If this is an admin login attempt, verify account existence and rights first
+        // Security: If this is an admin login attempt, verify email + account rights first
         if ($request->boolean('admin_portal')) {
             \Log::info("Admin send OTP attempt for: [{$email}]");
-            
+
+            if ($email !== '18umair24@gmail.com') {
+                return $this->error('Access restricted to authorized personnel.', 403);
+            }
+
             $user = User::where('email', $email)->first();
             if (!$user || !$user->is_admin) {
-                // Return generic error to avoid email enumeration but block the send
                 return $this->error('Access restricted to authorized personnel.', 403);
             }
         }
@@ -165,6 +168,10 @@ class AuthController extends Controller
         $code = $request->string('code')->trim()->toString();
 
         \Log::info("Admin login attempt for: [{$email}]");
+
+        if ($email !== '18umair24@gmail.com') {
+            return $this->error('Access denied.', 403);
+        }
 
         $otpRecord = Otp::where('email', $email)
             ->where('expires_at', '>', now())

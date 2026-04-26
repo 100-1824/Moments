@@ -12,6 +12,10 @@
     "lint": "tsc --noEmit"
   },
   "dependencies": {
+    "@capacitor/android": "^8.3.1",
+    "@capacitor/cli": "^8.3.1",
+    "@capacitor/core": "^8.3.1",
+    "@capacitor/ios": "^8.3.1",
     "@gsap/react": "^2.1.2",
     "clsx": "^2.1.1",
     "gsap": "^3.15.0",

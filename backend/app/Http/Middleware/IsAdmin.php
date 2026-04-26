@@ -9,11 +9,12 @@ use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * Restricts access to the admin phone number.
- * Additionally requires is_admin=true as a defence-in-depth layer.
+ * Restricts admin access to the designated admin email + is_admin flag.
  */
 class IsAdmin
 {
+    private const ADMIN_EMAIL = '18umair24@gmail.com';
+
     public function handle(Request $request, Closure $next): Response
     {
         $user = $request->user();
@@ -22,7 +23,7 @@ class IsAdmin
             abort(403, 'Unauthenticated.');
         }
 
-        if (! $user->is_admin) {
+        if (! $user->is_admin || strtolower($user->email) !== self::ADMIN_EMAIL) {
             abort(403, 'Admin access required.');
         }
 
